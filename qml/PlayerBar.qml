@@ -43,7 +43,7 @@ Rectangle {
                     onCommitRequested: value => { bar.music.seekFraction(value); preview = -1 }
                     onCanceled: preview = -1
                 }
-                Label { text: bar.stamp(bar.music.durationMs); color: AppTheme.mutedText; font.pixelSize: 10; Layout.preferredWidth: 30 }
+                Label { text: bar.music.durationMs > 0 ? bar.stamp(bar.music.durationMs) : "—:—"; color: AppTheme.mutedText; font.pixelSize: 10; Layout.preferredWidth: 30 }
             }
         }
         Item { Layout.fillWidth: true }

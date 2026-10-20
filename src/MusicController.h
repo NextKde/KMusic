@@ -121,7 +121,8 @@ public:
 
     QVariantMap onlineDetail() const { return m_onlineDetail; }
     Q_INVOKABLE void requestOnlineDetail(int row);
-    QString providerStatus() const { return m_providerStatus; }
+    QString providerStatus() const;
+    QVariantMap playbackSessionInfo() const;
     bool engineAvailable() const;
     QString engineBackend() const;
     bool mprisRegistered() const;
@@ -303,6 +304,14 @@ private:
     QString m_attemptName;
     QString m_recoveryStatus;
     QString m_providerStatus;
+    qint64 m_streamMetadataTrackId = -1;
+    qint64 m_streamDurationMs = 0;
+    QString m_streamAvailability = QStringLiteral("unknown");
+    QString m_streamQuality;
+    bool m_streamAvailabilityConfirmed = false;
+    qint64 m_providerResolveRequests = 0;
+    qint64 m_providerResolutions = 0;
+    qint64 m_engineLoadRequests = 0;
     QVariantMap m_onlineDetail;
     QSet<qint64> m_failedTracks;
     QSet<QString> m_removedDuringScan;

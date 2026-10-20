@@ -77,6 +77,7 @@ MusicController::MusicController(QObject *parent)
     connect(&m_engine, &PlaybackEngine::stateChanged,
             this, &MusicController::playbackStateChanged);
     connect(this, &MusicController::playbackStateChanged, this, &MusicController::playbackStatusChanged);
+    connect(this, &MusicController::currentTrackChanged, this, &MusicController::playbackStatusChanged);
     connect(&m_engine, &PlaybackEngine::bufferingChanged, this, &MusicController::playbackStatusChanged);
     connect(&m_engine, &PlaybackEngine::downloadCompleted, this, [this](const QString &path) {
         if (m_audioCache)
@@ -136,6 +137,14 @@ MusicController::MusicController(QObject *parent)
     });
     connect(&m_engine, &PlaybackEngine::durationChanged,
             this, &MusicController::durationChanged);
+    connect(&m_engine, &PlaybackEngine::durationChanged, this, [this] {
+        const auto track = findTrack(currentTrackId());
+        if (!track || track->source != QLatin1String("netease")
+            || m_loadedTrackId != track->id || m_engine.durationMs() <= 0) return;
+        m_streamMetadataTrackId = track->id;
+        m_streamDurationMs = m_engine.durationMs();
+        persistPlaybackPosition();
+    });
     connect(&m_engine, &PlaybackEngine::seekableChanged,
             this, &MusicController::seekableChanged);
     connect(&m_engine, &PlaybackEngine::volumeChanged,
@@ -205,9 +214,19 @@ void MusicController::initialize()
     connect(&m_onlineProvider, &OnlineMusicProvider::resolved, this,
         [this](qint64 id, const QUrl &url, bool trial, const QString &level) {
             if (id != currentTrackId() || id != m_resolvingTrackId) return;
+            ++m_providerResolutions;
+            m_streamMetadataTrackId = id;
+            m_streamAvailability = trial ? QStringLiteral("preview") : QStringLiteral("full");
+            m_streamQuality = m_onlineQuality;
+            m_streamAvailabilityConfirmed = true;
+            // The catalogue duration is not the length of this fresh URL.
+            // Wait for the decoder to report the actual stream duration.
+            m_streamDurationMs = 0;
             m_providerStatus = trial ? tr("NetEase · preview only (account/rights restriction)")
                                     : tr("NetEase · %1").arg(level);
             loadPreparedTrack(url);
+            persistPlaybackPosition();
+            emit durationChanged();
             emit playbackStatusChanged();
         });
     connect(&m_onlineProvider, &OnlineMusicProvider::resolveFailed, this,
@@ -308,9 +327,24 @@ void MusicController::initialize()
         m_queueIndex = m_queueIds.isEmpty() ? -1 : 0;
     const QJsonObject playback = QJsonDocument::fromJson(
         m_database.setting(QStringLiteral("playbackPosition")).toUtf8()).object();
-    if (playback.value(QStringLiteral("trackId")).toString().toLongLong() == currentTrackId())
+    if (playback.value(QStringLiteral("trackId")).toString().toLongLong() == currentTrackId()) {
         m_resumePositionMs = std::max<qint64>(0,
             playback.value(QStringLiteral("positionMs")).toVariant().toLongLong());
+        const auto track = findTrack(currentTrackId());
+        if (track && track->source == QLatin1String("netease")) {
+            const auto stream = playback.value(QStringLiteral("stream")).toObject();
+            const QString availability = stream.value(QStringLiteral("availability")).toString();
+            m_streamMetadataTrackId = track->id;
+            m_streamAvailability = availability == QLatin1String("preview") || availability == QLatin1String("full")
+                ? availability : QStringLiteral("unknown");
+            m_streamDurationMs = std::max<qint64>(0, stream.value(QStringLiteral("durationMs")).toVariant().toLongLong());
+            m_streamQuality = stream.value(QStringLiteral("quality")).toString();
+            // A previous response is history, never current playback permission.
+            m_streamAvailabilityConfirmed = false;
+            if (m_streamDurationMs > 0)
+                m_resumePositionMs = std::min(m_resumePositionMs, m_streamDurationMs);
+        }
+    }
     m_mpris = new MprisService(this, this);
     emit mprisRegisteredChanged();
     emit queueChanged();
@@ -488,9 +522,11 @@ qlonglong MusicController::positionMs() const
 }
 qlonglong MusicController::durationMs() const
 {
-    if (m_loadedTrackId == currentTrackId() && m_engine.durationMs() > 0)
+    if (m_loadedTrackId >= 0 && m_loadedTrackId == currentTrackId() && m_engine.durationMs() > 0)
         return m_engine.durationMs();
     const auto track = findTrack(currentTrackId());
+    if (track && track->source == QLatin1String("netease"))
+        return m_streamMetadataTrackId == track->id ? m_streamDurationMs : 0;
     return track ? track->durationMs : 0;
 }
 bool MusicController::seekable() const
@@ -1538,10 +1574,20 @@ void MusicController::persistPlaybackPosition()
 {
     if (!m_ready)
         return;
-    const QJsonObject position{
+    QJsonObject position{
         {QStringLiteral("trackId"), QString::number(currentTrackId())},
         {QStringLiteral("positionMs"), positionMs()},
     };
+    const auto track = findTrack(currentTrackId());
+    if (track && track->source == QLatin1String("netease")) {
+        const bool matches = m_streamMetadataTrackId == track->id;
+        // Only non-sensitive session facts. No URL, headers, cookies or token.
+        position.insert(QStringLiteral("stream"), QJsonObject{
+            {QStringLiteral("availability"), matches ? m_streamAvailability : QStringLiteral("unknown")},
+            {QStringLiteral("durationMs"), matches ? m_streamDurationMs : 0},
+            {QStringLiteral("quality"), matches ? m_streamQuality : QString{}},
+        });
+    }
     m_database.setSetting(QStringLiteral("playbackPosition"),
         QString::fromUtf8(QJsonDocument(position).toJson(QJsonDocument::Compact)));
 }
@@ -1554,6 +1600,7 @@ void MusicController::loadPreparedTrack(const QUrl &url)
     m_engineCacheKey = m_pendingCacheKey;
     m_loadedTrackId = m_resolvingTrackId;
     m_resolvingTrackId = -1;
+    ++m_engineLoadRequests;
     if (m_engine.load(url, m_playWhenReady, m_resumePositionMs))
         m_database.recordPlayed(m_loadedTrackId);
     emit playbackStateChanged();
@@ -1586,6 +1633,8 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     m_pendingCacheKey.clear();
     m_providerStatus.clear();
     if (track->source == QLatin1String("netease")) {
+        m_streamAvailabilityConfirmed = false;
+        ++m_providerResolveRequests;
         m_providerStatus = tr("NetEase · resolving playback address…");
         emit playbackStatusChanged();
         emit playbackStateChanged();
@@ -1812,4 +1861,30 @@ void MusicController::requestOnlineDetail(int row) {
     m_onlineDetail = {{"loading", true}};
     emit onlineDetailChanged();
     m_onlineProvider.loadDetail(track->providerId);
+}
+
+QString MusicController::providerStatus() const
+{
+    const auto track = findTrack(currentTrackId());
+    if (!track) return {};
+    if (!m_providerStatus.isEmpty()) return m_providerStatus;
+    if (track->source != QLatin1String("netease")) return {};
+    if (m_streamMetadataTrackId == track->id && m_streamAvailability == QLatin1String("preview"))
+        return m_streamAvailabilityConfirmed
+            ? tr("NetEase · preview only (account/rights restriction)")
+            : tr("NetEase · previous preview; playback must be checked again");
+    return tr("NetEase · playback availability must be checked before playing");
+}
+
+QVariantMap MusicController::playbackSessionInfo() const
+{
+    const bool matches = m_streamMetadataTrackId == currentTrackId();
+    return {{"availability", matches ? m_streamAvailability : QStringLiteral("unknown")},
+            {"availabilityConfirmed", matches && m_streamAvailabilityConfirmed},
+            {"lastStreamDurationMs", matches ? m_streamDurationMs : 0},
+            {"providerResolveRequests", m_providerResolveRequests},
+            {"providerResolutions", m_providerResolutions},
+            {"engineLoadRequests", m_engineLoadRequests},
+            {"engineLoaded", m_loadedTrackId >= 0 && m_loadedTrackId == currentTrackId()},
+            {"engineHasSource", !m_engine.source().isEmpty()}};
 }

@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     QTimer reviewTimer;
     if (!reviewDir.isEmpty()) {
         QDir().mkpath(reviewDir);
-        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &material, reviewDir] {
+        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &material, &app, reviewDir] {
             QFile request(QDir(reviewDir).filePath("request.json"));
             if (!request.open(QIODevice::ReadOnly)) return;
             const auto data = QJsonDocument::fromJson(request.readAll()).object();
@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
             else if (action == "pause") music.pause();
             else if (action == "play") music.play();
             else if (action == "seek") music.seek(data.value("positionMs").toVariant().toLongLong());
+            else if (action == "quit") app.quit();
             else if (action == "status") {
                 const auto api = window->rendererInterface()->graphicsApi();
                 const QString renderer = api == QSGRendererInterface::OpenGL ? "OpenGL" : api == QSGRendererInterface::Vulkan ? "Vulkan" : api == QSGRendererInterface::Software ? "Software" : api == QSGRendererInterface::Metal ? "Metal" : "other";
@@ -75,6 +76,7 @@ int main(int argc, char *argv[]) {
                     {"blurRequested", material.blurRequested()}, {"blurFallback", material.fallback()},
                     {"blurRegion", QJsonObject{{"x", material.region().x()}, {"y", material.region().y()}, {"width", material.region().width()}, {"height", material.region().height()}}}, {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
                     {"durationMs", music.durationMs()}, {"providerStatus", music.providerStatus()},
+                    {"playbackSession", QJsonObject::fromVariantMap(music.playbackSessionInfo())},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
                     {"onlineError", music.onlineError()}, {"error", music.errorMessage()},
                     {"windowWidth", window->width()}, {"windowHeight", window->height()}, {"dpr", window->devicePixelRatio()}

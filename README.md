@@ -74,3 +74,18 @@ support is detected; the fallback sidebar is opaque. This does not install or
 change KWin effects. Raw client-content screenshots retain sidebar alpha and do
 not include the compositor's desktop blur. Live review status distinguishes
 `effectAvailable`, `blurRequested`, the logical region and fallback reason.
+
+### Restoring online playback
+
+The library keeps a song's catalogue duration separately from the last decoded
+stream duration. For NetEase, a saved preview restores its actual last stream
+length and position with an explicit “previous preview; playback must be checked
+again” status. It does not restore a loaded URL or current playback permission.
+Pressing play after restart resolves a fresh address before loading the engine.
+Older sessions without stream metadata show an unknown playback length until a
+new stream is decoded, rather than displaying the full catalogue length.
+
+The saved session contains only track ID, position, last availability category,
+last stream duration and quality. Playback URLs, cookies, headers and tokens are
+not included. Live review status includes non-sensitive resolve/load counters and
+session confirmation facts for targeted restart/resume checks.
