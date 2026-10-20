@@ -82,8 +82,10 @@ void NativeReview::showBackground() {
     // Wayland placement is compositor-owned; the later guard verifies actual
     // coverage and rejects mismatches rather than assuming setGeometry worked.
     m_background->setGeometry(appRect.adjusted(-16, -16, 16, 16));
-    m_window->setTransientParent(m_background);
     m_background->show();
+    // The parent must already have a native surface when the existing app
+    // surface publishes its xdg_toplevel parent relationship.
+    m_window->setTransientParent(m_background);
     QTimer::singleShot(200, this, [this] { if (m_background && m_background->isVisible() && m_window) m_window->requestActivate(); });
 }
 void NativeReview::hideBackground() {
