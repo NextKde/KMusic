@@ -83,9 +83,12 @@ void NativeReview::showBackground() {
     // coverage and rejects mismatches rather than assuming setGeometry worked.
     m_background->setGeometry(appRect.adjusted(-16, -16, 16, 16));
     m_background->show();
-    // The parent must already have a native surface when the existing app
-    // surface publishes its xdg_toplevel parent relationship.
+    // Re-map this dedicated app surface with its test parent already present.
+    // Some Wayland integrations do not publish dynamic parent changes for an
+    // existing normal toplevel. No other application's state is changed.
+    m_window->hide();
     m_window->setTransientParent(m_background);
+    m_window->show();
     QTimer::singleShot(200, this, [this] { if (m_background && m_background->isVisible() && m_window) m_window->requestActivate(); });
 }
 void NativeReview::hideBackground() {
