@@ -18,6 +18,7 @@
 #include <QQuickWindow>
 #include <QScreen>
 #include <QtConcurrentRun>
+#include <QTimer>
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
@@ -74,9 +75,16 @@ void NativeReview::showBackground() {
         m_background->setSource(QUrl(QStringLiteral("qrc:/qt/qml/NextKde/Music/qml/ReviewBackdrop.qml")));
     }
     m_background->setScreen(m_window->screen());
-    m_background->showFullScreen();
+    const auto geometry = status().value("windowGeometry").toObject();
+    const QRect appRect(geometry.value("x").toInt(), geometry.value("y").toInt(), geometry.value("width").toInt(), geometry.value("height").toInt());
+    if (appRect.size() != m_window->size()) return;
+    // A dedicated normal window with only a 16px margin around this app.
+    // Wayland placement is compositor-owned; the later guard verifies actual
+    // coverage and rejects mismatches rather than assuming setGeometry worked.
+    m_background->setGeometry(appRect.adjusted(-16, -16, 16, 16));
     m_window->setTransientParent(m_background);
-    m_window->requestActivate();
+    m_background->show();
+    QTimer::singleShot(200, this, [this] { if (m_background && m_background->isVisible() && m_window) m_window->requestActivate(); });
 }
 void NativeReview::hideBackground() {
     if (m_busy) return;
@@ -104,7 +112,8 @@ QJsonObject NativeReview::status() const {
             // Do not inspect or expose titles/identities from unrelated PIDs.
             if (window->pid() != QCoreApplication::applicationPid()) continue;
             if (window->title() == QStringLiteral("KMusic")) appWindow = window;
-            else if (window->title() == QStringLiteral("KMusic dedicated native blur test background")) backgroundWindow = window;
+            else if (window->title() == QStringLiteral("KMusic dedicated native blur test background")
+                || window->title() == QStringLiteral("KMusic dedicated native blur test background — KMusic")) backgroundWindow = window;
         }
         if (appWindow) { geometry = appWindow->geometry(); uuid = QString::fromUtf8(appWindow->uuid()); compositorActive = appWindow->isActive(); }
         if (backgroundWindow) { backgroundGeometry = backgroundWindow->geometry(); backgroundUuid = QString::fromUtf8(backgroundWindow->uuid()); }
