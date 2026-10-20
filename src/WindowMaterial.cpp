@@ -29,7 +29,7 @@ void WindowMaterial::update() {
     if (m_window) {
         // Empty KDE region means the entire window, so never submit one.
         const QRect clipped = m_region.intersected(QRect(QPoint(0, 0), m_window->size()));
-        requested = available && m_window->isVisible() && !clipped.isEmpty();
+        requested = m_reviewBlurEnabled && available && m_window->isVisible() && !clipped.isEmpty();
         KWindowEffects::enableBlurBehind(m_window, requested, requested ? QRegion(clipped) : QRegion{});
     }
 #endif

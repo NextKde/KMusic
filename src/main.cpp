@@ -1,5 +1,6 @@
 #include "MusicController.h"
 #include "WindowMaterial.h"
+#include "NativeReview.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
@@ -41,10 +42,12 @@ int main(int argc, char *argv[]) {
     // Explicitly opt-in review hook: captures the live window's content, with
     // its actual GPU render and DPR. No offscreen or replacement shell.
     const QString reviewDir = qEnvironmentVariable("KMUSIC_REVIEW_DIR");
+    NativeReview nativeReview(&engine, &material, reviewDir);
+    if (!engine.rootObjects().isEmpty()) nativeReview.setWindow(qobject_cast<QQuickWindow *>(engine.rootObjects().first()));
     QTimer reviewTimer;
     if (!reviewDir.isEmpty()) {
         QDir().mkpath(reviewDir);
-        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &material, &app, reviewDir] {
+        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &material, &nativeReview, &app, reviewDir] {
             QFile request(QDir(reviewDir).filePath("request.json"));
             if (!request.open(QIODevice::ReadOnly)) return;
             const auto data = QJsonDocument::fromJson(request.readAll()).object();
@@ -53,7 +56,10 @@ int main(int argc, char *argv[]) {
             auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
             if (!window) return;
             const QString action = data.value("action").toString();
-            if (action == "capture") {
+            if (action == "nativeBackground") { if (data.value("visible").toBool()) nativeReview.showBackground(); else nativeReview.hideBackground(); }
+            else if (action == "nativeBlur") nativeReview.setBlurEnabled(data.value("enabled").toBool());
+            else if (action == "nativeSidebar") nativeReview.captureSidebar(data.value("path").toString());
+            else if (action == "capture") {
                 const QString path = data.value("path").toString();
                 auto result = window->contentItem()->grabToImage();
                 if (result) QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, reviewDir] {
@@ -119,7 +125,7 @@ int main(int argc, char *argv[]) {
                 QMetaObject::invokeMethod(window, "materialReviewState", Q_RETURN_ARG(QVariant, materialState));
                 QFile response(QDir(reviewDir).filePath("response.json"));
                 if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
-                    {"ok", true}, {"renderer", renderer},
+                    {"ok", true}, {"renderer", renderer}, {"nativeReview", nativeReview.status()},
                     {"materialReview", QJsonDocument::fromJson(materialState.toString().toUtf8()).object()},
                     {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
                     {"blurAvailable", material.effectAvailable()}, {"effectAvailable", material.effectAvailable()},

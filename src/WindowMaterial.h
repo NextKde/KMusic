@@ -15,6 +15,7 @@ public:
     explicit WindowMaterial(QObject *parent = nullptr) : QObject(parent) {}
     void setWindow(QQuickWindow *window);
     Q_INVOKABLE void setSidebarRect(const QRectF &rect);
+    void setReviewBlurEnabled(bool enabled) { m_reviewBlurEnabled = enabled; update(); }
     bool effectAvailable() const { return m_effectAvailable; }
     bool blurRequested() const { return m_blurRequested; }
     QRect region() const { return m_region; }
@@ -27,5 +28,6 @@ private:
     QRect m_region;
     bool m_effectAvailable = false;
     bool m_blurRequested = false;
+    bool m_reviewBlurEnabled = true;
     QString m_fallback = QStringLiteral("opaque: compositor blur unavailable");
 };
