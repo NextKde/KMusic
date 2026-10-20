@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
+import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -118,7 +119,14 @@ def main():
         run(["git", "add", "README.md", str(relative)], checkout)
         run(["git", "commit", "-m", f"Record local UI progress {stamp}"], checkout)
         print(f"Publishing {repo} {stamp}", flush=True)
-        run(["git", "-c", "http.version=HTTP/1.1", "push", "-u", "origin", "ui-evidence"], checkout)
+        for attempt in range(3):
+            try:
+                run(["git", "-c", "http.version=HTTP/1.1", "push", "-u", "origin", "ui-evidence"], checkout)
+                break
+            except subprocess.CalledProcessError:
+                if attempt == 2:
+                    raise
+                time.sleep(1 + attempt)
         revision = run(["git", "rev-parse", "HEAD"], checkout)
         published[key] = {"revision": revision, "round": stamp,
                           "url": f"https://github.com/{repo}/blob/ui-evidence/README.md"}
