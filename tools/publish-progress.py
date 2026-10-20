@@ -90,7 +90,7 @@ def main():
                            "devicePixelRatio": args.scale,
                            "logicalWidth": width / args.scale,
                            "logicalHeight": height / args.scale,
-                           "theme": "dark" if "dark" in image.stem else "light" if "light" in image.stem else "unspecified",
+                           "theme": "dark" if "dark" in image.stem or image.parent.name.startswith("dark-") else "light" if "light" in image.stem or image.parent.name.startswith("light-") else "unspecified",
                            "sha256": hashlib.sha256(data).hexdigest(),
                            "capturedAt": datetime.fromtimestamp(image.stat().st_mtime,
                                ZoneInfo("Asia/Shanghai")).isoformat()})
