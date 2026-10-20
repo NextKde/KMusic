@@ -6,7 +6,7 @@ Native NextKde music application. Development is in progress.
 [Latest progress and screenshots](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md) · [Current source](https://github.com/NextKde/KMusic/tree/codex/music-development) · [Component Gallery progress](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
 <!-- progress-links:end -->
 
-The approved project plan is in [docs/ProjectPlan.zh-CN.md](docs/ProjectPlan.zh-CN.md).
+The approved project plan is in [docs/ProjectPlan.zh-CN.md](https://github.com/NextKde/KMusic/blob/codex/music-development/docs/ProjectPlan.zh-CN.md).
 
 ## Development milestone
 
@@ -55,5 +55,5 @@ Other actions are `theme` (`theme`: `light`, `dark`, `system`), `page` (`page`: 
 window content using its actual renderer and DPR, then writes `response.json`
 with `ok` and `path`. It is not an offscreen rendering or a visual acceptance test.
 
-See [design](docs/Design.md), [confirmed plan](docs/ProjectPlan.zh-CN.md),
+See [design](docs/Design.md), [confirmed plan](https://github.com/NextKde/KMusic/blob/codex/music-development/docs/ProjectPlan.zh-CN.md),
 [component inventory](docs/ComponentInventory.md) and [source provenance](NOTICE.md).
