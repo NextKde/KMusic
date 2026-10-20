@@ -1,19 +1,19 @@
 # KMusic progress
 
-Updated: 2026-10-20T23:05:20.295222+08:00
+Updated: 2026-10-20T23:11:54.135085+08:00
 
-23:04轮本机双库新图：应用继续运行试听恢复修复版，共享Switch/Segmented材质正在开发。
+23:10轮新图：App仍运行996c30e，Gallery已热加载共享Switch/Segmented候选4c0f08b；新App正在构建。
 
-实际二进制996c30e/组件72e344c，PID723193，浅色1280x800 DPR2 OpenGL。完成：试听状态恢复P1已窄范围验收，播放器显示0:45且试听提示可见。正在开发的Switch/Segmented尚未进入当前二进制。待做：新控件动态/键盘回归、侧栏真实合成模糊、网络账户及完整功能UI验收。
+截图实际运行996c30e/组件72e344c，PID723193，浅色1280x800 DPR2 Qt6.12 OpenGL。完成：真实在线试听及试听恢复窄范围检查。正在开发：NowPlaying实用歌词开关/概览歌词分段与共享新材质，尚未进入此截图运行版本。问题：新控件动态/键盘未验收，侧栏真实合成blur未验收，完整账户/网络错误/功能验收待做。
 
-Source: [`996c30e181e8`](https://github.com/NextKde/KMusic/commit/996c30e181e89901b4a0282d85b7207d95a77c6e) · Branch: `codex/music-development` · Local changes: False
+Source: [`a5cfb9a7fb0b`](https://github.com/NextKde/KMusic/commit/a5cfb9a7fb0b3759a914c77edb928d2eca8a3238) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-![kmusic-poll-2304-light.png](screenshots/round-20261020-230520/kmusic-poll-2304-light.png)
+![kmusic-poll-2310-light.png](screenshots/round-20261020-231154/kmusic-poll-2310-light.png)
 
 2560 × 1600 original pixels
 
-[Capture and revision metadata](screenshots/round-20261020-230520/metadata.json)
+[Capture and revision metadata](screenshots/round-20261020-231154/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
