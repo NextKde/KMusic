@@ -1,17 +1,23 @@
 # KMusic progress
 
-Updated: 2026-10-20T22:06:55.534971+08:00
+Updated: 2026-10-20T22:12:41.862115+08:00
 
-已按确认计划启动。仓库改名 KMusic，开发者正在完成原生入口和真实 Kos.Ui 构建链接；Gallery 本机截图链路已建立。
+KMusic首版已在本机编译和启动；已完成真实Kos.Ui构建绑定。协调者亲自检查浅深色窗口截图，进入首轮UI修正，SPlayer音源正在接入。
 
-准备阶段：尚无可运行 KMusic 入口，当前无 App 实图；在线音源尚未接入，未宣称构建或功能通过。
+本机构建/启动通过；浅深色发现页已看图。发现播放器上一曲/下一曲图标被紧凑按钮padding截断，已派发共享组件修复。在线音乐与完整功能流程尚未验收。
 
-Source: [`1b73f2fb3b5a`](https://github.com/NextKde/KMusic/commit/1b73f2fb3b5aaf9034320f1216a5248889f683d4) · Branch: `codex/music-development` · Local changes: True
+Source: [`642841d79b16`](https://github.com/NextKde/KMusic/commit/642841d79b16a15e9311558de2375331513de8a9) · Branch: `codex/music-development` · Local changes: True
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-No current application image available in this preparation round; see status above.
+![kmusic-new-light.png](screenshots/round-20261020-221241/kmusic-new-light.png)
 
-[Capture and revision metadata](screenshots/round-20261020-220655/metadata.json)
+2560 × 1600 original pixels
+
+![kmusic-new-dark.png](screenshots/round-20261020-221241/kmusic-new-dark.png)
+
+2560 × 1600 original pixels
+
+[Capture and revision metadata](screenshots/round-20261020-221241/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
