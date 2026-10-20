@@ -31,6 +31,9 @@ void WindowMaterial::update() {
         const QRect clipped = m_region.intersected(QRect(QPoint(0, 0), m_window->size()));
         requested = m_reviewBlurEnabled && available && m_window->isVisible() && !clipped.isEmpty();
         KWindowEffects::enableBlurBehind(m_window, requested, requested ? QRegion(clipped) : QRegion{});
+        // Wayland background-effect state takes effect with a surface commit.
+        // Ensure changes reach the compositor even when the UI is otherwise idle.
+        m_window->update();
     }
 #endif
     m_effectAvailable = available;

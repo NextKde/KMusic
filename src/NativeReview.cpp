@@ -36,6 +36,7 @@ struct PipeResult { QByteArray bytes; QString error; };
 struct Capture {
     QJsonObject before;
     QJsonObject runtime;
+    QJsonObject verifiedWindowInfo;
     QVariantMap attributes;
     PipeResult pipe;
     QString error;
@@ -168,6 +169,7 @@ void NativeReview::captureSidebar(const QString &path) {
     if (::pipe2(pipes, O_CLOEXEC) != 0) { respond({{"ok", false}, {"error", "Cannot create capture pipe"}}); return; }
     m_busy = true;
     const auto capture = std::make_shared<Capture>(); capture->before = before; capture->runtime = runtime;
+    capture->verifiedWindowInfo = QJsonObject::fromVariantMap(info.value());
     const auto finish = [this, capture, path] {
         if (!capture->dbusDone || !capture->pipeDone) return;
         const auto after = status();
@@ -175,9 +177,13 @@ void NativeReview::captureSidebar(const QString &path) {
             && after.value("windowGeometry") == capture->before.value("windowGeometry")
             && after.value("captureGlobalRect") == capture->before.value("captureGlobalRect")
             && after.value("backgroundGeometry") == capture->before.value("backgroundGeometry")
-            && after.value("blurRequested") == capture->before.value("blurRequested");
+            && after.value("blurRequested") == capture->before.value("blurRequested")
+            && after.value("windowUuid") == capture->before.value("windowUuid")
+            && after.value("backgroundUuid") == capture->before.value("backgroundUuid")
+            && after.value("dpr") == capture->before.value("dpr");
         QJsonObject report{{"ok", false}, {"path", path}, {"appRuntime", capture->runtime}, {"before", capture->before}, {"after", after},
             {"api", "org.kde.KWin.ScreenShot2.CaptureArea"}, {"options", QJsonObject{{"hide-caller-windows", false}, {"include-cursor", false}, {"native-resolution", true}}},
+            {"kwinPidVerified", true}, {"verifiedWindowInfo", capture->verifiedWindowInfo},
             {"raw", QJsonObject::fromVariantMap(capture->attributes)}, {"rawBytes", capture->pipe.bytes.size()}, {"stable", stable}};
         QString error = !capture->error.isEmpty() ? capture->error : capture->pipe.error;
         const int width = capture->attributes.value("width").toInt();
