@@ -1,23 +1,19 @@
 # KMusic progress
 
-Updated: 2026-10-20T22:45:53.845477+08:00
+Updated: 2026-10-20T22:52:12.731860+08:00
 
-本轮浅深色材质候选已独立看图：button/input双圈描边移除、浅色文字对比修正；侧栏真实alpha及blur请求已核对。独立Select旧bevel进入下一轮。
+选择器材质候选本机静态复核；按钮/输入框共享材质持续回归，未完成整体验收。
 
-be8656d / fd51df7；侧栏客户端alpha0.80，主区alpha1；blurAvailable/requested=true、region(0,30,240,670)。仅客户端绘制通过静态检查，桌面合成blur视觉未验收；激活未成功时安全跳过对其他窗口截图。
+运行 eff27cd / 组件72e344c，1280x800 DPR2 OpenGL。完成：真实在线搜索及试听已有检查记录、选择器旧浮雕边去除且焦点可见。在做：重启后试听标识与时长恢复。问题：原生截图仍保留sidebar alpha0.8，不能证明合成器背景模糊；完整键盘交互及功能验收未完成。
 
-Source: [`be8656d0a5ef`](https://github.com/NextKde/KMusic/commit/be8656d0a5ef8aa003523687226bf5e1415fff7a) · Branch: `codex/music-development` · Local changes: True
+Source: [`eff27cd828db`](https://github.com/NextKde/KMusic/commit/eff27cd828dbe9f7c821596a5e9c78eda2a56588) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-![kmusic-material-light.png](screenshots/round-20261020-224553/kmusic-material-light.png)
+![kmusic-poll-2248-light.png](screenshots/round-20261020-225212/kmusic-poll-2248-light.png)
 
 2560 × 1600 original pixels
 
-![kmusic-material-dark.png](screenshots/round-20261020-224553/kmusic-material-dark.png)
-
-2560 × 1600 original pixels
-
-[Capture and revision metadata](screenshots/round-20261020-224553/metadata.json)
+[Capture and revision metadata](screenshots/round-20261020-225212/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
