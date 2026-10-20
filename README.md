@@ -89,3 +89,26 @@ The saved session contains only track ID, position, last availability category,
 last stream duration and quality. Playback URLs, cookies, headers and tokens are
 not included. Live review status includes non-sensitive resolve/load counters and
 session confirmation facts for targeted restart/resume checks.
+
+### Native sidebar review (Linux/KDE, opt in)
+
+KF6WindowSystem is optional for production sidebar blur; KWaylandClient is an
+optional dependency used only by the live review adapter to read this process's
+own compositor window UUIDs/geometry. Without it the native capture guard rejects
+the experiment. Ordinary startup creates no test window or window-management
+subscription. `WindowMaterial` schedules a window frame after changing native
+blur state so idle Wayland surfaces commit the request.
+
+With `KMUSIC_REVIEW_DIR` enabled, `nativeBackground` (`visible`: true/false)
+creates a dedicated original striped native test window, limited to the app size
+plus a 16px margin. `nativeBlur` (`enabled`: true/false) changes only this app's
+request. `nativeSidebar` (`path`: absolute PNG) calls the existing KWin
+[CaptureArea API](https://github.com/KDE/kwin/blob/v6.8.0/src/plugins/screenshot/org.kde.KWin.ScreenShot2.xml)
+for the sidebar interior, with caller windows included. It requires a matching
+runtime PID and checks real compositor geometry, UUID/PID, active window,
+background coverage and parent relationship before and after capture. Pixel data
+is discarded on a failed guard; a sidecar records the raw format/stride/DPR and
+window identity. No compositor configuration or permission changes are made.
+Close the test background and restore `nativeBlur.enabled=true` after comparison.
+Client `capture` images still do not prove compositor blur; actual native RGB
+on/off results require independent visual review.

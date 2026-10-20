@@ -47,3 +47,17 @@ review状态分别记录effectAvailable、blurRequested、逻辑区域与fallbac
 会先重新解析地址再加载引擎。旧会话没有流元数据时显示未知播放时长，避免将整曲长度当作试听长度。
 会话仅保存曲目ID、位置、上次可用性分类、流时长与音质，不保存播放URL、Cookie、请求头或Token。
 本机review状态提供不含敏感信息的解析/加载计数与确认状态，供重启/恢复专项核对。
+
+### 原生侧栏对照（Linux/KDE，可选开启）
+
+生产侧栏模糊可选依赖KF6WindowSystem。KWaylandClient仅供review适配器按本进程PID
+读取真实窗口UUID/几何；缺少时原生捕获守卫拒绝实验。普通启动不创建测试窗口，也不
+订阅窗口管理信息。WindowMaterial修改模糊请求后安排窗口帧，保证空闲Wayland表面
+也提交协议状态。
+开启KMUSIC_REVIEW_DIR后，nativeBackground（visible=true/false）创建原创条纹的
+独立原生背景窗口，尺寸仅为App加16px边界；nativeBlur（enabled=true/false）仅切换
+本App请求。nativeSidebar（path=绝对PNG路径）调用现有KWin CaptureArea，只抓侧栏内部，
+包含调用者窗口。前后验证runtime PID、真实合成器几何、UUID/PID、激活窗口、背景覆盖
+与父子关系；失败则丢弃像素，sidecar记录原始格式/stride/DPR及身份。不修改合成器配置
+或服务权限。实验后关闭测试背景并恢复nativeBlur.enabled=true。普通客户端capture
+仍不能证明桌面模糊，真实原生RGB on/off结果仍需独立看图验收。
