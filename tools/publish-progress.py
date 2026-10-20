@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 from pathlib import Path
 import shutil
 import struct
@@ -55,6 +56,8 @@ def main():
     parser.add_argument("--summary", required=True)
     parser.add_argument("--music-status", required=True)
     parser.add_argument("--gallery-status", required=True)
+    parser.add_argument("--scale", type=float, default=2.0,
+                        help="Observed live-window device pixel ratio")
     parser.add_argument("--reviewed", action="store_true", required=True,
                         help="Coordinator has personally inspected all supplied captures")
     args = parser.parse_args()
@@ -63,6 +66,8 @@ def main():
     state_file = ROOT / ".task" / "publication.json"
     state = json.loads(state_file.read_text()) if state_file.exists() else {}
     sources = {key: source_state(path) for key, (path, _) in TARGETS.items()}
+    runtime_file = ROOT / ".task" / "runtime.json"
+    runtime = json.loads(runtime_file.read_text()) if runtime_file.exists() else None
     published = {}
     for key, (source, repo) in TARGETS.items():
         checkout = evidence_checkout(key, source, repo)
@@ -78,15 +83,22 @@ def main():
             width, height = struct.unpack(">II", data[16:24])
             shutil.copyfile(image, output / image.name)
             images.append({"file": image.name, "width": width, "height": height,
+                           "devicePixelRatio": args.scale,
+                           "logicalWidth": width / args.scale,
+                           "logicalHeight": height / args.scale,
+                           "theme": "dark" if "dark" in image.stem else "light" if "light" in image.stem else "unspecified",
                            "sha256": hashlib.sha256(data).hexdigest(),
                            "capturedAt": datetime.fromtimestamp(image.stat().st_mtime,
                                ZoneInfo("Asia/Shanghai")).isoformat()})
         metadata = {"round": stamp, "publishedAt": now.isoformat(),
                     "summary": args.summary, "status": getattr(args, key + "_status"),
                     "source": sources[key], "relatedSources": sources,
+                    "appRuntime": runtime if key == "music" else None,
                     "captureMethod": "Local visible Qt Quick window item grab; no image editing",
                     "captureLimit": "Client content only; compositor chrome and separate popup windows excluded",
                     "sessionType": os.getenv("XDG_SESSION_TYPE", "unknown"),
+                    "system": platform.system(), "architecture": platform.machine(),
+                    "qtVersion": run(["pkg-config", "--modversion", "Qt6Core"]),
                     "images": images, "personallyReviewed": True}
         (output / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n")
         body = f"# {'KMusic' if key == 'music' else 'Gallery'} progress\n\n"
@@ -105,7 +117,8 @@ def main():
         (checkout / "README.md").write_text(index)
         run(["git", "add", "README.md", str(relative)], checkout)
         run(["git", "commit", "-m", f"Record local UI progress {stamp}"], checkout)
-        run(["git", "push", "-u", "origin", "ui-evidence"], checkout)
+        print(f"Publishing {repo} {stamp}", flush=True)
+        run(["git", "-c", "http.version=HTTP/1.1", "push", "-u", "origin", "ui-evidence"], checkout)
         revision = run(["git", "rev-parse", "HEAD"], checkout)
         published[key] = {"revision": revision, "round": stamp,
                           "url": f"https://github.com/{repo}/blob/ui-evidence/README.md"}
@@ -116,4 +129,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as error:
+        raise SystemExit(error.stderr or str(error))
