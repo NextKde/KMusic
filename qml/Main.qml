@@ -17,6 +17,8 @@ ApplicationWindow {
     property double pendingTrack: -1
     function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
+    function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
+    function materialReviewState() { return nowPlaying.materialReviewState() }
     function setReviewTheme(theme) { AppTheme.appearanceMode = theme }
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
@@ -27,7 +29,7 @@ ApplicationWindow {
     }
     Component.onCompleted: { AppTheme.appearanceMode = "light"; AppTheme.accentName = "purple"; Qt.callLater(updateSidebarBlur) }
     Shortcut { sequence: "Ctrl+O"; onActivated: folderDialog.open() }
-    Shortcut { sequence: "Space"; enabled: !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
+    Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
     Shortcut { sequence: "Ctrl+F"; onActivated: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
     Connections { target: music; function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() } }
     ColumnLayout {
@@ -131,7 +133,7 @@ ApplicationWindow {
                     }
                 }
                 OnlinePage { id: onlinePage; anchors.fill: parent; visible: window.destination === "online"; music: window.music }
-                NowPlaying { anchors.fill: parent; visible: window.destination === "now"; music: window.music }
+                NowPlaying { id: nowPlaying; anchors.fill: parent; visible: window.destination === "now"; music: window.music }
             }
         }
         Rectangle {

@@ -29,3 +29,14 @@ App独立可选KF6适配器仅向半透明侧栏区域请求原生BlurBehind；e
 分开报告，不可用回退不透明侧栏。客户端alpha截图只能表明App表面，不能证明桌面合成模糊。
 
 选择器视觉轮：闭合场/弹层共享LiquidSurface，去亮暗浮雕，Material与activated/宿主确认保持，键盘焦点独立。待运行验收；Gallery条纹源已裁切。GlassSwitch/NavBar/Segmented仍pending。
+
+Switch/Segmented候选（4c0f08b）：轨道、静止拇指及展开开关透镜共享方向性
+LiquidSurface；展开透镜采样同级真实轨道。分段透镜移除全周亮边/浮雕/阴影，
+可采样显式backdrop。Material分支和宿主状态所有权保留。Gallery含禁用/Material
+对照，分段页使用裁切的真实彩条源。浅深色展开/移动验收待完成，静止图不代表
+展开结果通过；NavBar独立材质仍待处理。
+实际播放页使用两种共享控件：Lyrics控制已有持久化设置；选择歌词视图会启用
+歌词，关闭歌词回到Overview并明确显示关闭。重新启用网易歌词发起新歌词请求。
+视图模式不持久化。审阅接口新增固定materialReview(state,index)与
+materialSequence(control,directory,index)，连续帧调用真实共享按下/释放状态入口，
+不注入指针/键盘事件；frames.json记录实际请求时间及状态。

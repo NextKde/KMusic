@@ -35,3 +35,19 @@ separately. Without runtime support it uses an opaque sidebar. A client alpha
 capture shows the app surface, not the compositor's desktop blur result.
 
 Select visual round: closed field/popup now share LiquidSurface; bright/dark bevel removed; Material and activated/acknowledgement unchanged. Keyboard focus is separate. Runtime review pending. Gallery source stripes now clip at source bounds. GlassSwitch/NavBar/Segmented remain pending.
+
+Switch/Segmented candidate (4c0f08b): track, resting handle and expanded switch
+lens share directional LiquidSurface; the expanded lens samples the sibling
+track. Segmented lens removes full rim/bevel/shadow and can sample an explicit
+backdrop. Existing Material branches and host ownership remain. Gallery includes
+disabled/Material controls and a clipped real striped source for the segmented
+lens. Expanded/moving light/dark acceptance is pending; static rest frames alone
+do not establish the expanded result. NavBar independent optics remain pending.
+
+The actual Now Playing page now uses both shared controls: Lyrics toggles the
+existing persisted setting; selecting Lyrics view enables it, and turning lyrics
+off returns to Overview with an explicit off state. Re-enabling NetEase lyrics
+issues a fresh lyric request. Presentation mode itself is transient. The review
+API adds whitelisted materialReview(state,index) and materialSequence(control,
+directory,index). Continuous frames use actual shared press/release state entry,
+not injected pointer/keyboard events; frames.json records request timing/state.

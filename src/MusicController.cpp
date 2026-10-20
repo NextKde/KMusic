@@ -440,8 +440,11 @@ void MusicController::setLyricsEnabled(bool enabled)
     m_lyricsEnabled = enabled;
     m_database.setSetting(QStringLiteral("lyricsEnabled"), enabled ? QStringLiteral("true") : QStringLiteral("false"));
     if (m_lyricsService) {
-        m_lyricsService->load(enabled ? findTrack(currentTrackId()).value_or(TrackRecord{}) : TrackRecord{});
+        const auto track = enabled ? findTrack(currentTrackId()) : std::nullopt;
+        m_lyricsService->load(track.value_or(TrackRecord{}));
         m_lyricsService->setPositionMs(positionMs());
+        if (track && track->source == QLatin1String("netease"))
+            m_onlineProvider.loadLyrics(track->id, track->providerId);
     }
     emit lyricsEnabledChanged();
     emit lyricsChanged();

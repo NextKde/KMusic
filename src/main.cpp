@@ -12,6 +12,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTimer>
+#include <QElapsedTimer>
+#include <QJsonArray>
+#include <memory>
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("kmusic"));
@@ -60,6 +63,42 @@ int main(int argc, char *argv[]) {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
             else if (action == "selectMenu") QMetaObject::invokeMethod(window, "openReviewSelect", Q_ARG(QVariant, data.value("name").toString()));
+            else if (action == "materialSequence") {
+                const QString control = data.value("control").toString();
+                const QString directory = data.value("directory").toString();
+                if ((control != "switch" && control != "segment") || !QDir::isAbsolutePath(directory)) return;
+                QDir().mkpath(directory);
+                const int index = data.value("index").toInt(1);
+                auto elapsed = std::make_shared<QElapsedTimer>(); elapsed->start();
+                auto frames = std::make_shared<QJsonArray>();
+                auto stateAction = [window, index](const QString &state) {
+                    QMetaObject::invokeMethod(window, "reviewMaterialAction", Q_ARG(QVariant, state), Q_ARG(QVariant, index));
+                };
+                stateAction(control + "Press");
+                QTimer::singleShot(200, window, [stateAction, control] { stateAction(control + "Release"); });
+                const QList<int> delays{0, 40, 100, 160, 240, 300, 380, 500};
+                for (const int delay : delays) QTimer::singleShot(delay, window, [window, directory, control, delay, elapsed, frames] {
+                    QVariant state;
+                    QMetaObject::invokeMethod(window, "materialReviewState", Q_RETURN_ARG(QVariant, state));
+                    const qint64 requestedAt = elapsed->elapsed();
+                    auto result = window->contentItem()->grabToImage();
+                    if (!result) return;
+                    const QString path = QDir(directory).filePath(control + QStringLiteral("-%1.png").arg(delay, 3, 10, QLatin1Char('0')));
+                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, directory, delay, requestedAt, state, frames] {
+                        const bool saved = result->saveToFile(path);
+                        frames->append(QJsonObject{{"scheduledMs", delay}, {"requestedAtMs", requestedAt}, {"saved", saved}, {"path", path},
+                            {"stateAtRequest", QJsonDocument::fromJson(state.toString().toUtf8()).object()}});
+                        QFile metadata(QDir(directory).filePath("frames.json"));
+                        if (metadata.open(QIODevice::WriteOnly)) metadata.write(QJsonDocument(QJsonObject{
+                            {"trigger", "shared control state entry; no synthetic pointer or keyboard events"},
+                            {"pressAtMs", 0}, {"releaseScheduledMs", 200}, {"frames", *frames}}).toJson());
+                    });
+                });
+            }
+            else if (action == "materialReview") {
+                QMetaObject::invokeMethod(window, "reviewMaterialAction",
+                    Q_ARG(QVariant, data.value("state").toString()), Q_ARG(QVariant, data.value("index").toInt()));
+            }
             else if (action == "activate") window->requestActivate();
             else if (action == "pause") music.pause();
             else if (action == "play") music.play();
@@ -68,9 +107,12 @@ int main(int argc, char *argv[]) {
             else if (action == "status") {
                 const auto api = window->rendererInterface()->graphicsApi();
                 const QString renderer = api == QSGRendererInterface::OpenGL ? "OpenGL" : api == QSGRendererInterface::Vulkan ? "Vulkan" : api == QSGRendererInterface::Software ? "Software" : api == QSGRendererInterface::Metal ? "Metal" : "other";
+                QVariant materialState;
+                QMetaObject::invokeMethod(window, "materialReviewState", Q_RETURN_ARG(QVariant, materialState));
                 QFile response(QDir(reviewDir).filePath("response.json"));
                 if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
                     {"ok", true}, {"renderer", renderer},
+                    {"materialReview", QJsonDocument::fromJson(materialState.toString().toUtf8()).object()},
                     {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
                     {"blurAvailable", material.effectAvailable()}, {"effectAvailable", material.effectAvailable()},
                     {"blurRequested", material.blurRequested()}, {"blurFallback", material.fallback()},
