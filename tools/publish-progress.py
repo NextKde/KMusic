@@ -54,6 +54,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--music-image", action="append", default=[])
     parser.add_argument("--gallery-image", action="append", default=[])
+    parser.add_argument("--music-data", action="append", default=[])
+    parser.add_argument("--gallery-data", action="append", default=[])
     parser.add_argument("--summary", required=True)
     parser.add_argument("--music-status", required=True)
     parser.add_argument("--gallery-status", required=True)
@@ -90,11 +92,21 @@ def main():
                            "devicePixelRatio": args.scale,
                            "logicalWidth": width / args.scale,
                            "logicalHeight": height / args.scale,
-                           "theme": "dark" if "dark" in image.stem or image.parent.name.startswith("dark-") else "light" if "light" in image.stem or image.parent.name.startswith("light-") else "unspecified",
+                           "theme": "dark" if "dark" in image.stem or image.parent.name == "dark" or image.parent.name.startswith("dark-") else "light" if "light" in image.stem or image.parent.name == "light" or image.parent.name.startswith("light-") else "unspecified",
                            "sha256": hashlib.sha256(data).hexdigest(),
                            "capturedAt": datetime.fromtimestamp(image.stat().st_mtime,
                                ZoneInfo("Asia/Shanghai")).isoformat()})
+        attachments = []
+        for filename in getattr(args, key + "_data"):
+            data_file = Path(filename).resolve()
+            if data_file.suffix != ".json":
+                raise ValueError("Only reviewed JSON evidence data is supported")
+            json.loads(data_file.read_text())
+            destination = "data-" + data_file.parent.name + "-" + data_file.name
+            shutil.copyfile(data_file, output / destination)
+            attachments.append(destination)
         metadata = {"round": stamp, "publishedAt": now.isoformat(),
+                    "reviewedData": attachments,
                     "summary": args.summary, "status": getattr(args, key + "_status"),
                     "source": sources[key], "relatedSources": sources,
                     "appRuntime": (images[0]["captureRuntime"] or runtime) if key == "music" and images else None,
@@ -116,6 +128,7 @@ def main():
         else:
             body += "No current application image available in this preparation round; see status above.\n\n"
         body += "[Capture and revision metadata](./metadata.json)\n"
+        body += "".join(f"\n[Reviewed state/timing data: {name}](./{name})\n" for name in attachments)
         (output / "README.md").write_text(body)
         index = body.replace("](./", f"]({relative.as_posix()}/")
         index += f"\n[All rounds](./screenshots) · [Other project](https://github.com/{TARGETS['gallery' if key == 'music' else 'music'][1]}/blob/ui-evidence/README.md)\n"
