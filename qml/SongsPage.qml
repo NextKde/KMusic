@@ -1,0 +1,75 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Kos.Ui
+ColumnLayout {
+    id: page
+    required property var music
+    property var trackModel: music.libraryModel
+    property string heading: qsTr("Songs")
+    property bool queueView: false
+    property bool playlistView: false
+    property double playlistId: -1
+    signal importRequested()
+    signal addToPlaylistRequested(double trackId)
+    spacing: 14
+    RowLayout {
+        Layout.fillWidth: true; Layout.topMargin: 24; Layout.leftMargin: 32; Layout.rightMargin: 32
+        Label { text: page.heading; color: AppTheme.text; font.pixelSize: 32; font.weight: Font.Bold; Layout.fillWidth: true }
+        LiquidActionButton { visible: !page.queueView; text: qsTr("Import"); onClicked: page.importRequested() }
+        LiquidActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
+    }
+    Label { Layout.leftMargin: 32; text: page.trackModel.count + qsTr(" songs"); color: AppTheme.mutedText }
+    Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
+    ListView {
+        id: list
+        Layout.fillWidth: true; Layout.fillHeight: true; clip: true
+        model: page.trackModel
+        leftMargin: 24; rightMargin: 24
+        ScrollBar.vertical: ScrollBar {}
+        delegate: ItemDelegate {
+            id: row
+            required property int index
+            required property double trackId
+            required property string title
+            required property string artist
+            required property string album
+            required property string durationText
+            required property string artworkUrl
+            width: list.width - 48; x: 24; height: 62
+            hoverEnabled: true
+            onClicked: {
+                if (page.queueView) page.music.playQueueRow(index)
+                else if (page.playlistView) page.music.playPlaylistRow(index)
+                else page.music.playTrack(trackId)
+            }
+            background: Rectangle { radius: 6; color: row.hovered ? AppTheme.cardHover : row.index % 2 ? AppTheme.card : "transparent" }
+            contentItem: RowLayout {
+                spacing: 12
+                Label { text: row.index + 1; color: AppTheme.mutedText; Layout.preferredWidth: 22; horizontalAlignment: Text.AlignHCenter }
+                Artwork { source: row.artworkUrl; title: row.title; Layout.preferredWidth: 40; Layout.preferredHeight: 40; radius: 5 }
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 3
+                    Label { text: row.title; color: page.music.currentTrackId === row.trackId ? AppTheme.accent : AppTheme.text; Layout.fillWidth: true; elide: Text.ElideRight; font.weight: Font.Medium }
+                    Label { text: row.artist; color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
+                }
+                Label { text: row.album; color: AppTheme.mutedText; Layout.preferredWidth: Math.max(60, list.width * .17); elide: Text.ElideRight }
+                Label { text: row.durationText; color: AppTheme.mutedText; Layout.preferredWidth: 45 }
+                LiquidActionButton {
+                    text: page.queueView ? "−" : "+"; implicitWidth: 34; implicitHeight: 30
+                    Accessible.name: page.queueView ? qsTr("Remove from queue") : qsTr("Add to queue")
+                    onClicked: { if (page.queueView) page.music.removeQueueRow(row.index); else page.music.enqueueTrack(row.trackId) }
+                }
+                LiquidActionButton {
+                    visible: !page.queueView; text: "···"; implicitWidth: 34; implicitHeight: 30
+                    Accessible.name: qsTr("Add to playlist"); onClicked: page.addToPlaylistRequested(row.trackId)
+                }
+            }
+        }
+        Label {
+            anchors.centerIn: parent; visible: list.count === 0
+            text: page.queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
+            color: AppTheme.mutedText; font.pixelSize: 18
+        }
+    }
+}

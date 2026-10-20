@@ -1,0 +1,62 @@
+#include "MusicController.h"
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQuickStyle>
+#include <QQuickWindow>
+#include <QQuickItem>
+#include <QQuickItemGrabResult>
+#include <QFile>
+#include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QTimer>
+int main(int argc, char *argv[]) {
+    QGuiApplication app(argc, argv);
+    app.setApplicationName(QStringLiteral("kmusic"));
+    app.setApplicationDisplayName(QStringLiteral("KMusic"));
+    app.setOrganizationName(QStringLiteral("NextKde"));
+    app.setApplicationVersion(QStringLiteral(MUSIC_VERSION));
+    app.setDesktopFileName(QStringLiteral("kmusic"));
+    QQuickStyle::setStyle(QStringLiteral("Basic"));
+    MusicController music;
+    QQmlApplicationEngine engine;
+    engine.setInitialProperties({{QStringLiteral("music"), QVariant::fromValue(&music)}});
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
+        [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
+    engine.loadFromModule(QStringLiteral("NextKde.Music"), QStringLiteral("Main"));
+    const auto files = app.arguments().mid(1);
+    if (!files.isEmpty()) QObject::connect(&music, &MusicController::readyChanged, &music, [&music, files] {
+        if (music.ready()) music.openUri(files.first());
+    }, Qt::SingleShotConnection);
+    // Explicitly opt-in review hook: captures the live window's content, with
+    // its actual GPU render and DPR. No offscreen or replacement shell.
+    const QString reviewDir = qEnvironmentVariable("KMUSIC_REVIEW_DIR");
+    QTimer reviewTimer;
+    if (!reviewDir.isEmpty()) {
+        QDir().mkpath(reviewDir);
+        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, reviewDir] {
+            QFile request(QDir(reviewDir).filePath("request.json"));
+            if (!request.open(QIODevice::ReadOnly)) return;
+            const auto data = QJsonDocument::fromJson(request.readAll()).object();
+            request.close(); request.remove();
+            if (engine.rootObjects().isEmpty()) return;
+            auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+            if (!window) return;
+            const QString action = data.value("action").toString();
+            if (action == "capture") {
+                const QString path = data.value("path").toString();
+                auto result = window->contentItem()->grabToImage();
+                if (result) QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, reviewDir] {
+                    const bool ok = result->saveToFile(path);
+                    QFile response(QDir(reviewDir).filePath("response.json"));
+                    if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{{"ok", ok}, {"path", path}}).toJson());
+                });
+            } else if (action == "theme") {
+                QMetaObject::invokeMethod(window, "setReviewTheme", Q_ARG(QVariant, data.value("theme").toString()));
+            } else if (action == "page") window->setProperty("destination", data.value("page").toString());
+            else if (action == "resize") { window->setWidth(data.value("width").toInt(1280)); window->setHeight(data.value("height").toInt(800)); }
+        });
+        reviewTimer.start(200);
+    }
+    return app.exec();
+}

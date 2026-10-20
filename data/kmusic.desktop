@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=KMusic
+Comment=Music for NextKde
+Exec=kmusic %U
+Icon=kmusic
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+MimeType=audio/mpeg;audio/flac;audio/ogg;audio/x-wav;
