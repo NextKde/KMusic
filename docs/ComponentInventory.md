@@ -51,3 +51,12 @@ issues a fresh lyric request. Presentation mode itself is transient. The review
 API adds whitelisted materialReview(state,index) and materialSequence(control,
 directory,index). Continuous frames use actual shared press/release state entry,
 not injected pointer/keyboard events; frames.json records request timing/state.
+
+NavBar candidate (ae9d83e): shared track/resting pill/active lens use directional
+Surface; RGB/white closed rims, fixed glint and depth gradients are removed.
+Its original mutable currentIndex/selectionChanged navigation contract and
+click/spring/timeout behaviour remain. Gallery supplies the direct consumer and
+real textured/disabled/Material comparisons. KMusic does not currently consume
+NavBar, so it receives the pinned shared update and existing-page regression
+without introducing an artificial new navigation UI. Dynamic/focus/accessibility
+acceptance remains independent; this does not complete all material review.

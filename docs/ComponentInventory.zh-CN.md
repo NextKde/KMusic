@@ -40,3 +40,9 @@ LiquidSurface；展开透镜采样同级真实轨道。分段透镜移除全周�
 视图模式不持久化。审阅接口新增固定materialReview(state,index)与
 materialSequence(control,directory,index)，连续帧调用真实共享按下/释放状态入口，
 不注入指针/键盘事件；frames.json记录实际请求时间及状态。
+
+NavBar候选（ae9d83e）：共享轨道/静止拇指/活动透镜使用方向性Surface，移除
+RGB/白色闭合边、固定高光斑和深度渐变。保留原可变currentIndex/selectionChanged
+导航契约及点击/弹簧/超时行为。Gallery作为直接消费方提供真实纹理、禁用/Material
+对照。KMusic当前不使用NavBar，仅固定共享版本并回归现有页面，不额外塞入新导航。
+动态/焦点/无障碍验收需独立完成，未宣称所有材质均已验收。
