@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Publish reviewed live captures and honest progress to the two evidence branches."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import struct
+import subprocess
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+ROOT = Path(__file__).resolve().parents[1]
+TARGETS = {
+    "music": (ROOT, "NextKde/KMusic"),
+    "gallery": (ROOT.parent / "nextkdeAppDemo", "NextKde/nextkdeAppDemo"),
+}
+
+
+def run(args, cwd=None):
+    return subprocess.run(args, cwd=cwd, check=True, text=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          timeout=120).stdout.strip()
+
+
+def source_state(path):
+    status = run(["git", "status", "--porcelain"], path)
+    patch = run(["git", "diff", "HEAD", "--binary"], path)
+    return {"revision": run(["git", "rev-parse", "HEAD"], path),
+            "branch": run(["git", "branch", "--show-current"], path),
+            "dirty": bool(status), "changedPaths": status.splitlines(),
+            "trackedDiffSha256": hashlib.sha256(patch.encode()).hexdigest()}
+
+
+def evidence_checkout(key, source, repo):
+    path = ROOT / ".task" / "evidence" / key
+    if not (path / ".git").exists():
+        path.mkdir(parents=True, exist_ok=True)
+        run(["git", "init", "-b", "ui-evidence", str(path)])
+        run(["git", "remote", "add", "origin", f"https://github.com/{repo}.git"], path)
+        for setting in ("user.name", "user.email"):
+            run(["git", "config", setting, run(["git", "config", setting], source)], path)
+        remote = run(["git", "ls-remote", "--heads", "origin", "ui-evidence"], path)
+        if remote:
+            run(["git", "fetch", "origin", "ui-evidence"], path)
+            run(["git", "reset", "--hard", "FETCH_HEAD"], path)
+    return path
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--music-image", action="append", default=[])
+    parser.add_argument("--gallery-image", action="append", default=[])
+    parser.add_argument("--summary", required=True)
+    parser.add_argument("--music-status", required=True)
+    parser.add_argument("--gallery-status", required=True)
+    parser.add_argument("--reviewed", action="store_true", required=True,
+                        help="Coordinator has personally inspected all supplied captures")
+    args = parser.parse_args()
+    now = datetime.now(ZoneInfo("Asia/Shanghai"))
+    stamp = now.strftime("%Y%m%d-%H%M%S")
+    state_file = ROOT / ".task" / "publication.json"
+    state = json.loads(state_file.read_text()) if state_file.exists() else {}
+    sources = {key: source_state(path) for key, (path, _) in TARGETS.items()}
+    published = {}
+    for key, (source, repo) in TARGETS.items():
+        checkout = evidence_checkout(key, source, repo)
+        relative = Path("screenshots") / f"round-{stamp}"
+        output = checkout / relative
+        output.mkdir(parents=True, exist_ok=True)
+        images = []
+        for filename in getattr(args, key + "_image"):
+            image = Path(filename).resolve()
+            data = image.read_bytes()
+            if data[:8] != b"\x89PNG\r\n\x1a\n":
+                raise ValueError(f"Expected original PNG capture: {image}")
+            width, height = struct.unpack(">II", data[16:24])
+            shutil.copyfile(image, output / image.name)
+            images.append({"file": image.name, "width": width, "height": height,
+                           "sha256": hashlib.sha256(data).hexdigest(),
+                           "capturedAt": datetime.fromtimestamp(image.stat().st_mtime,
+                               ZoneInfo("Asia/Shanghai")).isoformat()})
+        metadata = {"round": stamp, "publishedAt": now.isoformat(),
+                    "summary": args.summary, "status": getattr(args, key + "_status"),
+                    "source": sources[key], "relatedSources": sources,
+                    "captureMethod": "Local visible Qt Quick window item grab; no image editing",
+                    "captureLimit": "Client content only; compositor chrome and separate popup windows excluded",
+                    "sessionType": os.getenv("XDG_SESSION_TYPE", "unknown"),
+                    "images": images, "personallyReviewed": True}
+        (output / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n")
+        body = f"# {'KMusic' if key == 'music' else 'Gallery'} progress\n\n"
+        body += f"Updated: {now.isoformat()}\n\n{args.summary}\n\n{metadata['status']}\n\n"
+        body += f"Source: [`{sources[key]['revision'][:12]}`](https://github.com/{repo}/commit/{sources[key]['revision']})"
+        body += f" · Branch: `{sources[key]['branch']}` · Local changes: {sources[key]['dirty']}\n\n"
+        body += "Captures and builds document progress; UI acceptance is recorded separately.\n\n"
+        if images:
+            body += "\n\n".join(f"![{item['file']}](./{item['file']})\n\n{item['width']} × {item['height']} original pixels" for item in images) + "\n\n"
+        else:
+            body += "No current application image available in this preparation round; see status above.\n\n"
+        body += "[Capture and revision metadata](./metadata.json)\n"
+        (output / "README.md").write_text(body)
+        index = body.replace("](./", f"]({relative.as_posix()}/")
+        index += f"\n[All rounds](./screenshots) · [Other project](https://github.com/{TARGETS['gallery' if key == 'music' else 'music'][1]}/blob/ui-evidence/README.md)\n"
+        (checkout / "README.md").write_text(index)
+        run(["git", "add", "README.md", str(relative)], checkout)
+        run(["git", "commit", "-m", f"Record local UI progress {stamp}"], checkout)
+        run(["git", "push", "-u", "origin", "ui-evidence"], checkout)
+        revision = run(["git", "rev-parse", "HEAD"], checkout)
+        published[key] = {"revision": revision, "round": stamp,
+                          "url": f"https://github.com/{repo}/blob/ui-evidence/README.md"}
+        state["last_evidence_push_at"] = now.isoformat()
+        state.setdefault("targets", {}).update({key: published[key]})
+        state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n")
+    print(json.dumps(published, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

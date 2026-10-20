@@ -1,5 +1,9 @@
 # NextKde Music design contract
 
+> Paused for user review on 2026-10-20. The proposed revised contract is
+> [ProjectPlan.zh-CN.md](ProjectPlan.zh-CN.md). It supersedes this initial document
+> on local testing, source integration, evidence publication and repository naming.
+
 [简体中文](Design.zh-CN.md)
 
 ## Reference ownership
