@@ -27,3 +27,5 @@ Select、GlassSwitch、NavBar、Segmented独立旧渐变/边缘仍pending，Mate
 
 App独立可选KF6适配器仅向半透明侧栏区域请求原生BlurBehind；effectAvailable与blurRequested
 分开报告，不可用回退不透明侧栏。客户端alpha截图只能表明App表面，不能证明桌面合成模糊。
+
+选择器视觉轮：闭合场/弹层共享LiquidSurface，去亮暗浮雕，Material与activated/宿主确认保持，键盘焦点独立。待运行验收；Gallery条纹源已裁切。GlassSwitch/NavBar/Segmented仍pending。

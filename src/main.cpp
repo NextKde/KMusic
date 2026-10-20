@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
             } else if (action == "onlineSearch") {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
+            else if (action == "selectMenu") QMetaObject::invokeMethod(window, "openReviewSelect", Q_ARG(QVariant, data.value("name").toString()));
             else if (action == "activate") window->requestActivate();
             else if (action == "pause") music.pause();
             else if (action == "play") music.play();

@@ -33,3 +33,5 @@ The app-only optional KF6WindowSystem adapter requests native BlurBehind only fo
 the translucent sidebar region. `effectAvailable` and `blurRequested` are reported
 separately. Without runtime support it uses an opaque sidebar. A client alpha
 capture shows the app surface, not the compositor's desktop blur result.
+
+Select visual round: closed field/popup now share LiquidSurface; bright/dark bevel removed; Material and activated/acknowledgement unchanged. Keyboard focus is separate. Runtime review pending. Gallery source stripes now clip at source bounds. GlassSwitch/NavBar/Segmented remain pending.

@@ -6,6 +6,7 @@ ColumnLayout {
     id: page
     required property var music
     property alias queryText: query.text
+    function openQualityMenu() { qualitySelect.openMenu() }
     spacing: 12
     RowLayout {
         Layout.fillWidth: true; Layout.leftMargin: 32; Layout.rightMargin: 32; Layout.topMargin: 24
@@ -17,6 +18,8 @@ ColumnLayout {
         }
         LiquidActionButton { text: page.music.onlineSearching ? qsTr("Searching…") : qsTr("Search"); enabled: query.text.trim().length > 0 && !page.music.onlineSearching; onClicked: page.music.searchOnline(query.text) }
         LiquidSelect {
+            id: qualitySelect
+            accentColor: AppTheme.accent
             model: ["Standard", "320k", "Lossless"]; materialForm: false; appearanceMode: AppTheme.appearanceMode
             currentIndex: page.music.onlineQuality === "320k" ? 1 : page.music.onlineQuality === "flac" ? 2 : 0
             onActivated: index => page.music.onlineQuality = ["128k", "320k", "flac"][index]

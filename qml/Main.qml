@@ -16,6 +16,7 @@ ApplicationWindow {
     property double selectedPlaylist: -1
     property double pendingTrack: -1
     function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
+    function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
     function setReviewTheme(theme) { AppTheme.appearanceMode = theme }
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
@@ -84,6 +85,8 @@ ApplicationWindow {
                         Item { height: 24 }
                         LiquidActionButton { Layout.fillWidth: true; text: music.scanning ? qsTr("Scanning…") : qsTr("Import music folder"); enabled: !music.scanning; onClicked: folderDialog.open() }
                         LiquidSelect {
+                            id: appearanceSelect
+                            accentColor: AppTheme.accent
                             Layout.fillWidth: true; model: [qsTr("System"), qsTr("Light"), qsTr("Dark")]; materialForm: false
                             appearanceMode: AppTheme.appearanceMode; currentIndex: AppTheme.appearanceMode === "system" ? 0 : AppTheme.dark ? 2 : 1
                             onActivated: index => AppTheme.appearanceMode = ["system", "light", "dark"][index]
