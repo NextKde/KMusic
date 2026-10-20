@@ -83,7 +83,10 @@ def main():
                 raise ValueError(f"Expected original PNG capture: {image}")
             width, height = struct.unpack(">II", data[16:24])
             shutil.copyfile(image, output / image.name)
+            runtime_sidecar = Path(str(image) + ".runtime.json")
+            capture_runtime = json.loads(runtime_sidecar.read_text()) if runtime_sidecar.exists() else None
             images.append({"file": image.name, "width": width, "height": height,
+                           "captureRuntime": capture_runtime,
                            "devicePixelRatio": args.scale,
                            "logicalWidth": width / args.scale,
                            "logicalHeight": height / args.scale,
@@ -94,7 +97,8 @@ def main():
         metadata = {"round": stamp, "publishedAt": now.isoformat(),
                     "summary": args.summary, "status": getattr(args, key + "_status"),
                     "source": sources[key], "relatedSources": sources,
-                    "appRuntime": runtime if key == "music" else None,
+                    "appRuntime": (images[0]["captureRuntime"] or runtime) if key == "music" and images else None,
+                    "runtimeAtPublication": runtime if key == "music" else None,
                     "captureMethod": "Local visible Qt Quick window item grab; no image editing",
                     "captureLimit": "Client content only; compositor chrome and separate popup windows excluded",
                     "sessionType": os.getenv("XDG_SESSION_TYPE", "unknown"),
