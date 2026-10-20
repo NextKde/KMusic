@@ -114,6 +114,7 @@ int main(int argc, char *argv[]) {
                     Q_ARG(QVariant, data.value("state").toString()), Q_ARG(QVariant, data.value("index").toInt()));
             }
             else if (action == "activate") window->requestActivate();
+            else if (action == "retryLyrics") music.reloadLyrics();
             else if (action == "pause") music.pause();
             else if (action == "play") music.play();
             else if (action == "seek") music.seek(data.value("positionMs").toVariant().toLongLong());
@@ -132,6 +133,8 @@ int main(int argc, char *argv[]) {
                     {"blurRequested", material.blurRequested()}, {"blurFallback", material.fallback()},
                     {"blurRegion", QJsonObject{{"x", material.region().x()}, {"y", material.region().y()}, {"width", material.region().width()}, {"height", material.region().height()}}}, {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
                     {"durationMs", music.durationMs()}, {"providerStatus", music.providerStatus()},
+                    {"lyricsEnabled", music.lyricsEnabled()}, {"lyricsLoading", music.lyricsLoading()}, {"lyricsCount", music.lyrics().size()},
+                    {"lyricsError", music.lyricsError()}, {"lyricRequestCount", music.lyricRequestCount()},
                     {"playbackSession", QJsonObject::fromVariantMap(music.playbackSessionInfo())},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
                     {"onlineError", music.onlineError()}, {"error", music.errorMessage()},

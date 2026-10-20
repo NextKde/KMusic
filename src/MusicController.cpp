@@ -210,6 +210,7 @@ void MusicController::initialize()
     });
     connect(&m_onlineProvider, &OnlineMusicProvider::lyricsResolved, this, [this](qint64 id, const QString &text, const QString &error) {
         m_lyricsService->setProviderLyrics(id, text, error);
+        if (m_lyricsEnabled && id == currentTrackId()) m_lyricsService->setPositionMs(positionMs());
     });
     connect(&m_onlineProvider, &OnlineMusicProvider::resolved, this,
         [this](qint64 id, const QUrl &url, bool trial, const QString &level) {
@@ -345,6 +346,9 @@ void MusicController::initialize()
                 m_resumePositionMs = std::min(m_resumePositionMs, m_streamDurationMs);
         }
     }
+    // Restore lyrics for the saved identity independently of audio playback.
+    // NetEase always requests fresh provider data; no old lyric cache implies success.
+    reloadLyrics();
     m_mpris = new MprisService(this, this);
     emit mprisRegisteredChanged();
     emit queueChanged();
@@ -439,16 +443,22 @@ void MusicController::setLyricsEnabled(bool enabled)
         return;
     m_lyricsEnabled = enabled;
     m_database.setSetting(QStringLiteral("lyricsEnabled"), enabled ? QStringLiteral("true") : QStringLiteral("false"));
-    if (m_lyricsService) {
-        const auto track = enabled ? findTrack(currentTrackId()) : std::nullopt;
-        m_lyricsService->load(track.value_or(TrackRecord{}));
-        m_lyricsService->setPositionMs(positionMs());
-        if (track && track->source == QLatin1String("netease"))
-            m_onlineProvider.loadLyrics(track->id, track->providerId);
-    }
+    reloadLyrics();
     emit lyricsEnabledChanged();
     emit lyricsChanged();
     emit currentLyricChanged();
+}
+
+void MusicController::reloadLyrics()
+{
+    if (!m_ready || !m_lyricsService) return;
+    const auto track = m_lyricsEnabled ? findTrack(currentTrackId()) : std::nullopt;
+    m_lyricsService->load(track.value_or(TrackRecord{}));
+    m_lyricsService->setPositionMs(positionMs());
+    if (track && track->source == QLatin1String("netease")) {
+        ++m_lyricRequestCount;
+        m_onlineProvider.loadLyrics(track->id, track->providerId);
+    }
 }
 
 double MusicController::cacheProgress() const
@@ -1631,7 +1641,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     emit positionChanged();
     emit seekableChanged();
     emit durationChanged();
-    m_lyricsService->load(m_lyricsEnabled ? *track : TrackRecord{});
+    reloadLyrics();
     m_usingCachedAudio = false;
     m_pendingCacheKey.clear();
     m_providerStatus.clear();
@@ -1643,7 +1653,6 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
         emit playbackStateChanged();
         m_trackTimeout.start();
         m_onlineProvider.resolve(track->id, track->providerId, m_onlineQuality);
-        if (m_lyricsEnabled) m_onlineProvider.loadLyrics(track->id, track->providerId);
         return;
     }
     if (track->source != QLatin1String("local")) {

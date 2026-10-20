@@ -132,6 +132,8 @@ public:
     QStringList playbackAttempts() const { return m_playbackAttempts; }
     bool lyricsEnabled() const;
     void setLyricsEnabled(bool enabled);
+    Q_INVOKABLE void reloadLyrics();
+    qint64 lyricRequestCount() const { return m_lyricRequestCount; }
     qlonglong currentTrackId() const;
     QString currentTitle() const;
     QString currentArtist() const;
@@ -312,6 +314,7 @@ private:
     qint64 m_providerResolveRequests = 0;
     qint64 m_providerResolutions = 0;
     qint64 m_engineLoadRequests = 0;
+    qint64 m_lyricRequestCount = 0;
     QVariantMap m_onlineDetail;
     QSet<qint64> m_failedTracks;
     QSet<QString> m_removedDuringScan;

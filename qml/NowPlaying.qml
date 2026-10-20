@@ -90,10 +90,21 @@ ColumnLayout {
                 color: index === page.music.currentLyricIndex ? AppTheme.text : AppTheme.mutedText
                 font.weight: Font.DemiBold
             }
-            Label {
-                anchors.centerIn: parent; visible: parent.count === 0
-                text: !page.music.lyricsEnabled ? qsTr("Lyrics off") : page.music.lyricsLoading ? qsTr("Loading lyrics…") : qsTr("Lyrics unavailable")
-                color: AppTheme.mutedText
+            ColumnLayout {
+                anchors.centerIn: parent; width: Math.min(380, parent.width - 32)
+                visible: parent.count === 0
+                spacing: 12
+                Label {
+                    Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
+                    text: !page.music.lyricsEnabled ? qsTr("Lyrics off") : page.music.lyricsLoading ? qsTr("Loading lyrics…") : page.music.lyricsError || qsTr("Lyrics unavailable")
+                    color: AppTheme.mutedText
+                }
+                LiquidActionButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: page.music.lyricsEnabled && !page.music.lyricsLoading && page.music.currentTrackId >= 0
+                    text: qsTr("Retry lyrics")
+                    onClicked: page.music.reloadLyrics()
+                }
             }
         }
     }

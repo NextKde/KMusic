@@ -128,7 +128,9 @@ QList<TrackRecord> OnlineMusicProvider::parseNeteaseSearch(const QByteArray &pay
 }
 
 void OnlineMusicProvider::loadLyrics(qint64 trackId, const QString &songId) {
-    request("lyric", {{"id", songId}}, [this, trackId](const QJsonObject &response) {
+    const quint64 generation = ++m_lyricGeneration;
+    request("lyric", {{"id", songId}}, [this, trackId, generation](const QJsonObject &response) {
+        if (generation != m_lyricGeneration) return;
         if (!response.value("ok").toBool()) { emit lyricsResolved(trackId, {}, failureText(response)); return; }
         const auto body = response.value("body").toObject();
         const QString lrc = body.value("lrc").toObject().value("lyric").toString();

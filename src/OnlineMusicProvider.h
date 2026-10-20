@@ -45,5 +45,6 @@ private:
     qint64 m_sequence = 0;
     quint64 m_generation = 0;
     quint64 m_resolveGeneration = 0;
+    quint64 m_lyricGeneration = 0;
     bool m_searching = false;
 };
