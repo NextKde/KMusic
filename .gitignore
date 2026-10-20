@@ -1,0 +1,6 @@
+.task/
+build/
+.build/
+CMakeUserPresets.json
+*.user
+__pycache__/
