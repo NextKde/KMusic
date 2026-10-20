@@ -1,19 +1,23 @@
 # KMusic progress
 
-Updated: 2026-10-20T22:56:51.454095+08:00
+Updated: 2026-10-20T22:59:46.824633+08:00
 
-22:53轮新截图；开发者正在修复试听状态恢复，当前截图仍是已运行的选择器材质候选。
+试听恢复P1候选996c30e：真实暂停→退出→重启→重新解析→播放检查通过，协调者已看恢复前后图。
 
-实际运行eff27cd / 组件72e344c，OpenGL Qt6.12 DPR2，浅色1280x800。完成：在线搜索/真实试听已有检查，选择器静态材质复核。正在开发但未进入本截图：保存实际流时长与试听分类，重启后明确重新检查。问题：当前旧运行版仍显示整曲时长；侧栏合成模糊未验收；完整键盘/功能验收待做。工作树修改不代表运行版本。
+运行996c30e/组件72e344c，PID723193，Qt6.12 OpenGL DPR2 1280x800浅色。完成：重启保留实际上次试听45.024秒与位置，明确previous preview/recheck；resume真实fresh resolve1/load1且播放1476→2332ms，最终暂停2728ms，fakeAudio=false。附本轮新图及22:56同候选恢复前补充图，时间见metadata。未记录URL/凭据。待做：更广网络/账户/键盘/错误恢复与整体验收；真实合成侧栏blur仍未验收。
 
-Source: [`eff27cd828db`](https://github.com/NextKde/KMusic/commit/eff27cd828dbe9f7c821596a5e9c78eda2a56588) · Branch: `codex/music-development` · Local changes: True
+Source: [`996c30e181e8`](https://github.com/NextKde/KMusic/commit/996c30e181e89901b4a0282d85b7207d95a77c6e) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-![kmusic-poll-2253-light.png](screenshots/round-20261020-225651/kmusic-poll-2253-light.png)
+![kmusic-poll-2258-light.png](screenshots/round-20261020-225946/kmusic-poll-2258-light.png)
 
 2560 × 1600 original pixels
 
-[Capture and revision metadata](screenshots/round-20261020-225651/metadata.json)
+![preview-restored-before-resume.png](screenshots/round-20261020-225946/preview-restored-before-resume.png)
+
+2560 × 1600 original pixels
+
+[Capture and revision metadata](screenshots/round-20261020-225946/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
