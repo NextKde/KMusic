@@ -22,6 +22,7 @@ public:
 
     void load(const TrackRecord &track);
     void setPositionMs(qint64 positionMs);
+    void setProviderLyrics(qint64 trackId, const QString &text, const QString &error);
     static QVariantList parseLrc(const QString &text);
 
 signals:

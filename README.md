@@ -13,8 +13,11 @@ The approved project plan is in [docs/ProjectPlan.zh-CN.md](docs/ProjectPlan.zh-
 Native Qt Quick music player consuming the pinned `Kos.Ui` module from
 [nextkdeAppDemo](https://github.com/NextKde/nextkdeAppDemo). The first UI milestone
 uses original, explicitly labelled offline editorial art and the existing NextKde
-local library/playback backend. SPlayer Next NetEase integration is in progress;
-this milestone does not claim online streaming support or final UI acceptance.
+local library/playback backend. The NetEase page now uses the attributed SPlayer
+Next request/crypto modules through a plain Node helper: search, song details,
+lyrics and playable URL resolution feed the real GStreamer player. Preview-only,
+unavailable, account and network states are explicit. Login and broader catalogue
+flows remain in progress; this is not final feature or UI acceptance.
 
 ### Build and run
 
@@ -22,6 +25,7 @@ Qt 6.8+ (Core, Gui, Qml, Quick, QuickControls2, QuickDialogs2, Concurrent, DBus,
 Network and Sql), Qt5Compat.GraphicalEffects, Qt SVG support, GStreamer development
 packages (core/audio/pbutils) and TagLib 1.12+ are required. Audio decoding also
 needs the corresponding GStreamer codec plugins and a working audio sink.
+Online NetEase requests require Node.js 22.19+; no npm install or Electron is needed.
 
 ```sh
 git clone --recursive https://github.com/NextKde/KMusic.git
@@ -38,8 +42,12 @@ now-playing views. Light/dark/system appearance is in the sidebar.
 
 Data defaults to `~/.local/share/kmusic`, cache to `~/.cache/kmusic`, isolated from
 KOS Music. `KOS_MUSIC_DATA_DIR` and `KOS_MUSIC_CACHE_DIR` override these for review.
-Only local music is exposed by this initial UI; inherited LX adapters are not a
-default source and are not wired into the app.
+Online music is under **Online · NetEase**. Enter a query, search, then click a
+result to play; + enqueues it and ··· opens fetched song details. The status strip
+identifies preview-only playback. Availability depends on the source's response;
+no URL, authentication and network errors are shown explicitly. Inherited LX
+adapters are not the default source and are not wired into the app. Playback URLs
+are transient and are not stored as song identity. Login is not implemented yet.
 
 ### Live review hook
 

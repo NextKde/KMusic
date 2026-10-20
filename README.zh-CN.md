@@ -4,10 +4,12 @@
 
 采用 Qt Quick 的原生音乐应用，实际链接固定版本的 nextkdeAppDemo / Kos.Ui。
 首轮已有方角窗体、右侧窗控、双精选卡/专辑架、侧栏与常驻播放器；推荐艺术为明确标注的原创离线样例。
-本地导入、搜索、播放、队列和歌单使用现有 NextKde 后端。SPlayer Next 网易云音源正在接入，
-当前里程碑不声明在线音乐可用，也不代表 UI 最终验收通过。
+本地导入、搜索、播放、队列和歌单使用现有 NextKde 后端。SPlayer Next 网易云请求/加密模块
+已通过纯 Node 辅助进程接入搜索、详情、歌词与播放地址，并交给真实 GStreamer 播放器。
+试听、不可播、网络和账号失效有明确状态。账号登录及更广的目录流程仍待完善，不代表最终验收通过。
 
 依赖 Qt6 6.8+ Core/Gui/Qml/Quick/QuickControls2/QuickDialogs2/Concurrent/DBus/Network/Sql、
+在线请求另需 Node.js>=22.19，无需 npm 安装或 Electron。
 Qt5Compat.GraphicalEffects、SVG、GStreamer core/audio/pbutils 开发包、TagLib>=1.12及相应解码插件。
 
 ```sh
@@ -30,3 +32,7 @@ Ctrl+F 搜索本地资料库；底栏提供播放、进度、音量、随机、�
 截图来自实际窗口渲染，不是离屏模拟，截图成功本身不等于视觉验收通过。
 
 详见[确认计划](docs/ProjectPlan.zh-CN.md)、[组件对应](docs/ComponentInventory.zh-CN.md)与[来源](NOTICE.md)。
+
+在线入口为 **Online · NetEase**，输入关键词搜索、点击结果播放、+入队、···查看实际获取的详情。
+状态栏会显示试听限制；无播放地址、账号和网络错误会明确呈现。临时播放URL不作为持久歌曲身份，
+不从其他播放器读取账号Cookie，尚无登录流程。原LX适配器不是默认来源。

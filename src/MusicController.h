@@ -54,6 +54,8 @@ class MusicController : public QObject {
     Q_PROPERTY(bool lyricsLoading READ lyricsLoading NOTIFY lyricsLoadingChanged)
     Q_PROPERTY(QString lyricsError READ lyricsError NOTIFY lyricsErrorChanged)
 
+    Q_PROPERTY(QVariantMap onlineDetail READ onlineDetail NOTIFY onlineDetailChanged)
+    Q_PROPERTY(QString providerStatus READ providerStatus NOTIFY playbackStatusChanged)
     Q_PROPERTY(bool engineAvailable READ engineAvailable CONSTANT)
     Q_PROPERTY(QString engineBackend READ engineBackend CONSTANT)
     Q_PROPERTY(bool mprisRegistered READ mprisRegistered NOTIFY mprisRegisteredChanged)
@@ -117,6 +119,9 @@ public:
     bool lyricsLoading() const;
     QString lyricsError() const;
 
+    QVariantMap onlineDetail() const { return m_onlineDetail; }
+    Q_INVOKABLE void requestOnlineDetail(int row);
+    QString providerStatus() const { return m_providerStatus; }
     bool engineAvailable() const;
     QString engineBackend() const;
     bool mprisRegistered() const;
@@ -215,6 +220,7 @@ signals:
     void scanningChanged();
     void errorMessageChanged();
     void onlineSearchingChanged();
+    void onlineDetailChanged();
     void onlineErrorChanged();
     void musicSourcesChanged();
     void musicSourceStateChanged();
@@ -296,6 +302,8 @@ private:
     QStringList m_playbackAttempts;
     QString m_attemptName;
     QString m_recoveryStatus;
+    QString m_providerStatus;
+    QVariantMap m_onlineDetail;
     QSet<qint64> m_failedTracks;
     QSet<QString> m_removedDuringScan;
     int m_attemptGeneration = 0;

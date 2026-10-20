@@ -61,6 +61,11 @@ void LyricsService::load(const TrackRecord &track)
         setError(tr("No sidecar lyrics found"));
         return;
     }
+    if (track.source == QLatin1String("netease")) {
+        // The SPlayer adapter supplies lyrics asynchronously for this identity.
+        setLoading(true);
+        return;
+    }
     if (track.source == QLatin1String("wy") && !track.providerId.isEmpty()) {
         loadOnline(track);
         return;
@@ -226,4 +231,10 @@ QString LyricsService::cacheFile(const TrackRecord &track) const
 {
     return QDir(m_cachePath).filePath(
         QStringLiteral("%1-%2.lrc").arg(track.source, track.providerId));
+}
+
+void LyricsService::setProviderLyrics(qint64 trackId, const QString &text, const QString &error) {
+    if (trackId != m_loadedTrackId) return;
+    setLoading(false);
+    applyLyrics(text, error);
 }

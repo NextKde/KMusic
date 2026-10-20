@@ -14,6 +14,7 @@ ApplicationWindow {
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
     property double pendingTrack: -1
+    function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function setReviewTheme(theme) { AppTheme.appearanceMode = theme }
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
@@ -44,6 +45,7 @@ ApplicationWindow {
                         }
                         LiquidNavigationButton { Layout.fillWidth: true; text: qsTr("⌕   Search"); checked: window.destination === "search"; onClicked: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
                         LiquidNavigationButton { Layout.fillWidth: true; text: qsTr("▧   New"); checked: window.destination === "new"; onClicked: window.navigate("new") }
+                        LiquidNavigationButton { Layout.fillWidth: true; text: qsTr("◎   Online · NetEase"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
                         Label { text: qsTr("LIBRARY"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold; Layout.topMargin: 24; Layout.leftMargin: 12 }
                         Repeater {
                             model: [{key:"songs", label:qsTr("♫   Songs")}, {key:"albums", label:qsTr("▣   Albums")}, {key:"artists", label:qsTr("♙   Artists")}]
@@ -113,15 +115,16 @@ ApplicationWindow {
                         Label { visible: (window.destination === "artists" ? music.artists : music.albums).length === 0; text: qsTr("Import a music folder to get started."); color: AppTheme.mutedText }
                     }
                 }
+                OnlinePage { id: onlinePage; anchors.fill: parent; visible: window.destination === "online"; music: window.music }
                 NowPlaying { anchors.fill: parent; visible: window.destination === "now"; music: window.music }
             }
         }
         Rectangle {
-            visible: music.errorMessage.length > 0 || music.scanning
+            visible: music.errorMessage.length > 0 || music.scanning || music.providerStatus.length > 0
             Layout.fillWidth: true; implicitHeight: 34; color: AppTheme.card
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 20
-                Label { text: music.errorMessage || music.scanStatus; color: AppTheme.text; Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 12 }
+                Label { text: music.errorMessage || (music.scanning ? music.scanStatus : music.providerStatus); color: AppTheme.text; Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 12 }
                 LiquidActionButton { iconOnly: true; visible: music.errorMessage.length > 0; text: "×"; implicitWidth: 30; implicitHeight: 26; onClicked: music.clearError() }
             }
         }

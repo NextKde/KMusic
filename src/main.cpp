@@ -5,6 +5,7 @@
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
+#include <QSGRendererInterface>
 #include <QFile>
 #include <QDir>
 #include <QJsonDocument>
@@ -34,7 +35,7 @@ int main(int argc, char *argv[]) {
     QTimer reviewTimer;
     if (!reviewDir.isEmpty()) {
         QDir().mkpath(reviewDir);
-        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, reviewDir] {
+        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, reviewDir] {
             QFile request(QDir(reviewDir).filePath("request.json"));
             if (!request.open(QIODevice::ReadOnly)) return;
             const auto data = QJsonDocument::fromJson(request.readAll()).object();
@@ -51,6 +52,23 @@ int main(int argc, char *argv[]) {
                     QFile response(QDir(reviewDir).filePath("response.json"));
                     if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{{"ok", ok}, {"path", path}}).toJson());
                 });
+            } else if (action == "onlineSearch") {
+                QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
+            } else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
+            else if (action == "pause") music.pause();
+            else if (action == "play") music.play();
+            else if (action == "seek") music.seek(data.value("positionMs").toVariant().toLongLong());
+            else if (action == "status") {
+                const auto api = window->rendererInterface()->graphicsApi();
+                const QString renderer = api == QSGRendererInterface::OpenGL ? "OpenGL" : api == QSGRendererInterface::Vulkan ? "Vulkan" : api == QSGRendererInterface::Software ? "Software" : api == QSGRendererInterface::Metal ? "Metal" : "other";
+                QFile response(QDir(reviewDir).filePath("response.json"));
+                if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
+                    {"ok", true}, {"renderer", renderer}, {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
+                    {"durationMs", music.durationMs()}, {"providerStatus", music.providerStatus()},
+                    {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
+                    {"onlineError", music.onlineError()}, {"error", music.errorMessage()},
+                    {"windowWidth", window->width()}, {"windowHeight", window->height()}, {"dpr", window->devicePixelRatio()}
+                }).toJson());
             } else if (action == "theme") {
                 QMetaObject::invokeMethod(window, "setReviewTheme", Q_ARG(QVariant, data.value("theme").toString()));
             } else if (action == "page") window->setProperty("destination", data.value("page").toString());

@@ -1,6 +1,9 @@
 # Source provenance
 
-KMusic is distributed under GNU GPL version 3; see LICENSE.
+The native KMusic application is distributed under GNU GPL version 3; see LICENSE.
+The extracted SPlayer Next provider code is under AGPL-3.0; see
+providers/netease/LICENSE and providers/netease/NOTICE.md. Preserve both notices
+when distributing the combined application and helper.
 
 - `src/` music backend and `qml/Artwork.qml`, `data/kmusic.svg` originate from
   [NextKde/NextKde](https://github.com/NextKde/NextKde), revision
@@ -12,6 +15,10 @@ KMusic is distributed under GNU GPL version 3; see LICENSE.
 - New discovery artwork is original QML geometry. Offline collections contain
   no commercial album images or audio. Apple Music supplies layout inspiration.
 - Forma source-5bdb550 is a visual reference; its source is not copied here.
-- SPlayer Next provider integration is planned against revision
-  `05a4e5929030df21a8448ddb24c77dbd353f974e`; no SPlayer code is included yet.
-  Any extraction must preserve its applicable license and authorship.
+- `providers/netease/{core,modules}` is extracted from SPlayer Next revision
+  `05a4e5929030df21a8448ddb24c77dbd353f974e` (imsyy and contributors), AGPL-3.0.
+  Relative import suffixes and native host transport are adapted; unsupported
+  Electron web-client mode is explicit. Request/crypto/xeapi and selected NetEase
+  modules are retained. See its NOTICE for exact paths and modifications.
+- `providers/helper.ts` and the Qt QProcess protocol are KMusic glue. No Electron
+  UI, account cookie from another player, or third-party source fallback is used.

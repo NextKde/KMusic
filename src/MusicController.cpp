@@ -196,6 +196,27 @@ void MusicController::initialize()
             this, &MusicController::onlineErrorChanged);
     connect(&m_onlineProvider, &OnlineMusicProvider::resultsReady,
             &m_onlineModel, &TrackListModel::setTracks);
+    connect(&m_onlineProvider, &OnlineMusicProvider::detailReady, this, [this](const QVariantMap &detail) {
+        m_onlineDetail = detail; emit onlineDetailChanged();
+    });
+    connect(&m_onlineProvider, &OnlineMusicProvider::lyricsResolved, this, [this](qint64 id, const QString &text, const QString &error) {
+        m_lyricsService->setProviderLyrics(id, text, error);
+    });
+    connect(&m_onlineProvider, &OnlineMusicProvider::resolved, this,
+        [this](qint64 id, const QUrl &url, bool trial, const QString &level) {
+            if (id != currentTrackId() || id != m_resolvingTrackId) return;
+            m_providerStatus = trial ? tr("NetEase · preview only (account/rights restriction)")
+                                    : tr("NetEase · %1").arg(level);
+            loadPreparedTrack(url);
+            emit playbackStatusChanged();
+        });
+    connect(&m_onlineProvider, &OnlineMusicProvider::resolveFailed, this,
+        [this](qint64 id, const QString &message) {
+            if (id != currentTrackId() || id != m_resolvingTrackId) return;
+            m_providerStatus = message;
+            schedulePlaybackFailure(message);
+            emit playbackStatusChanged();
+        });
     connect(m_sourceService.get(), &LxSourceService::sourcesChanged,
             this, &MusicController::musicSourcesChanged);
     connect(m_sourceService.get(), &LxSourceService::stateChanged,
@@ -1563,6 +1584,16 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     m_lyricsService->load(m_lyricsEnabled ? *track : TrackRecord{});
     m_usingCachedAudio = false;
     m_pendingCacheKey.clear();
+    m_providerStatus.clear();
+    if (track->source == QLatin1String("netease")) {
+        m_providerStatus = tr("NetEase · resolving playback address…");
+        emit playbackStatusChanged();
+        emit playbackStateChanged();
+        m_trackTimeout.start();
+        m_onlineProvider.resolve(track->id, track->providerId, m_onlineQuality);
+        if (m_lyricsEnabled) m_onlineProvider.loadLyrics(track->id, track->providerId);
+        return;
+    }
     if (track->source != QLatin1String("local")) {
         m_pendingCacheKey = audioCacheKey(*track);
         const QString preferred = m_sourceService->activeSourceId();
@@ -1587,6 +1618,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
 
 void MusicController::cancelRecovery()
 {
+    m_onlineProvider.cancelResolve();
     ++m_attemptGeneration;
     m_attemptTimeout.stop();
     m_trackTimeout.stop();
@@ -1772,4 +1804,12 @@ QString MusicController::localPath(const QString &pathOrUrl)
 {
     const QUrl url(pathOrUrl);
     return url.isLocalFile() ? url.toLocalFile() : pathOrUrl;
+}
+
+void MusicController::requestOnlineDetail(int row) {
+    const auto track = m_onlineModel.trackAt(row);
+    if (!track) return;
+    m_onlineDetail = {{"loading", true}};
+    emit onlineDetailChanged();
+    m_onlineProvider.loadDetail(track->providerId);
 }
