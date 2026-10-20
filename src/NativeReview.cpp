@@ -6,6 +6,7 @@
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
+#include <QDBusReply>
 #include <QDBusUnixFileDescriptor>
 #include <QDir>
 #include <QFile>
@@ -21,6 +22,11 @@
 #include <poll.h>
 #include <unistd.h>
 #include <memory>
+#ifdef KMUSIC_HAVE_KWAYLAND_REVIEW
+#include <KWayland/Client/connection_thread.h>
+#include <KWayland/Client/registry.h>
+#include <KWayland/Client/plasmawindowmanagement.h>
+#endif
 
 namespace {
 QJsonObject rectJson(QRect rect) { return {{"x", rect.x()}, {"y", rect.y()}, {"width", rect.width()}, {"height", rect.height()}}; }
@@ -37,7 +43,21 @@ struct Capture {
 };
 }
 NativeReview::NativeReview(QQmlEngine *engine, WindowMaterial *material, QString reviewDir, QObject *parent)
-    : QObject(parent), m_engine(engine), m_material(material), m_reviewDir(std::move(reviewDir)) {}
+    : QObject(parent), m_engine(engine), m_material(material), m_reviewDir(std::move(reviewDir)) {
+#ifdef KMUSIC_HAVE_KWAYLAND_REVIEW
+    if (!m_reviewDir.isEmpty()) {
+        if (auto *connection = KWayland::Client::ConnectionThread::fromApplication(this)) {
+            auto *registry = new KWayland::Client::Registry(this);
+            QObject::connect(registry, &KWayland::Client::Registry::plasmaWindowManagementAnnounced,
+                this, [this, registry](quint32 name, quint32 version) {
+                    // Subscribe only. Never issue management/activation requests.
+                    m_windowManagement = registry->createPlasmaWindowManagement(name, version, this);
+                });
+            registry->create(connection); registry->setup();
+        }
+    }
+#endif
+}
 NativeReview::~NativeReview() { hideBackground(); }
 void NativeReview::setWindow(QQuickWindow *window) { m_window = window; }
 void NativeReview::respond(QJsonObject response) const {
@@ -70,21 +90,44 @@ void NativeReview::setBlurEnabled(bool enabled) {
 }
 QJsonObject NativeReview::status() const {
     const QRect region = m_material->region().adjusted(2, 2, -2, -2);
-    const QRect geometry = m_window ? m_window->geometry() : QRect{};
+    QRect geometry;
+    QRect backgroundGeometry;
+    QString uuid;
+    QString backgroundUuid;
+    bool compositorActive = false;
+    bool compositorParent = false;
+#ifdef KMUSIC_HAVE_KWAYLAND_REVIEW
+    if (auto *management = qobject_cast<KWayland::Client::PlasmaWindowManagement *>(m_windowManagement.data())) {
+        KWayland::Client::PlasmaWindow *appWindow = nullptr;
+        KWayland::Client::PlasmaWindow *backgroundWindow = nullptr;
+        for (auto *window : management->windows()) {
+            // Do not inspect or expose titles/identities from unrelated PIDs.
+            if (window->pid() != QCoreApplication::applicationPid()) continue;
+            if (window->title() == QStringLiteral("KMusic")) appWindow = window;
+            else if (window->title() == QStringLiteral("KMusic dedicated native blur test background")) backgroundWindow = window;
+        }
+        if (appWindow) { geometry = appWindow->geometry(); uuid = QString::fromUtf8(appWindow->uuid()); compositorActive = appWindow->isActive(); }
+        if (backgroundWindow) { backgroundGeometry = backgroundWindow->geometry(); backgroundUuid = QString::fromUtf8(backgroundWindow->uuid()); }
+        compositorParent = appWindow && backgroundWindow && appWindow->parentWindow() == backgroundWindow;
+    }
+#endif
+    const bool compositorKnown = !uuid.isEmpty() && !backgroundUuid.isEmpty() && !geometry.isEmpty() && !backgroundGeometry.isEmpty();
     const QRect global = region.translated(geometry.topLeft());
     const bool backgroundVisible = m_background && m_background->isVisible() && m_background->isExposed();
     const bool sameScreen = m_window && m_background && m_background->screen() == m_window->screen();
-    const bool covers = backgroundVisible && m_background->geometry().contains(global);
+    const bool covers = backgroundVisible && backgroundGeometry.contains(global);
     const bool transient = m_window && m_background && m_window->transientParent() == m_background;
     const bool inside = m_window && QRect(QPoint{}, m_window->size()).contains(region) && region.width() > 0 && region.height() > 0;
-    const bool active = m_window && m_window->isActive();
+    const bool active = m_window && m_window->isActive() && compositorActive;
     return {{"timestamp", now()}, {"pid", QCoreApplication::applicationPid()}, {"busy", m_busy},
-        {"windowActive", active}, {"windowGeometry", rectJson(geometry)}, {"sidebarLocalRect", rectJson(region)},
+        {"windowActive", active}, {"windowGeometry", rectJson(geometry)}, {"qtWindowGeometry", rectJson(m_window ? m_window->geometry() : QRect{})},
+        {"compositorGeometryKnown", compositorKnown}, {"windowUuid", uuid}, {"backgroundUuid", backgroundUuid}, {"compositorParentMatches", compositorParent},
+        {"sidebarLocalRect", rectJson(region)},
         {"captureGlobalRect", rectJson(global)}, {"dpr", m_window ? m_window->devicePixelRatio() : 0},
-        {"backgroundVisible", backgroundVisible}, {"backgroundGeometry", rectJson(m_background ? m_background->geometry() : QRect{})},
+        {"backgroundVisible", backgroundVisible}, {"backgroundGeometry", rectJson(backgroundGeometry)},
         {"sameScreen", sameScreen}, {"backgroundCoversCapture", covers}, {"transientParentMatches", transient},
         {"blurEnabled", m_blurEnabled}, {"effectAvailable", m_material->effectAvailable()}, {"blurRequested", m_material->blurRequested()},
-        {"eligible", active && inside && covers && sameScreen && transient && !m_reviewDir.isEmpty()}};
+        {"eligible", active && compositorKnown && compositorParent && inside && covers && sameScreen && transient && geometry.size() == m_window->size() && !m_reviewDir.isEmpty()}};
 }
 void NativeReview::captureSidebar(const QString &path) {
     if (m_busy) { respond({{"ok", false}, {"error", "Native capture already running"}}); return; }
@@ -95,6 +138,16 @@ void NativeReview::captureSidebar(const QString &path) {
     if (!before.value("eligible").toBool() || !QDir::isAbsolutePath(path)
         || runtime.value("pid").toVariant().toLongLong() != QCoreApplication::applicationPid()) {
         respond({{"ok", false}, {"error", "Capture guard failed: require active app, dedicated native background coverage and matching runtime PID"}, {"before", before}});
+        return;
+    }
+    // Confirm that the protocol UUID still belongs to this PID immediately
+    // before using its compositor coordinates. No interactive window selection.
+    auto infoRequest = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("getWindowInfo"));
+    infoRequest.setArguments({before.value("windowUuid").toString()});
+    const QDBusReply<QVariantMap> info = QDBusConnection::sessionBus().call(infoRequest, QDBus::Block, 1000);
+    if (!info.isValid() || info.value().value("pid").toLongLong() != QCoreApplication::applicationPid()) {
+        respond({{"ok", false}, {"error", "KWin own-window identity cross-check failed; capture skipped"}, {"before", before},
+            {"windowInfo", info.isValid() ? QJsonObject::fromVariantMap(info.value()) : QJsonObject{{"error", info.error().message()}}}});
         return;
     }
     int pipes[2];

@@ -27,6 +27,7 @@ private:
     QString m_reviewDir;
     QPointer<QQuickWindow> m_window;
     QQuickView *m_background = nullptr;
+    QPointer<QObject> m_windowManagement;
     bool m_busy = false;
     bool m_blurEnabled = true;
 };
