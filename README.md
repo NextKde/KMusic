@@ -1,19 +1,19 @@
 # KMusic progress
 
-Updated: 2026-10-20T22:27:53.274004+08:00
+Updated: 2026-10-20T22:42:43.615960+08:00
 
-新增用户反馈已进入本轮：侧栏轻微透明/模糊；按钮和input等高光去描边/浮雕。已查Apple官方实图/WWDC并定位共享双圈高光，保留本轮改前基线。
+首轮材质修正已本机构建运行并独立看图：共享按钮/input去常驻双圈描边，浅色输入可读；侧栏alpha0.80并向现有合成器提交精确blur区域。
 
-当前运行在线checkpoint ebb33ec；真实搜索30条并完成带试听标识的播放/暂停验证。改前侧栏仍实心，浅色输入文本对比不足，正在修正；不宣称新材质已完成。
+运行be8656d / 组件fd51df7，原生blurAvailable=true、blurRequested=true、region(0,30,240,670)。客户端像素确认侧栏alpha0.8、主内容alpha1；原生合成模糊视觉仍待额外证据。浅色输入文字已清晰，独立Select仍有旧高光待修。
 
-Source: [`2e00154beb6b`](https://github.com/NextKde/KMusic/commit/2e00154beb6bb36422fa2cae52beb979b54ef81e) · Branch: `codex/music-development` · Local changes: False
+Source: [`be8656d0a5ef`](https://github.com/NextKde/KMusic/commit/be8656d0a5ef8aa003523687226bf5e1415fff7a) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-![kmusic-before-material-light.png](screenshots/round-20261020-222753/kmusic-before-material-light.png)
+![kmusic-material-light.png](screenshots/round-20261020-224243/kmusic-material-light.png)
 
 2560 × 1600 original pixels
 
-[Capture and revision metadata](screenshots/round-20261020-222753/metadata.json)
+[Capture and revision metadata](screenshots/round-20261020-224243/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
