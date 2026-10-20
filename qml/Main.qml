@@ -7,8 +7,9 @@ import Kos.Ui
 ApplicationWindow {
     id: window
     required property var music
+    required property var windowMaterial
     width: 1280; height: 800; minimumWidth: 1024; minimumHeight: 640
-    visible: true; title: "KMusic"; color: AppTheme.window
+    visible: true; title: "KMusic"; color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
     property string destination: "new"
     property string pageTitle: qsTr("Songs")
@@ -19,19 +20,29 @@ ApplicationWindow {
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
     function navigate(key, title) { destination = key; pageTitle = title || qsTr("Songs"); music.setSearch(""); music.setLibraryView("songs") }
-    Component.onCompleted: { AppTheme.appearanceMode = "light"; AppTheme.accentName = "purple" }
+    function updateSidebarBlur() {
+        const p = sidebar.mapToItem(window.contentItem, 0, 0)
+        windowMaterial.setSidebarRect(Qt.rect(p.x, p.y, sidebar.width, sidebar.height))
+    }
+    Component.onCompleted: { AppTheme.appearanceMode = "light"; AppTheme.accentName = "purple"; Qt.callLater(updateSidebarBlur) }
     Shortcut { sequence: "Ctrl+O"; onActivated: folderDialog.open() }
-    Shortcut { sequence: "Space"; onActivated: music.togglePlayPause() }
+    Shortcut { sequence: "Space"; enabled: !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
     Shortcut { sequence: "Ctrl+F"; onActivated: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
     Connections { target: music; function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() } }
-    Rectangle { anchors.fill: parent; color: AppTheme.window; z: -1 }
     ColumnLayout {
         anchors.fill: parent; spacing: 0
         WindowChrome { Layout.fillWidth: true; targetWindow: window }
         RowLayout {
             Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
             Rectangle {
-                Layout.preferredWidth: 240; Layout.fillHeight: true; color: AppTheme.sidebar
+                id: sidebar
+                Layout.preferredWidth: 240; Layout.fillHeight: true
+                color: window.windowMaterial.effectAvailable
+                    ? Qt.rgba(AppTheme.sidebar.r, AppTheme.sidebar.g, AppTheme.sidebar.b, .80) : AppTheme.sidebar
+                onXChanged: Qt.callLater(window.updateSidebarBlur)
+                onYChanged: Qt.callLater(window.updateSidebarBlur)
+                onWidthChanged: Qt.callLater(window.updateSidebarBlur)
+                onHeightChanged: Qt.callLater(window.updateSidebarBlur)
                 ScrollView {
                     anchors.fill: parent; anchors.margins: 18; contentWidth: availableWidth; clip: true
                     ColumnLayout {
@@ -81,8 +92,9 @@ ApplicationWindow {
                 }
             }
             Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; color: AppTheme.border }
-            Item {
+            Rectangle {
                 Layout.fillWidth: true; Layout.fillHeight: true
+                color: AppTheme.window
                 DiscoveryPage {
                     anchors.fill: parent; visible: window.destination === "new"; music: window.music
                     onImportRequested: folderDialog.open()

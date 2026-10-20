@@ -20,3 +20,10 @@
 资料库、队列、持久化等业务不进入组件库。
 
 还原项1：共享按钮 iconOnly 模式修复紧凑播放器图标裁切，原文字按钮默认行为保持。待运行回归。滑块差异：Forma 轨道4px/拇指22×16px，共享默认6px/32×16px；仅记录，先实图比较，不直接修改全局默认。
+
+材质轮次fd51df7：共享表面从闭合双边框改为基于法线的方向性正光，按钮/输入实际复用；
+输入语义色、焦点和选择文字一起修复，GLSL/QSB配对提交。待实际视觉回归。
+Select、GlassSwitch、NavBar、Segmented独立旧渐变/边缘仍pending，Material分支保持。
+
+App独立可选KF6适配器仅向半透明侧栏区域请求原生BlurBehind；effectAvailable与blurRequested
+分开报告，不可用回退不透明侧栏。客户端alpha截图只能表明App表面，不能证明桌面合成模糊。

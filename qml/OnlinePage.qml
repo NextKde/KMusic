@@ -24,7 +24,7 @@ ColumnLayout {
     }
     Label {
         Layout.leftMargin: 32; Layout.rightMargin: 32; Layout.fillWidth: true
-        text: page.music.onlineError || qsTr("NetEase · SPlayer Next adapter · playback may be restricted to a preview or require an account")
+        text: page.music.onlineError || qsTr("NetEase · playback may be restricted to a preview or require an account")
         color: page.music.onlineError.length ? AppTheme.destructive : AppTheme.mutedText
         wrapMode: Text.WordWrap; font.pixelSize: 12
     }
@@ -43,7 +43,7 @@ ColumnLayout {
             Label { text: page.music.onlineDetail.loading ? qsTr("Loading details…") : page.music.onlineDetail.error || page.music.onlineDetail.title || ""; color: AppTheme.text; font.pixelSize: 22; Layout.fillWidth: true; wrapMode: Text.WordWrap }
             Label { text: page.music.onlineDetail.artist || ""; color: AppTheme.mutedText; Layout.fillWidth: true; wrapMode: Text.WordWrap }
             Label { text: page.music.onlineDetail.album || ""; color: AppTheme.mutedText; Layout.fillWidth: true; wrapMode: Text.WordWrap }
-            Label { text: page.music.onlineDetail.source || "NetEase"; color: AppTheme.mutedText; font.pixelSize: 11 }
+            Label { text: "NetEase"; color: AppTheme.mutedText; font.pixelSize: 11 }
         }
     }
 }

@@ -145,6 +145,6 @@ void OnlineMusicProvider::loadDetail(const QString &songId) {
         emit detailReady({{"id", song.value("id").toVariant()}, {"title", song.value("name").toString()},
             {"artist", joinedArtists(song.value("ar").toArray())}, {"album", album.value("name").toString()},
             {"artwork", album.value("picUrl").toString()}, {"durationMs", song.value("dt").toVariant()},
-            {"source", "NetEase / SPlayer Next adapter"}});
+            {"source", "NetEase"}});
     });
 }

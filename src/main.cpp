@@ -1,4 +1,5 @@
 #include "MusicController.h"
+#include "WindowMaterial.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
@@ -19,12 +20,15 @@ int main(int argc, char *argv[]) {
     app.setApplicationVersion(QStringLiteral(MUSIC_VERSION));
     app.setDesktopFileName(QStringLiteral("kmusic"));
     QQuickStyle::setStyle(QStringLiteral("Basic"));
+    QQuickWindow::setDefaultAlphaBuffer(true);
     MusicController music;
+    WindowMaterial material;
     QQmlApplicationEngine engine;
-    engine.setInitialProperties({{QStringLiteral("music"), QVariant::fromValue(&music)}});
+    engine.setInitialProperties({{QStringLiteral("music"), QVariant::fromValue(&music)}, {QStringLiteral("windowMaterial"), QVariant::fromValue(&material)}});
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.loadFromModule(QStringLiteral("NextKde.Music"), QStringLiteral("Main"));
+    if (!engine.rootObjects().isEmpty()) material.setWindow(qobject_cast<QQuickWindow *>(engine.rootObjects().first()));
     const auto files = app.arguments().mid(1);
     if (!files.isEmpty()) QObject::connect(&music, &MusicController::readyChanged, &music, [&music, files] {
         if (music.ready()) music.openUri(files.first());
@@ -35,7 +39,7 @@ int main(int argc, char *argv[]) {
     QTimer reviewTimer;
     if (!reviewDir.isEmpty()) {
         QDir().mkpath(reviewDir);
-        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, reviewDir] {
+        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &material, reviewDir] {
             QFile request(QDir(reviewDir).filePath("request.json"));
             if (!request.open(QIODevice::ReadOnly)) return;
             const auto data = QJsonDocument::fromJson(request.readAll()).object();
@@ -55,6 +59,7 @@ int main(int argc, char *argv[]) {
             } else if (action == "onlineSearch") {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
+            else if (action == "activate") window->requestActivate();
             else if (action == "pause") music.pause();
             else if (action == "play") music.play();
             else if (action == "seek") music.seek(data.value("positionMs").toVariant().toLongLong());
@@ -63,7 +68,11 @@ int main(int argc, char *argv[]) {
                 const QString renderer = api == QSGRendererInterface::OpenGL ? "OpenGL" : api == QSGRendererInterface::Vulkan ? "Vulkan" : api == QSGRendererInterface::Software ? "Software" : api == QSGRendererInterface::Metal ? "Metal" : "other";
                 QFile response(QDir(reviewDir).filePath("response.json"));
                 if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
-                    {"ok", true}, {"renderer", renderer}, {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
+                    {"ok", true}, {"renderer", renderer},
+                    {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
+                    {"blurAvailable", material.effectAvailable()}, {"effectAvailable", material.effectAvailable()},
+                    {"blurRequested", material.blurRequested()}, {"blurFallback", material.fallback()},
+                    {"blurRegion", QJsonObject{{"x", material.region().x()}, {"y", material.region().y()}, {"width", material.region().width()}, {"height", material.region().height()}}}, {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
                     {"durationMs", music.durationMs()}, {"providerStatus", music.providerStatus()},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
                     {"onlineError", music.onlineError()}, {"error", music.errorMessage()},

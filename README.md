@@ -65,3 +65,12 @@ with `ok` and `path`. It is not an offscreen rendering or a visual acceptance te
 
 See [design](docs/Design.md), [confirmed plan](docs/ProjectPlan.zh-CN.md),
 [component inventory](docs/ComponentInventory.md) and [source provenance](NOTICE.md).
+
+### Sidebar material
+
+If KF6WindowSystem is available at build time, KMusic can request the compositor's
+existing BlurBehind support for its sidebar only. Text stays opaque. Runtime
+support is detected; the fallback sidebar is opaque. This does not install or
+change KWin effects. Raw client-content screenshots retain sidebar alpha and do
+not include the compositor's desktop blur. Live review status distinguishes
+`effectAvailable`, `blurRequested`, the logical region and fallback reason.

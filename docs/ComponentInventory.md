@@ -22,3 +22,14 @@ compatible upstream; KMusic opts into 14px circles and maximize/restore. App
 business logic (library, queue, persistence) stays outside shared controls.
 
 Fidelity item 1: `LiquidActionButton.iconOnly` fixes clipped compact transport glyphs; upstream defaults remain unchanged. Runtime regression pending. Slider geometry difference recorded: Forma track 4px / knob 22×16px versus shared defaults 6px / 32×16px. No global slider defaults changed; visual comparison is required.
+
+Material round (fd51df7): shared surface closed borders replaced by normal-based
+positive light arcs; button/input share it. Input semantic colour/focus/selection
+fix included. Exact shader sources and baked assets are committed together.
+Runtime review pending. Independent Select, GlassSwitch, NavBar and Segmented
+gradient/edge paths remain pending; Material branches are preserved.
+
+The app-only optional KF6WindowSystem adapter requests native BlurBehind only for
+the translucent sidebar region. `effectAvailable` and `blurRequested` are reported
+separately. Without runtime support it uses an opaque sidebar. A client alpha
+capture shows the app surface, not the compositor's desktop blur result.
