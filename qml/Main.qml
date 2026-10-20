@@ -57,7 +57,7 @@ ApplicationWindow {
                         RowLayout {
                             Layout.fillWidth: true; Layout.topMargin: 22
                             Label { text: qsTr("PLAYLISTS"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold; Layout.fillWidth: true; Layout.leftMargin: 12 }
-                            LiquidActionButton { text: "+"; implicitWidth: 30; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
+                            LiquidActionButton { iconOnly: true; text: "+"; implicitWidth: 30; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
                         }
                         Repeater {
                             model: music.playlists
@@ -122,7 +122,7 @@ ApplicationWindow {
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 20
                 Label { text: music.errorMessage || music.scanStatus; color: AppTheme.text; Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 12 }
-                LiquidActionButton { visible: music.errorMessage.length > 0; text: "×"; implicitWidth: 30; implicitHeight: 26; onClicked: music.clearError() }
+                LiquidActionButton { iconOnly: true; visible: music.errorMessage.length > 0; text: "×"; implicitWidth: 30; implicitHeight: 26; onClicked: music.clearError() }
             }
         }
         PlayerBar { Layout.fillWidth: true; music: window.music; onQueueRequested: window.navigate("queue", qsTr("Play queue")); onNowPlayingRequested: window.destination = "now" }

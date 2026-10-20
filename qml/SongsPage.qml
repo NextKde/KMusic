@@ -55,12 +55,13 @@ ColumnLayout {
                 }
                 Label { text: row.album; color: AppTheme.mutedText; Layout.preferredWidth: Math.max(60, list.width * .17); elide: Text.ElideRight }
                 Label { text: row.durationText; color: AppTheme.mutedText; Layout.preferredWidth: 45 }
-                LiquidActionButton {
+                LiquidActionButton { iconOnly: true;
                     text: page.queueView ? "−" : "+"; implicitWidth: 34; implicitHeight: 30
                     Accessible.name: page.queueView ? qsTr("Remove from queue") : qsTr("Add to queue")
                     onClicked: { if (page.queueView) page.music.removeQueueRow(row.index); else page.music.enqueueTrack(row.trackId) }
                 }
                 LiquidActionButton {
+                    iconOnly: true
                     visible: !page.queueView; text: "···"; implicitWidth: 34; implicitHeight: 30
                     Accessible.name: qsTr("Add to playlist"); onClicked: page.addToPlaylistRequested(row.trackId)
                 }

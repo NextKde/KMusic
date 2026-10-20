@@ -20,3 +20,5 @@ a fidelity or runtime acceptance claim.
 The outer window radius is zero. Window control defaults remain backward
 compatible upstream; KMusic opts into 14px circles and maximize/restore. App
 business logic (library, queue, persistence) stays outside shared controls.
+
+Fidelity item 1: `LiquidActionButton.iconOnly` fixes clipped compact transport glyphs; upstream defaults remain unchanged. Runtime regression pending. Slider geometry difference recorded: Forma track 4px / knob 22×16px versus shared defaults 6px / 32×16px. No global slider defaults changed; visual comparison is required.

@@ -23,11 +23,11 @@ Rectangle {
             Layout.fillWidth: true; Layout.maximumWidth: 500; spacing: 0
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter; spacing: 12
-                LiquidActionButton { text: "⇄"; implicitWidth: 32; flat: true; checkable: true; checked: bar.music.shuffle; onClicked: bar.music.shuffle = !bar.music.shuffle; Accessible.name: qsTr("Shuffle") }
-                LiquidActionButton { text: "◀◀"; implicitWidth: 36; flat: true; enabled: bar.music.canGoPrevious; onClicked: bar.music.previous(); Accessible.name: qsTr("Previous") }
-                LiquidActionButton { text: bar.music.playbackState === "Playing" ? "Ⅱ" : "▶"; implicitWidth: 44; enabled: bar.music.currentTrackId > 0; onClicked: bar.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
-                LiquidActionButton { text: "▶▶"; implicitWidth: 36; flat: true; enabled: bar.music.canGoNext; onClicked: bar.music.next(); Accessible.name: qsTr("Next") }
-                LiquidActionButton { text: bar.music.repeatMode === "one" ? "↻¹" : "↻"; implicitWidth: 32; flat: true; checked: bar.music.repeatMode !== "none"; onClicked: bar.music.repeatMode = bar.music.repeatMode === "none" ? "all" : bar.music.repeatMode === "all" ? "one" : "none"; Accessible.name: qsTr("Repeat mode") }
+                LiquidActionButton { iconOnly: true; text: "⇄"; implicitWidth: 32; flat: true; checkable: true; checked: bar.music.shuffle; onClicked: bar.music.shuffle = !bar.music.shuffle; Accessible.name: qsTr("Shuffle") }
+                LiquidActionButton { iconOnly: true; text: "◀◀"; implicitWidth: 36; flat: true; enabled: bar.music.canGoPrevious; onClicked: bar.music.previous(); Accessible.name: qsTr("Previous") }
+                LiquidActionButton { iconOnly: true; text: bar.music.playbackState === "Playing" ? "Ⅱ" : "▶"; implicitWidth: 44; enabled: bar.music.currentTrackId > 0; onClicked: bar.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
+                LiquidActionButton { iconOnly: true; text: "▶▶"; implicitWidth: 36; flat: true; enabled: bar.music.canGoNext; onClicked: bar.music.next(); Accessible.name: qsTr("Next") }
+                LiquidActionButton { iconOnly: true; text: bar.music.repeatMode === "track" ? "↻¹" : "↻"; implicitWidth: 32; flat: true; checked: bar.music.repeatMode !== "none"; onClicked: bar.music.repeatMode = bar.music.repeatMode === "none" ? "playlist" : bar.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: qsTr("Repeat mode") }
             }
             RowLayout {
                 Layout.fillWidth: true; spacing: 4
@@ -55,7 +55,7 @@ Rectangle {
             onCommitRequested: value => bar.music.volume = value
             Accessible.name: qsTr("Volume")
         }
-        LiquidActionButton { text: "≡"; implicitWidth: 34; flat: true; onClicked: bar.queueRequested(); Accessible.name: qsTr("Queue") }
-        LiquidActionButton { text: "♫"; implicitWidth: 34; flat: true; onClicked: bar.nowPlayingRequested(); Accessible.name: qsTr("Now playing") }
+        LiquidActionButton { iconOnly: true; text: "≡"; implicitWidth: 34; flat: true; onClicked: bar.queueRequested(); Accessible.name: qsTr("Queue") }
+        LiquidActionButton { iconOnly: true; text: "♫"; implicitWidth: 34; flat: true; onClicked: bar.nowPlayingRequested(); Accessible.name: qsTr("Now playing") }
     }
 }
