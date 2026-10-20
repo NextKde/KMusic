@@ -7,6 +7,7 @@ ColumnLayout {
     required property var music
     property int presentationMode: 0
     spacing: 20
+    clip: true
 
     function ownsControlFocus(item) {
         for (let node = item; node; node = node.parent)
@@ -65,17 +66,20 @@ ColumnLayout {
         }
     }
     RowLayout {
+        id: contentRow
         Layout.fillWidth: true; Layout.fillHeight: true
         spacing: 44
         ColumnLayout {
             visible: page.presentationMode === 0
-            Layout.preferredWidth: Math.min(360, page.width * .43); Layout.leftMargin: 40; spacing: 22
-            Artwork { Layout.fillWidth: true; Layout.preferredHeight: width; source: page.music.currentArtworkUrl; title: page.music.currentTitle; radius: 12 }
+            readonly property real coverSize: Math.max(160, Math.min(320, page.width * .36, contentRow.height - 140))
+            Layout.minimumWidth: 0; Layout.preferredWidth: coverSize; Layout.maximumWidth: coverSize
+            Layout.alignment: Qt.AlignVCenter; Layout.leftMargin: 36; spacing: 18
+            Artwork { Layout.fillWidth: true; Layout.preferredHeight: parent.coverSize; source: page.music.currentArtworkUrl; title: page.music.currentTitle; radius: 12 }
             Label { text: page.music.currentTitle || qsTr("Nothing playing"); color: AppTheme.text; font.pixelSize: 24; font.weight: Font.Bold; Layout.fillWidth: true; wrapMode: Text.WordWrap }
-            Label { text: page.music.currentArtist; color: AppTheme.mutedText; font.pixelSize: 18 }
+            Label { text: page.music.currentArtist; color: AppTheme.mutedText; font.pixelSize: 18; Layout.fillWidth: true; elide: Text.ElideRight }
         }
         ListView {
-            Layout.fillWidth: true; Layout.fillHeight: true; Layout.leftMargin: page.presentationMode === 1 ? 36 : 0; Layout.topMargin: 16; Layout.bottomMargin: 40; Layout.rightMargin: 36
+            Layout.minimumWidth: 0; Layout.preferredWidth: page.width * .5; Layout.fillWidth: true; Layout.fillHeight: true; Layout.leftMargin: page.presentationMode === 1 ? 36 : 0; Layout.topMargin: 16; Layout.bottomMargin: 40; Layout.rightMargin: 36
             clip: true; model: page.music.lyrics; currentIndex: page.music.currentLyricIndex
             highlightRangeMode: ListView.ApplyRange; preferredHighlightBegin: height * .4; preferredHighlightEnd: height * .6
             delegate: Label {

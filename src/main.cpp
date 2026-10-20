@@ -15,6 +15,8 @@
 #include <QElapsedTimer>
 #include <QJsonArray>
 #include <memory>
+#include <QtConcurrentRun>
+#include <QFutureWatcher>
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("kmusic"));
@@ -84,14 +86,20 @@ int main(int argc, char *argv[]) {
                     auto result = window->contentItem()->grabToImage();
                     if (!result) return;
                     const QString path = QDir(directory).filePath(control + QStringLiteral("-%1.png").arg(delay, 3, 10, QLatin1Char('0')));
-                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, directory, delay, requestedAt, state, frames] {
-                        const bool saved = result->saveToFile(path);
-                        frames->append(QJsonObject{{"scheduledMs", delay}, {"requestedAtMs", requestedAt}, {"saved", saved}, {"path", path},
-                            {"stateAtRequest", QJsonDocument::fromJson(state.toString().toUtf8()).object()}});
-                        QFile metadata(QDir(directory).filePath("frames.json"));
-                        if (metadata.open(QIODevice::WriteOnly)) metadata.write(QJsonDocument(QJsonObject{
-                            {"trigger", "shared control state entry; no synthetic pointer or keyboard events"},
-                            {"pressAtMs", 0}, {"releaseScheduledMs", 200}, {"frames", *frames}}).toJson());
+                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, window, path, directory, delay, requestedAt, state, frames] {
+                        // PNG compression must not stall the animation/event loop.
+                        const QImage image = result->image();
+                        auto *writer = new QFutureWatcher<bool>(window);
+                        QObject::connect(writer, &QFutureWatcher<bool>::finished, window, [writer, path, directory, delay, requestedAt, state, frames] {
+                            frames->append(QJsonObject{{"scheduledMs", delay}, {"requestedAtMs", requestedAt}, {"saved", writer->result()}, {"path", path},
+                                {"stateAtRequest", QJsonDocument::fromJson(state.toString().toUtf8()).object()}});
+                            QFile metadata(QDir(directory).filePath("frames.json"));
+                            if (metadata.open(QIODevice::WriteOnly)) metadata.write(QJsonDocument(QJsonObject{
+                                {"trigger", "shared control state entry; no synthetic pointer or keyboard events"},
+                                {"pressAtMs", 0}, {"releaseScheduledMs", 200}, {"frames", *frames}}).toJson());
+                            writer->deleteLater();
+                        });
+                        writer->setFuture(QtConcurrent::run([image, path] { return image.save(path); }));
                     });
                 });
             }
