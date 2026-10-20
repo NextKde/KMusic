@@ -1,19 +1,19 @@
 # KMusic progress
 
-Updated: 2026-10-20T23:34:21.988648+08:00
+Updated: 2026-10-20T23:42:21.033809+08:00
 
-23:33轮新原图，导航动画实际状态/时间数据一并公开；focus-off与侧栏合成验证尚在进行。
+23:38双库新图；导航真实无焦点状态已独立看图并核对focusIndex=-1，上一轮Gallery延迟上传现已确认成功。
 
-拍摄时95c7232/ae9d83e，PID745885，1280x800浅色DPR2 OpenGL。歌词页布局保持修复，实际仍显示Lyrics unavailable，恢复请求/重试待查。试听标识45秒及重新检查提示保留。侧栏真实背景blur未验收，正在调查App限定合成证据方法，不改KWin或权限。完整键鼠/账户网络验收未完成。
+实际运行95c7232/ae9d83e PID745885，1280x800浅色DPR2 OpenGL，身份固定sidecar。仍有启动后歌词未自动加载问题，已定位恢复初始化漏发请求，修复尚未运行。侧栏模糊将用专用原生背景和严格限定App内部CaptureArea对照验证，当前仍未验收。完整键鼠/账户网络功能待做。
 
-Source: [`95c7232fce7a`](https://github.com/NextKde/KMusic/commit/95c7232fce7a3edb5e9d352a1227356b155add5b) · Branch: `codex/music-development` · Local changes: True
+Source: [`91f9e67b07c7`](https://github.com/NextKde/KMusic/commit/91f9e67b07c7b91ad5da123b0c77a72c3ff3440b) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-![kmusic-poll-2333-light.png](screenshots/round-20261020-233421/kmusic-poll-2333-light.png)
+![kmusic-poll-2338-light.png](screenshots/round-20261020-234221/kmusic-poll-2338-light.png)
 
 2560 × 1600 original pixels
 
-[Capture and revision metadata](screenshots/round-20261020-233421/metadata.json)
+[Capture and revision metadata](screenshots/round-20261020-234221/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
