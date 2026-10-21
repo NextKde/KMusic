@@ -195,7 +195,7 @@ ApplicationWindow {
             }
         }
         }
-        LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; maximumTextureSize: 2560 }
+        LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; blur: .45; maximumTextureSize: 2560 }
         PlayerBar { id: player; anchors.bottom: parent.bottom; anchors.bottomMargin: 16
             width: Math.min(820, parent.width - 236 - 32); x: 236 + (parent.width - 236 - width) / 2
             backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", qsTr("Play queue")); onNowPlayingRequested: window.destination = "now" }

@@ -7,11 +7,11 @@ LiquidCard {
     required property var music
     signal queueRequested()
     signal nowPlayingRequested()
-    height: 84; radius: 20; padding: 14
+    height: 84; radius: height / 2; padding: 14
     shadowEnabled: true; shadowOpacity: AppTheme.dark ? .22 : .14
     tintColor: AppTheme.dark ? "#282c32" : "#f8f9fa"
     tintStrength: AppTheme.dark ? .20 : .22
-    readability: .12; blurStrength: 1.1
+    readability: .12; blurStrength: .25
     refractionStrength: 5; magnification: 1.035; reflectionStrength: .55
     function reviewState() {
         return { sampling: bar.sampling, seekValue: seekSlider.value, volume: volumeSlider.value,
@@ -32,11 +32,11 @@ LiquidCard {
             Layout.fillWidth: true; Layout.minimumWidth: 220; spacing: 0
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter; spacing: 6
-                MusicActionButton { backdrop: bar.backdrop; iconOnly: true; iconName: "shuffle"; implicitWidth: 26; implicitHeight: 28; flat: true; checked: bar.music.shuffle; onClicked: bar.music.shuffle = !bar.music.shuffle; Accessible.name: qsTr("Shuffle") }
-                MusicActionButton { backdrop: bar.backdrop; iconOnly: true; iconName: "previous"; implicitWidth: 26; implicitHeight: 28; flat: true; enabled: bar.music.canGoPrevious; onClicked: bar.music.previous(); Accessible.name: qsTr("Previous") }
-                MusicActionButton { id: playAction; backdrop: bar.backdrop; objectName: "reviewPlayerPlay"; iconOnly: true; iconName: bar.music.playbackState === "Playing" ? "pause" : "play"; iconSize: 18; implicitWidth: 34; implicitHeight: 32; enabled: bar.music.currentTrackId > 0; onClicked: bar.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
-                MusicActionButton { backdrop: bar.backdrop; iconOnly: true; iconName: "next"; implicitWidth: 26; implicitHeight: 28; flat: true; enabled: bar.music.canGoNext; onClicked: bar.music.next(); Accessible.name: qsTr("Next") }
-                MusicActionButton { backdrop: bar.backdrop; iconOnly: true; iconName: "repeat"; implicitWidth: 26; implicitHeight: 28; flat: true; checked: bar.music.repeatMode !== "none"; onClicked: bar.music.repeatMode = bar.music.repeatMode === "none" ? "playlist" : bar.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: qsTr("Repeat mode"); ToolTip.text: bar.music.repeatMode; ToolTip.visible: hovered }
+                MusicActionButton { backdrop: null; iconOnly: true; iconName: "shuffle"; implicitWidth: 26; implicitHeight: 28; flat: true; checked: bar.music.shuffle; onClicked: bar.music.shuffle = !bar.music.shuffle; Accessible.name: qsTr("Shuffle") }
+                MusicActionButton { backdrop: null; iconOnly: true; iconName: "previous"; implicitWidth: 26; implicitHeight: 28; flat: true; enabled: bar.music.canGoPrevious; onClicked: bar.music.previous(); Accessible.name: qsTr("Previous") }
+                MusicActionButton { id: playAction; backdrop: null; objectName: "reviewPlayerPlay"; iconOnly: true; iconName: bar.music.playbackState === "Playing" ? "pause" : "play"; iconSize: 18; implicitWidth: 34; implicitHeight: 32; enabled: bar.music.currentTrackId > 0; onClicked: bar.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
+                MusicActionButton { backdrop: null; iconOnly: true; iconName: "next"; implicitWidth: 26; implicitHeight: 28; flat: true; enabled: bar.music.canGoNext; onClicked: bar.music.next(); Accessible.name: qsTr("Next") }
+                MusicActionButton { backdrop: null; iconOnly: true; iconName: "repeat"; implicitWidth: 26; implicitHeight: 28; flat: true; checked: bar.music.repeatMode !== "none"; onClicked: bar.music.repeatMode = bar.music.repeatMode === "none" ? "playlist" : bar.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: qsTr("Repeat mode"); ToolTip.text: bar.music.repeatMode; ToolTip.visible: hovered }
             }
             RowLayout {
                 Layout.fillWidth: true; spacing: 7
@@ -65,7 +65,7 @@ LiquidCard {
             onCommitRequested: value => bar.music.volume = value
             Accessible.name: qsTr("Volume")
         }
-        MusicActionButton { backdrop: bar.backdrop; iconOnly: true; iconName: "queue"; implicitWidth: 26; implicitHeight: 28; flat: true; onClicked: bar.queueRequested(); Accessible.name: qsTr("Queue") }
-        MusicActionButton { backdrop: bar.backdrop; iconOnly: true; iconName: "music"; implicitWidth: 26; implicitHeight: 28; flat: true; onClicked: bar.nowPlayingRequested(); Accessible.name: qsTr("Now playing") }
+        MusicActionButton { backdrop: null; iconOnly: true; iconName: "queue"; implicitWidth: 26; implicitHeight: 28; flat: true; onClicked: bar.queueRequested(); Accessible.name: qsTr("Queue") }
+        MusicActionButton { backdrop: null; iconOnly: true; iconName: "music"; implicitWidth: 26; implicitHeight: 28; flat: true; onClicked: bar.nowPlayingRequested(); Accessible.name: qsTr("Now playing") }
     }
 }
