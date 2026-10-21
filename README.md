@@ -1,19 +1,23 @@
 # KMusic progress
 
-Updated: 2026-10-21T09:06:06.981663+08:00
+Updated: 2026-10-21T09:13:27.650101+08:00
 
-Fresh dual captures of current running b5da candidate; narrow hero hard-edge correction still in progress.
+Final checkpoint then PAUSED at explicit user request to adjust direction. No further development or automatic review until user resumes.
 
-Captured b5da8e9/PID50393/shared9da light1280x800 DPR2; source in progress distinct from binary. Same rejected hero interior hard boundary remains visible. Current player paused, real8 new albums. No new UI acceptance, optical continuous evidence pending.
+Latest source/builda2925a5/shared9da PID57925, committed clean. Final1280 light/dark captures personally reviewed: interior hard edge softened; light frame still has some loading cover placeholders, dark covers loaded. Narrow improvement only; whole UI and liquid continuous-frame acceptance incomplete. Previous b5da final capture historical, not new candidate. User-requested stop after this round.
 
-Source: [`b5da8e9a73c0`](https://github.com/NextKde/KMusic/commit/b5da8e9a73c00d3c84f6105278fefaa540f2d7c0) · Branch: `codex/music-development` · Local changes: False
+Source: [`a2925a542b39`](https://github.com/NextKde/KMusic/commit/a2925a542b395436c2cacd20e542b734e2d14582) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-![kmusic-poll-0903-light.png](screenshots/round-20261021-090606/kmusic-poll-0903-light.png)
+![home-a2925a5-light-1280.png](screenshots/round-20261021-091327/home-a2925a5-light-1280.png)
 
 2560 × 1600 original pixels
 
-[Capture and revision metadata](screenshots/round-20261021-090606/metadata.json)
+![home-a2925a5-dark-1280.png](screenshots/round-20261021-091327/home-a2925a5-dark-1280.png)
+
+2560 × 1600 original pixels
+
+[Capture and revision metadata](screenshots/round-20261021-091327/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
