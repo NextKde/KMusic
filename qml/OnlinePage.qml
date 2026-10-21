@@ -12,6 +12,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true; Layout.leftMargin: 32; Layout.rightMargin: 32; Layout.topMargin: 24
         LiquidTextField {
+            shadowEnabled: true; shadowOpacity: .06
             id: query
             Layout.fillWidth: true; materialForm: false; liquidFinish: true
             placeholderText: qsTr("Search songs on NetEase")
