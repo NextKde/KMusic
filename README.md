@@ -127,3 +127,5 @@ Only that loaded subset is played or enqueued; the app does not claim the full
 playlist is available. Individual playback still resolves current permissions.
 
 Playlist **Load more** appends unique songs in source order without playback or queue changes. A failed batch keeps the loaded list and offers Retry more; loaded/total counts remain independent of the local filter.
+
+Artist search opens the real NetEase popular-song list using the same collection browser. The loaded popular count is separate from the provider catalogue count; it is not all works. Play/queue popular songs are explicit, and browsing does not change playback. Artist album browsing is not included in this first artist batch.

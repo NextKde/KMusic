@@ -44,7 +44,7 @@ Item {
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 6
                     Label { Layout.fillWidth: true; text: resultRow.modelData.title; color: AppTheme.text; font.pixelSize: 14; elide: Text.ElideRight }
-                    Label { Layout.fillWidth: true; text: resultRow.modelData.kind === "playlist" ? qsTr("Playlist · %1").arg(resultRow.modelData.artist) : qsTr("Album · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
+                    Label { Layout.fillWidth: true; text: resultRow.modelData.kind === "playlist" ? qsTr("Playlist · %1").arg(resultRow.modelData.artist) : resultRow.modelData.kind === "artist" ? qsTr("Artist") + (resultRow.modelData.artist ? " · " + resultRow.modelData.artist : "") : qsTr("Album · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
                 }
                 Label { text: resultRow.modelData.totalCount > 0 ? qsTr("%1 songs").arg(resultRow.modelData.totalCount) : ""; color: AppTheme.mutedText; font.pixelSize: 11 }
                 VectorIcon { name: "back"; rotation: 180; color: AppTheme.mutedText; size: 16 }
@@ -69,9 +69,9 @@ Item {
                 Layout.fillWidth: true
                 Label { text: qsTr("Online search"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true }
                 MusicSelect {
-                    model: [qsTr("Songs"), qsTr("Playlists"), qsTr("Albums")]; materialForm: true
-                    currentIndex: page.music.onlineSearchKind === "playlist" ? 1 : page.music.onlineSearchKind === "album" ? 2 : 0
-                    onActivated: index => { page.music.onlineSearchKind = ["song", "playlist", "album"][index]; page.music.searchOnline(query.text) }
+                    model: [qsTr("Songs"), qsTr("Playlists"), qsTr("Albums"), qsTr("Artists")]; materialForm: true
+                    currentIndex: page.music.onlineSearchKind === "playlist" ? 1 : page.music.onlineSearchKind === "album" ? 2 : page.music.onlineSearchKind === "artist" ? 3 : 0
+                    onActivated: index => { page.music.onlineSearchKind = ["song", "playlist", "album", "artist"][index]; page.music.searchOnline(query.text) }
                 }
             }
             RowLayout {

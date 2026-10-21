@@ -8,6 +8,7 @@ import songUrl from "./netease/modules/song_url.ts";
 import lyric from "./netease/modules/lyric_new.ts";
 import albumNew from "./netease/modules/album_new.ts";
 import album from "./netease/modules/album.ts";
+import artists from "./netease/modules/artists.ts";
 import playlist from "./netease/modules/playlist_detail.ts";
 
 import qrKey from "./netease/modules/login_qr_key.ts";
@@ -68,6 +69,20 @@ input.on("line", async (line) => {
       const profile = body.data?.profile ?? body.profile;
       const account = body.data?.account ?? body.account;
       emit({ id, ok: true, body: { authenticated: Boolean(account?.id && profile?.userId), nickname: profile?.nickname || "", userId: String(profile?.userId || "") } }); return;
+    }
+    if (req.action === "artistTracks") {
+      const response = await artists(params, createRequest);
+      const body: any = response.body;
+      const artist = body.artist;
+      if (!artist) throw new Error("Artist unavailable");
+      const songs = body.hotSongs || [];
+      emit({ id, ok: true, body: { code: 200, songs, collection: {
+        providerId: String(artist.id), kind: "artist", title: artist.name || "",
+        artist: (artist.alias || []).join(" / "), artwork: artist.picUrl || artist.img1v1Url || "",
+        description: artist.briefDesc || "", trackCount: songs.length, totalCount: songs.length,
+        catalogueTrackCount: Number(artist.musicSize || 0), catalogueAlbumCount: Number(artist.albumSize || 0),
+        scope: "popular", partial: false, source: "NetEase"
+      } } }); return;
     }
     if (req.action === "playlistTracks") {
       const playlistId = String(params.id);

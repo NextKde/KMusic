@@ -109,25 +109,37 @@ void OnlineMusicProvider::searchCollections(const QString &query, const QString 
     emit collectionsReady({}); setError({});
     if (cleaned.isEmpty()) { setSearching(false); return; }
     setSearching(true);
-    request("search", {{"keywords", cleaned}, {"type", kind == "playlist" ? 1000 : 10}, {"limit", 30}},
+    request("search", {{"keywords", cleaned}, {"type", kind == "playlist" ? 1000 : kind == "artist" ? 100 : 10}, {"limit", 30}},
         [this, generation, kind](const QJsonObject &response) {
         if (generation != m_generation) return;
         setSearching(false);
         if (!response.value("ok").toBool()) { setError(failureText(response)); return; }
         const auto result = response.value("body").toObject().value("result").toObject();
         QVariantList rows;
-        for (const auto &value : result.value(kind == "playlist" ? "playlists" : "albums").toArray()) {
+        for (const auto &value : result.value(kind == "playlist" ? "playlists" : kind == "artist" ? "artists" : "albums").toArray()) {
             const auto entry = value.toObject();
             const auto artist = entry.value("artist").toObject();
             const QString owner = kind == "playlist" ? entry.value("creator").toObject().value("nickname").toString()
-                : joinedArtists(entry.value("artists").toArray());
+                : kind == "artist" ? entry.value("alias").toVariant().toStringList().join(" / ") : joinedArtists(entry.value("artists").toArray());
             rows.append(QVariantMap{{"providerId", QString::number(entry.value("id").toVariant().toLongLong())},
                 {"kind", kind}, {"title", entry.value("name").toString()},
                 {"artist", owner.isEmpty() ? artist.value("name").toString() : owner},
                 {"artwork", entry.value(kind == "playlist" ? "coverImgUrl" : "picUrl").toString()},
-                {"totalCount", entry.value(kind == "playlist" ? "trackCount" : "size").toInt()}, {"source", "NetEase"}});
+                {"totalCount", entry.value(kind == "playlist" ? "trackCount" : kind == "artist" ? "musicSize" : "size").toInt()}, {"source", "NetEase"}});
         }
         emit collectionsReady(rows);
+    });
+}
+void OnlineMusicProvider::loadArtistTracks(const QString &id) {
+    const auto generation = ++m_albumGeneration;
+    request("artistTracks", {{"id", id}}, [this, id, generation](const QJsonObject &response) {
+        if (generation != m_albumGeneration) return;
+        if (!response.value("ok").toBool()) { emit albumTracksReady(id, {}, failureText(response), {}); return; }
+        const auto body = response.value("body").toObject();
+        QString error;
+        const auto tracks = parseNeteaseSearch(QJsonDocument(QJsonObject{{"code", 200},
+            {"result", QJsonObject{{"songs", body.value("songs")}}}}).toJson(), &error);
+        emit albumTracksReady(id, tracks, error, body.value("collection").toObject().toVariantMap());
     });
 }
 void OnlineMusicProvider::loadPlaylistTracks(const QString &id, int offset) {

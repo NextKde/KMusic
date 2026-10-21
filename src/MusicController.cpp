@@ -1976,6 +1976,7 @@ void MusicController::retryOnlineAlbum()
     m_albumLoading = true; m_albumError.clear(); m_albumLoadMoreError.clear(); m_albumMessage.clear();
     m_albumTracks.clear(); m_albumTracksModel.setTracks({}); emit onlineAlbumChanged();
     if (m_onlineAlbum.value("kind").toString() == "playlist") m_onlineProvider.loadPlaylistTracks(id);
+    else if (m_onlineAlbum.value("kind").toString() == "artist") m_onlineProvider.loadArtistTracks(id);
     else m_onlineProvider.loadAlbumTracks(id);
 }
 void MusicController::playDiscoveryAlbum(int row)
@@ -2046,7 +2047,7 @@ QString MusicController::currentProviderId() const
 
 void MusicController::setOnlineSearchKind(const QString &kind)
 {
-    if (kind != "song" && kind != "album" && kind != "playlist") return;
+    if (kind != "song" && kind != "album" && kind != "playlist" && kind != "artist") return;
     if (m_onlineSearchKind == kind) return;
     m_onlineSearchKind = kind; m_onlineCollections.clear(); m_onlineModel.setTracks({});
     m_onlineProvider.search({}); emit onlineCollectionsChanged();

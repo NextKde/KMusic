@@ -17,6 +17,7 @@ Item {
             if (id !== page.displayedAlbumId) { page.displayedAlbumId = id; search.text = "" }
         }
     }
+    readonly property bool artistView: music.onlineAlbum.kind === "artist"
     readonly property bool playlistView: music.onlineAlbum.kind === "playlist"
     readonly property bool partial: music.onlineAlbum.partial === true
     readonly property bool albumReady: !music.albumLoading && !music.albumError.length && (music.onlineAlbum.trackCount || 0) > 0
@@ -29,7 +30,7 @@ Item {
         anchors.fill: parent
         music: page.music; trackModel: page.music.albumTracksModel
         showHeading: false; albumView: true; bottomContentInset: page.bottomContentInset
-        emptyMessage: page.music.albumLoading ? (page.playlistView ? qsTr("Loading playlist…") : qsTr("Loading album…")) : page.music.albumError || (search.text.length ? qsTr("No matching songs") : qsTr("No songs available"))
+        emptyMessage: page.music.albumLoading ? (page.artistView ? qsTr("Loading popular songs…") : page.playlistView ? qsTr("Loading playlist…") : qsTr("Loading album…")) : page.music.albumError || (search.text.length ? qsTr("No matching songs") : qsTr("No songs available"))
         headerContent: Component {
             Item {
                 implicitHeight: 320
@@ -41,20 +42,20 @@ Item {
                         Label { text: page.music.onlineAlbum.title || qsTr("Album"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
                         Label { text: page.playlistView ? qsTr("By %1").arg(page.music.onlineAlbum.artist || "") : page.music.onlineAlbum.artist || ""; color: MusicColors.sidebarAccent; font.pixelSize: 18; Layout.fillWidth: true; elide: Text.ElideRight }
                         Label {
-                            text: "NetEase" + (page.music.onlineAlbum.publishTime ? " · " + new Date(Number(page.music.onlineAlbum.publishTime)).getFullYear() : "") + (page.music.onlineAlbum.trackCount !== undefined ? " · " + (page.partial ? qsTr("%1 of %2 songs loaded").arg(page.music.onlineAlbum.trackCount).arg(page.music.onlineAlbum.totalCount) : page.music.onlineAlbum.trackCount === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.music.onlineAlbum.trackCount)) : "")
+                            text: page.artistView ? qsTr("NetEase · %1 popular songs loaded").arg(page.music.onlineAlbum.trackCount || 0) + (page.music.onlineAlbum.catalogueTrackCount > 0 ? qsTr(" · %1 catalogue songs").arg(page.music.onlineAlbum.catalogueTrackCount) : "") : "NetEase" + (page.music.onlineAlbum.publishTime ? " · " + new Date(Number(page.music.onlineAlbum.publishTime)).getFullYear() : "") + (page.music.onlineAlbum.trackCount !== undefined ? " · " + (page.partial ? qsTr("%1 of %2 songs loaded").arg(page.music.onlineAlbum.trackCount).arg(page.music.onlineAlbum.totalCount) : page.music.onlineAlbum.trackCount === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.music.onlineAlbum.trackCount)) : "")
                             color: AppTheme.mutedText; font.pixelSize: 11
                         }
                         Label { text: page.music.onlineAlbum.description || ""; visible: text.length > 0; color: AppTheme.mutedText; font.pixelSize: 11; wrapMode: Text.WordWrap; maximumLineCount: 3; elide: Text.ElideRight; Layout.fillWidth: true }
                         RowLayout {
                             spacing: 10
-                            MusicActionButton { objectName: "reviewAlbumPlay"; text: page.partial ? qsTr("Play loaded songs") : page.playlistView ? qsTr("Play playlist") : qsTr("Play album"); iconName: ""; textColor: MusicColors.sidebarAccent; surfaceColor: MusicColors.rowFill; enabled: page.albumReady; onClicked: page.music.playOnlineAlbum() }
-                            MusicActionButton { objectName: "reviewAlbumQueue"; text: page.partial ? qsTr("Queue loaded songs") : qsTr("Add to queue"); surfaceColor: MusicColors.rowFill; enabled: page.albumReady; onClicked: page.music.enqueueOnlineAlbum() }
+                            MusicActionButton { objectName: "reviewAlbumPlay"; text: page.artistView ? qsTr("Play popular songs") : page.partial ? qsTr("Play loaded songs") : page.playlistView ? qsTr("Play playlist") : qsTr("Play album"); iconName: ""; textColor: MusicColors.sidebarAccent; surfaceColor: MusicColors.rowFill; enabled: page.albumReady; onClicked: page.music.playOnlineAlbum() }
+                            MusicActionButton { objectName: "reviewAlbumQueue"; text: page.artistView ? qsTr("Queue popular songs") : page.partial ? qsTr("Queue loaded songs") : qsTr("Add to queue"); surfaceColor: MusicColors.rowFill; enabled: page.albumReady; onClicked: page.music.enqueueOnlineAlbum() }
                         }
                     }
                 }
                 Label {
                     x: 32; y: 292; width: parent.width - 64; elide: Text.ElideRight; font.pixelSize: 11
-                    text: page.music.albumLoadMoreError || page.music.albumMessage || (page.music.albumLoadingMore ? qsTr("Loading more songs…") : page.partial ? (page.music.onlineAlbum.hasMore ? qsTr("More songs are available. Play and queue actions use the loaded songs.") : qsTr("Some song metadata is unavailable from NetEase. Play and queue actions use the loaded songs.")) : qsTr("Playback depends on account and track permissions. Previews are labelled when available."))
+                    text: page.music.albumLoadMoreError || page.music.albumMessage || (page.artistView ? qsTr("Popular songs from NetEase, not all works. Playback depends on track permissions.") : page.music.albumLoadingMore ? qsTr("Loading more songs…") : page.partial ? (page.music.onlineAlbum.hasMore ? qsTr("More songs are available. Play and queue actions use the loaded songs.") : qsTr("Some song metadata is unavailable from NetEase. Play and queue actions use the loaded songs.")) : qsTr("Playback depends on account and track permissions. Previews are labelled when available."))
                     color: AppTheme.mutedText
                 }
             }
@@ -82,7 +83,7 @@ Item {
             LiquidTextField {
                 id: search
                 Layout.preferredWidth: Math.min(210, page.width * .28); implicitHeight: 30
-                materialForm: true; placeholderText: page.playlistView ? qsTr("Find in playlist") : qsTr("Find in album"); font.pixelSize: 12
+                materialForm: true; placeholderText: page.artistView ? qsTr("Find in popular songs") : page.playlistView ? qsTr("Find in playlist") : qsTr("Find in album"); font.pixelSize: 12
                 onTextChanged: page.music.albumTracksModel.search = text
             }
         }
