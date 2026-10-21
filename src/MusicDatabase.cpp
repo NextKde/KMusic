@@ -11,7 +11,7 @@
 
 namespace {
 
-constexpr int schemaVersion = 3;
+constexpr int schemaVersion = 4;
 
 void setError(QString *target, const QString &message)
 {
@@ -148,6 +148,14 @@ bool MusicDatabase::migrate(QString *errorMessage)
         statements.append({
             QStringLiteral("CREATE TABLE IF NOT EXISTS favorites (track_id INTEGER PRIMARY KEY REFERENCES tracks(id) ON DELETE CASCADE, added_at INTEGER NOT NULL)"),
             QStringLiteral("PRAGMA user_version = 3"),
+        });
+    }
+    if (currentVersion < 4) {
+        // Legacy last_played_at was updated at source-load time. Do not label
+        // those unverified records as successful playback history.
+        statements.append({
+            QStringLiteral("CREATE TABLE IF NOT EXISTS recent_plays (track_id INTEGER PRIMARY KEY REFERENCES tracks(id) ON DELETE CASCADE, last_started_at INTEGER NOT NULL)"),
+            QStringLiteral("PRAGMA user_version = 4"),
         });
     }
     QSqlQuery query(m_database);
@@ -419,14 +427,28 @@ bool MusicDatabase::removeTrack(qint64 trackId, QString *errorMessage)
     return query.exec() ? true : fail(query, errorMessage);
 }
 
+QList<qint64> MusicDatabase::recentTrackIds(QString *errorMessage) const
+{
+    QList<qint64> ids;
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral("SELECT track_id FROM recent_plays ORDER BY last_started_at DESC, track_id DESC"))) { fail(query, errorMessage); return {}; }
+    while (query.next()) ids.append(query.value(0).toLongLong());
+    return ids;
+}
 bool MusicDatabase::recordPlayed(qint64 trackId, QString *errorMessage)
 {
+    if (!m_database.transaction()) { setError(errorMessage, m_database.lastError().text()); return false; }
+    const auto now = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(m_database);
-    query.prepare(QStringLiteral("UPDATE tracks SET play_count = play_count + 1, "
-                                 "last_played_at = ? WHERE id = ?"));
-    query.addBindValue(QDateTime::currentMSecsSinceEpoch());
-    query.addBindValue(trackId);
-    return query.exec() ? true : fail(query, errorMessage);
+    query.prepare(QStringLiteral("UPDATE tracks SET play_count = play_count + 1, last_played_at = ? WHERE id = ?"));
+    query.addBindValue(now); query.addBindValue(trackId);
+    if (!query.exec()) { fail(query, errorMessage); m_database.rollback(); return false; }
+    QSqlQuery recent(m_database);
+    recent.prepare(QStringLiteral("INSERT INTO recent_plays(track_id, last_started_at) VALUES(?, ?) ON CONFLICT(track_id) DO UPDATE SET last_started_at = excluded.last_started_at"));
+    recent.addBindValue(trackId); recent.addBindValue(now);
+    if (!recent.exec()) { fail(recent, errorMessage); m_database.rollback(); return false; }
+    if (!m_database.commit()) { setError(errorMessage, m_database.lastError().text()); m_database.rollback(); return false; }
+    return true;
 }
 
 QList<qint64> MusicDatabase::favoriteTrackIds(QString *errorMessage) const

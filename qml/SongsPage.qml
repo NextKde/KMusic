@@ -18,6 +18,7 @@ ColumnLayout {
     signal detailsRequested(int row)
     signal saveToPlaylistRequested(int row)
     property bool queueView: false
+    property bool recentView: false
     property bool favoritesView: false
     property bool playlistView: false
     property double playlistId: -1
@@ -28,10 +29,10 @@ ColumnLayout {
         visible: page.showHeading
         Layout.fillWidth: true; Layout.topMargin: 24; Layout.leftMargin: 32; Layout.rightMargin: 32
         Label { text: page.heading; color: AppTheme.text; font.pixelSize: 32; font.weight: Font.Bold; Layout.fillWidth: true }
-        MusicActionButton { visible: !page.queueView && !page.onlineView && !page.favoritesView; text: qsTr("Import"); onClicked: page.importRequested() }
+        MusicActionButton { visible: !page.queueView && !page.onlineView && !page.favoritesView && !page.recentView; text: qsTr("Import"); onClicked: page.importRequested() }
         MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
-    Label { visible: page.showHeading; Layout.leftMargin: 32; text: page.trackModel.count === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.trackModel.count); color: AppTheme.mutedText }
+    Label { visible: page.showHeading; Layout.leftMargin: 32; text: (page.recentView ? qsTr("On this device") + " · " : "") + (page.trackModel.count === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.trackModel.count)); color: AppTheme.mutedText }
     Rectangle { visible: page.showHeading; Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
     ListView {
         id: list
@@ -56,13 +57,14 @@ ColumnLayout {
             required property string artworkUrl
             required property string providerId
             readonly property bool localFavorite: { const revision = page.music.favoritesRevision; return page.music.isTrackFavorite(page.onlineView ? "online" : page.albumView ? "album" : "library", page.onlineView || page.albumView ? index : trackId) }
-            objectName: index === 0 ? (page.albumView ? "reviewAlbumFirstSong" : page.playlistView ? "reviewLocalPlaylistFirstSong" : "") : ""
+            objectName: index === 0 ? (page.albumView ? "reviewAlbumFirstSong" : page.playlistView ? "reviewLocalPlaylistFirstSong" : page.recentView ? "reviewRecentFirstSong" : "") : ""
             width: list.width - 48; x: 24; height: 62
             hoverEnabled: true
             onClicked: {
                 if (page.albumView) page.music.playOnlineAlbumRow(index)
                 else if (page.onlineView) page.music.playOnlineRow(index)
                 else if (page.queueView) page.music.playQueueRow(index)
+                else if (page.recentView) page.music.playRecentRow(index)
                 else if (page.favoritesView) page.music.playFavoriteRow(index)
                 else if (page.playlistView) page.music.playPlaylistRow(index)
                 else page.music.playTrack(trackId)

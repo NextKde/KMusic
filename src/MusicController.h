@@ -28,6 +28,7 @@ class MusicController : public QObject {
     QML_ELEMENT
 
     Q_PROPERTY(AccountController *account READ account CONSTANT)
+    Q_PROPERTY(TrackListModel *recentModel READ recentModel CONSTANT)
     Q_PROPERTY(TrackListModel *favoritesModel READ favoritesModel CONSTANT)
     Q_PROPERTY(int favoritesRevision READ favoritesRevision NOTIFY favoritesChanged)
     Q_PROPERTY(bool currentFavorite READ currentFavorite NOTIFY favoritesChanged)
@@ -120,6 +121,8 @@ public:
     explicit MusicController(QObject *parent = nullptr);
     ~MusicController() override;
 
+    TrackListModel *recentModel() { return &m_recentModel; }
+    Q_INVOKABLE void playRecentRow(int row);
     TrackListModel *favoritesModel() { return &m_favoritesModel; }
     int favoritesRevision() const { return m_favoritesRevision; }
     bool currentFavorite() const { return isTrackFavorite("current", 0); }
@@ -348,6 +351,7 @@ private:
     void applyGroupSearch();
     void refreshPlaylists();
     void refreshFavorites();
+    void refreshRecent();
     std::optional<TrackRecord> favoriteCandidate(const QString &source, qlonglong rowOrId) const;
     void refreshQueueModel();
     void refreshPlaylistModel();
@@ -375,6 +379,8 @@ private:
     Transcoder m_transcoder;
     TrackListModel m_libraryModel;
     TrackListModel m_favoritesModel;
+    TrackListModel m_recentModel;
+    int m_recentRecordedLoad = -1;
     QSet<QString> m_favoritePaths;
     int m_favoritesRevision = 0;
     TrackListModel m_queueModel;

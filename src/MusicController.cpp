@@ -64,6 +64,7 @@ MusicController::MusicController(QObject *parent)
     , m_transcoder(this)
     , m_libraryModel(this)
     , m_favoritesModel(this)
+    , m_recentModel(this)
     , m_queueModel(this)
     , m_playlistTracksModel(this)
     , m_onlineModel(this)
@@ -72,6 +73,7 @@ MusicController::MusicController(QObject *parent)
     , m_account(&m_onlineProvider, this)
     , m_scanWatcher(this)
 {
+    m_recentModel.setMode(QStringLiteral("queue"));
     m_favoritesModel.setMode(QStringLiteral("queue"));
     connect(this, &MusicController::currentTrackChanged, this, &MusicController::favoritesChanged);
     m_queueModel.setMode(QStringLiteral("queue"));
@@ -111,10 +113,16 @@ MusicController::MusicController(QObject *parent)
     connect(&m_skipTimer, &QTimer::timeout, this, &MusicController::advanceAfterFailure);
     connect(&m_engine, &PlaybackEngine::stateChanged, this, [this] {
         if (m_engine.state() == QLatin1String("Playing")) {
+            if (m_loadedTrackId == currentTrackId() && m_loadedTrackId > 0 && m_recentRecordedLoad != m_engineLoadRequests) {
+                QString error;
+                if (m_database.recordPlayed(m_loadedTrackId, &error)) {
+                    m_recentRecordedLoad = m_engineLoadRequests;
+                    refreshRecent();
+                } else setError(error);
+            }
             m_attemptTimeout.stop();
             m_trackTimeout.stop();
             m_recoveryStatus.clear();
-            setError({});
             emit playbackStatusChanged();
         } else if (m_engine.state() == QLatin1String("Error")) {
             schedulePlaybackFailure(m_engine.errorMessage());
@@ -1324,6 +1332,19 @@ void MusicController::toggleTrackFavorite(const QString &source, qlonglong rowOr
     if (m_database.setTrackFavorite(*track, !m_favoritePaths.contains(track->path), &error) < 0) { setError(error); return; }
     refreshLibrary();
 }
+void MusicController::refreshRecent()
+{
+    QString error;
+    const auto ids = m_database.recentTrackIds(&error);
+    if (!error.isEmpty()) setError(error);
+    m_recentModel.setTracks(tracksForIds(ids));
+}
+void MusicController::playRecentRow(int row)
+{
+    const auto ids = m_recentModel.visibleIds();
+    if (row < 0 || row >= ids.size()) return;
+    setQueue(ids, row); startCurrentTrack();
+}
 void MusicController::refreshFavorites()
 {
     QString error;
@@ -1558,6 +1579,7 @@ void MusicController::refreshLibrary()
     refreshQueueModel();
     refreshPlaylistModel();
     refreshFavorites();
+    refreshRecent();
     emit libraryFoldersChanged();
     emit libraryChanged();
 }
@@ -1753,8 +1775,7 @@ void MusicController::loadPreparedTrack(const QUrl &url)
     m_loadedTrackId = m_resolvingTrackId;
     m_resolvingTrackId = -1;
     ++m_engineLoadRequests;
-    if (m_engine.load(url, m_playWhenReady, m_resumePositionMs))
-        m_database.recordPlayed(m_loadedTrackId);
+    m_engine.load(url, m_playWhenReady, m_resumePositionMs);
     emit playbackStateChanged();
 }
 
