@@ -48,7 +48,8 @@ result to play; + enqueues it and ··· opens fetched song details. The status 
 identifies preview-only playback. Availability depends on the source's response;
 no URL, authentication and network errors are shown explicitly. Inherited LX
 adapters are not the default source and are not wired into the app. Playback URLs
-are transient and are not stored as song identity. Login is not implemented yet.
+are transient and are not stored as song identity. QR sign-in and secure session storage are implemented; actual phone confirmation
+and an authenticated session still require user validation.
 
 ### Live review hook
 
