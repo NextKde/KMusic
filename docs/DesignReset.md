@@ -4,12 +4,23 @@
 
 ## Current bounded correction: color and floating playback
 
-Latest sidebar adjustment: default to 1100×680 (approximately the golden ratio),
-with 95% sidebar opacity in both appearances. The user chose pure QML and deferred
-actual desktop blur. Cover the entire sidebar with a continuous matte tint, soft
-face light and fine static grain, rather than edge shadow alone. This is material
-pigmentation, not external-pixel blur. Keep the 52px player and supplied internal
-order, and leave automatic polling paused.
+Latest bounded request: sidebar opacity is **98%**. External desktop visibility
+uses window alpha only, without KWin/native blur. Actual horizontally scrolling
+in-app artwork and text extend beneath the sidebar and receive continuous QML
+blur plus one refraction pass. Exclude the sidebar, its foreground and the player
+from the sidebar capture source to prevent feedback and duplicated contours.
+
+Buttons and inputs now directly reference the user-supplied
+[Liquid Glass Vue](https://vue-web-liquid-glass.netlify.app/searchbox): visible
+convex-edge bending of real background detail, a continuous center and directional
+highlights, without thick closed outlines, embossing or opaque flat substitutes.
+Shared fixes belong in Kos.Ui and require Gallery regression. Study source:
+[mkj0kjay/vue-web-liquid-glass](https://github.com/mkj0kjay/vue-web-liquid-glass);
+preserve attribution/licensing for any adapted code.
+
+Keep the 1100×680 default, the 52px player and its supplied internal order. Follow
+the newly attached user AGENTS VM-only preference for runtime tests/screenshots
+this round. Automatic polling stays paused; no catalogue or backend expansion.
 
 After pausing the long-running work, the user authorized these two corrections
 only. Keep scheduled polling paused; this does not resume the full project or
@@ -56,4 +67,4 @@ Previous component checks do not establish whole-app design acceptance.
 
 The next gate is one coherent, running 1280×800 main window, with a 1024×640 layout check: kos-settings exterior, music sidebar/content/player proportions, consistent vector icons and Forma details. Use genuine source-backed music/artwork or honest empty states. Remove repetitive abstract fixture covers and ad hoc text-symbol icons. Preserve the existing source, playback, preview and lyrics work. General visual fixes still belong in the shared library and require Gallery regression.
 
-Continue local dedicated-window checks and the existing screenshot/source publication schedule. Do not claim the rejected exterior is accepted while the correction is in progress.
+Automatic polling remains paused. Run the bounded runtime review only in the VM, following the latest user instructions. Publish only genuine evidence with its actual source/runtime identity; do not claim whole-app acceptance.
