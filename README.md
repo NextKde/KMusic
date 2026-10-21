@@ -1,17 +1,19 @@
 # KMusic progress
 
-Updated: 2026-10-21T08:14:48.799489+08:00
+Updated: 2026-10-21T08:19:17.247575+08:00
 
-08:13轮：完整纯QML主界面已重写并在构建，本轮没有新App运行画面；Gallery继续新图回归。
+首个纯QML完整主界面候选e783a98已实际运行；整体比例和内容层级进入新一轮验收，尚未通过。
 
-本轮采集时runtime running=false，未运行退役native版本；不附旧App图。Main/Chrome/Discovery/PlayerBar/AlbumTile/Artwork整体改造，236侧栏、30CSD、84播放器、真实内容封面/诚实空态、统一矢量图标、QML内部underlay液态采样正在构建。外观未验收。音源/试听/歌词保留。源码dirty状态见metadata，源码文件已更新不代表二进制已运行。
+拍摄时e783a98/组件482f7ce PID27065，1280x800浅色DPR2 OpenGL。原生KWin/KF依赖已移除；方角自绘壳、236侧栏、84播放器、真实音乐封面和矢量图标已联动重写。协调者亲自看图，待修：侧栏封面过于可辨、首页大型功能引导偏dashboard、专辑架首屏露出不足、Listen now材质有竖向灰块。后续77候选QML预模糊正在交付，不冒充本图。此为新完整候选，非旧图，不代表整体UI验收。
 
-Source: [`e783a9858319`](https://github.com/NextKde/KMusic/commit/e783a9858319b79f22c86463cf078a4b31192803) · Branch: `codex/music-development` · Local changes: False
+Source: [`77e0540c9167`](https://github.com/NextKde/KMusic/commit/77e0540c9167ed84c5a92616b4dac5f263793163) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
-No current application image available in this preparation round; see status above.
+![kmusic-poll-0813-candidate-light.png](screenshots/round-20261021-081917/kmusic-poll-0813-candidate-light.png)
 
-[Capture and revision metadata](screenshots/round-20261021-081448/metadata.json)
+2560 × 1600 original pixels
+
+[Capture and revision metadata](screenshots/round-20261021-081917/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
