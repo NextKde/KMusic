@@ -1,6 +1,6 @@
 # KMusic progress
 
-Updated: 2026-10-21T22:30:28.605706+08:00
+Updated: 2026-10-21T22:34:59.425898+08:00
 
 Runtime `72ac1587` · shared `96ff101` · native Qt/QML, local rendering
 
@@ -10,9 +10,9 @@ Runtime `72ac1587` · shared `96ff101` · native Qt/QML, local rendering
 - New candidate: real album detail browsing with independent track model and explicit play/queue actions. Browsing did not alter queue or start playback; real helper interruption showed an error, Retry restored 20 tracks; actual album/single enqueue kept playback paused; Play album and track-row playback advanced real audio. Search filtering and error Retry checked. Fixed toolbar samples the opaque real page scene.
 - Design: immersive left playback/right real queue, plain content buttons, fixed liquid overlays. Final visual acceptance belongs to user.
 
-![Current capture](screenshots/round-20261021-2229/current.png)
+![Current capture](screenshots/round-20261021-2234/current.png)
 
-[Exact capture metadata](screenshots/round-20261021-2229/metadata.json)
+[Exact capture metadata](screenshots/round-20261021-2234/metadata.json)
 
 ![Current-track readability, light](screenshots/round-20261021-212941/panel-light.png)
 
