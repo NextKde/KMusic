@@ -68,6 +68,29 @@ input.on("line", async (line) => {
       const account = body.data?.account ?? body.account;
       emit({ id, ok: true, body: { authenticated: Boolean(account?.id && profile?.userId), nickname: profile?.nickname || "", userId: String(profile?.userId || "") } }); return;
     }
+    if (req.action === "playlistTracks") {
+      const response = await playlist(params, createRequest);
+      const body: any = response.body;
+      const list = body.playlist;
+      if (!list) throw new Error("Playlist unavailable");
+      const allIds = (list.trackIds || []).map((x: any) => String(x.id));
+      const total = Math.max(Number(list.trackCount || 0), allIds.length, (list.tracks || []).length);
+      // Bound this first detail batch. Never label a truncated set as complete.
+      const limit = 200;
+      const wanted = allIds.length ? allIds.slice(0, limit) : (list.tracks || []).slice(0, limit).map((x: any) => String(x.id));
+      const known = new Map((list.tracks || []).map((song: any) => [String(song.id), song]));
+      const missing = wanted.filter((songId: string) => !known.has(songId));
+      for (let offset = 0; offset < missing.length; offset += 100) {
+        const detail = await songDetail({ ids: missing.slice(offset, offset + 100).join(","), cookie: params.cookie }, createRequest);
+        for (const song of ((detail.body as any).songs || [])) known.set(String(song.id), song);
+      }
+      const songs = wanted.map((songId: string) => known.get(songId)).filter(Boolean);
+      emit({ id, ok: true, body: { code: 200, songs, collection: {
+        providerId: String(list.id), kind: "playlist", title: list.name || "", artist: list.creator?.nickname || "",
+        artwork: list.coverImgUrl || "", description: list.description || "", trackCount: songs.length,
+        totalCount: total, partial: songs.length < total, requestedCount: wanted.length, loadLimit: limit, source: "NetEase"
+      } } }); return;
+    }
     if (req.action === "resolve") {
       const details = await songDetail({ cookie: params.cookie, ids: String(params.songId) }, createRequest);
       const response = await songUrl({ cookie: params.cookie, id: String(params.songId), level: params.level || "standard" }, createRequest);

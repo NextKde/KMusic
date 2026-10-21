@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
                     {"discoveryFirst", "reviewDiscoveryFirst"}, {"discoverySecond", "reviewDiscoverySecond"},
                     {"account", "reviewAccountButton"}, {"signIn", "reviewAccountGenerate"}, {"cancelSignIn", "reviewAccountCancel"},
                     {"immersivePlay", "reviewImmersivePlay"}, {"nextQueued", "reviewNextQueued"},
-                    {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
+                    {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
                     {"albumSong", "reviewAlbumFirstSong"}, {"albumEnqueue", "reviewAlbumEnqueueFirst"}, {"albumRetry", "reviewAlbumRetry"}
                 };
                 if (!namedControls.contains(control) ||
@@ -120,6 +120,8 @@ int main(int argc, char *argv[]) {
                 }).toJson());
             } else if (action == "onlineSearch") {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
+            } else if (action == "collectionSearch") {
+                QMetaObject::invokeMethod(window, "reviewCollectionSearch", Q_ARG(QVariant, data.value("query").toString()), Q_ARG(QVariant, data.value("kind").toString()));
             } else if (action == "albumFilter") {
                 QMetaObject::invokeMethod(window, "reviewAlbumFilter", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playDiscovery") music.playDiscoveryAlbum(data.value("row").toInt());
@@ -240,6 +242,8 @@ int main(int argc, char *argv[]) {
                     {"discoveryError", music.discoveryError()}, {"discoveryPlaying", music.discoveryPlaying()},
                     {"accountState", music.account()->state()}, {"accountQrVisible", !music.account()->qrImage().isEmpty()}, {"accountAuthenticated", music.account()->authenticated()},
                     {"onlineAlbumId", music.onlineAlbum().value("providerId").toString()},
+                    {"collectionKind", music.onlineAlbum().value("kind").toString()}, {"collectionPartial", music.onlineAlbum().value("partial").toBool()},
+                    {"collectionTotal", music.onlineAlbum().value("totalCount").toInt()}, {"collectionResults", music.onlineCollections().size()}, {"searchKind", music.onlineSearchKind()},
                     {"albumTracksCount", music.albumTracksModel()->count()}, {"albumLoading", music.albumLoading()},
                     {"albumError", music.albumError()}, {"albumMessage", music.albumMessage()},
                     {"queueCount", music.queueModel()->count()}, {"queueIndex", music.queueIndex()}, {"currentTrackId", music.currentTrackId()},

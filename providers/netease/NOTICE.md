@@ -21,3 +21,8 @@ from the same pinned revision. The QR check catch now preserves actual
 800/801/802/803 responses and propagates transport failures instead of an empty
 success-shaped body. KMusic generates the QR locally with libqrencode. No web UI
 or QR image service is used. Account/cookie state management is KMusic code.
+
+Collection search reuses cloudsearch type1000/type10 and playlist_detail from the
+same fixed revision. KMusic's helper follows trackIds and requests missing song
+metadata for a bounded first200 entries; partial counts are reported explicitly.
+No additional upstream code or web interface was imported for this adapter.

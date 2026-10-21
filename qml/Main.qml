@@ -12,6 +12,7 @@ ApplicationWindow {
     flags: Qt.Window | Qt.FramelessWindowHint
     property string destination: "new"
     property string lastContentDestination: "new"
+    property string collectionReturnDestination: "new"
     onDestinationChanged: if (destination !== "now") lastContentDestination = destination
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
@@ -20,7 +21,7 @@ ApplicationWindow {
     property int sensitiveContentRevision: 0
     onSensitiveContentVisibleChanged: if (sensitiveContentVisible) ++sensitiveContentRevision
     function openAccount() { accountDialog.open() }
-    function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
+    function reviewOnlineSearch(text) { music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
     function materialReviewState() {
@@ -39,7 +40,9 @@ ApplicationWindow {
         return JSON.stringify(state)
     }
     function reviewAlbumFilter(text) { albumPage.filterText = text }
-    function reviewOnlineAlbum(row) { music.openDiscoveryAlbum(row); destination = "onlineAlbum" }
+    function reviewOnlineAlbum(row) { collectionReturnDestination = "new"; music.openDiscoveryAlbum(row); destination = "onlineAlbum" }
+    function reviewCollectionSearch(text, kind) { destination = "online"; music.onlineSearchKind = kind; onlinePage.queryText = text; music.searchOnline(text) }
+    function openCollection(row) { collectionReturnDestination = "online"; music.openOnlineCollection(row); destination = "onlineAlbum" }
     function reviewReleaseScroll(fraction) { return discover.scrollReleaseReview(fraction) }
     function reviewScroll(fraction) {
         const view = window.destination === "new" ? discover.contentItem : window.destination === "onlineAlbum" ? albumPage.reviewList : window.destination === "online" ? onlinePage.reviewList : songsPage.reviewList
@@ -125,8 +128,8 @@ ApplicationWindow {
                         Item { Layout.preferredHeight: window.playerContentInset; Layout.fillWidth: true }
                     }
                 }
-                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = "new" }
-                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music }
+                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination }
+                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row) }
             }
         }
         Rectangle {

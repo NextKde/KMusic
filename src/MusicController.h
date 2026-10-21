@@ -38,6 +38,8 @@ class MusicController : public QObject {
     Q_PROPERTY(QString albumError READ albumError NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString albumMessage READ albumMessage NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString currentProviderId READ currentProviderId NOTIFY currentTrackChanged)
+    Q_PROPERTY(QVariantList onlineCollections READ onlineCollections NOTIFY onlineCollectionsChanged)
+    Q_PROPERTY(QString onlineSearchKind READ onlineSearchKind WRITE setOnlineSearchKind NOTIFY onlineCollectionsChanged)
     Q_PROPERTY(QVariantList discoveryAlbums READ discoveryAlbums NOTIFY discoveryChanged)
     Q_PROPERTY(bool discoveryLoading READ discoveryLoading NOTIFY discoveryChanged)
     Q_PROPERTY(QString discoveryError READ discoveryError NOTIFY discoveryChanged)
@@ -109,6 +111,10 @@ public:
     TrackListModel *queueModel();
     TrackListModel *playlistTracksModel();
     TrackListModel *onlineModel();
+    QVariantList onlineCollections() const { return m_onlineCollections; }
+    QString onlineSearchKind() const { return m_onlineSearchKind; }
+    void setOnlineSearchKind(const QString &kind);
+    Q_INVOKABLE void openOnlineCollection(int row);
     TrackListModel *albumTracksModel() { return &m_albumTracksModel; }
     QVariantMap onlineAlbum() const { return m_onlineAlbum; }
     bool albumLoading() const { return m_albumLoading; }
@@ -250,6 +256,7 @@ public:
 signals:
     void readyChanged();
     void libraryChanged();
+    void onlineCollectionsChanged();
     void onlineAlbumChanged();
     void discoveryChanged();
     void playlistsChanged();
@@ -330,6 +337,8 @@ private:
     TrackListModel m_albumTracksModel;
     QList<TrackRecord> m_albumTracks;
     QVariantMap m_onlineAlbum;
+    QVariantList m_onlineCollections;
+    QString m_onlineSearchKind = "song";
     bool m_albumLoading = false;
     QString m_albumError, m_albumMessage;
     OnlineMusicProvider m_onlineProvider;

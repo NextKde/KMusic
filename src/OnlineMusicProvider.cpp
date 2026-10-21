@@ -103,6 +103,46 @@ void OnlineMusicProvider::search(const QString &query, int limit) {
         setError(error); emit resultsReady(tracks);
     });
 }
+void OnlineMusicProvider::searchCollections(const QString &query, const QString &kind) {
+    const auto generation = ++m_generation;
+    const QString cleaned = query.trimmed();
+    emit collectionsReady({}); setError({});
+    if (cleaned.isEmpty()) { setSearching(false); return; }
+    setSearching(true);
+    request("search", {{"keywords", cleaned}, {"type", kind == "playlist" ? 1000 : 10}, {"limit", 30}},
+        [this, generation, kind](const QJsonObject &response) {
+        if (generation != m_generation) return;
+        setSearching(false);
+        if (!response.value("ok").toBool()) { setError(failureText(response)); return; }
+        const auto result = response.value("body").toObject().value("result").toObject();
+        QVariantList rows;
+        for (const auto &value : result.value(kind == "playlist" ? "playlists" : "albums").toArray()) {
+            const auto entry = value.toObject();
+            const auto artist = entry.value("artist").toObject();
+            const QString owner = kind == "playlist" ? entry.value("creator").toObject().value("nickname").toString()
+                : joinedArtists(entry.value("artists").toArray());
+            rows.append(QVariantMap{{"providerId", QString::number(entry.value("id").toVariant().toLongLong())},
+                {"kind", kind}, {"title", entry.value("name").toString()},
+                {"artist", owner.isEmpty() ? artist.value("name").toString() : owner},
+                {"artwork", entry.value(kind == "playlist" ? "coverImgUrl" : "picUrl").toString()},
+                {"totalCount", entry.value(kind == "playlist" ? "trackCount" : "size").toInt()}, {"source", "NetEase"}});
+        }
+        emit collectionsReady(rows);
+    });
+}
+void OnlineMusicProvider::loadPlaylistTracks(const QString &id) {
+    const auto generation = ++m_albumGeneration;
+    request("playlistTracks", {{"id", id}}, [this, id, generation](const QJsonObject &response) {
+        if (generation != m_albumGeneration) return;
+        if (!response.value("ok").toBool()) { emit albumTracksReady(id, {}, failureText(response), {}); return; }
+        const auto body = response.value("body").toObject();
+        QString error;
+        auto tracks = parseNeteaseSearch(QJsonDocument(QJsonObject{{"code", 200},
+            {"result", QJsonObject{{"songs", body.value("songs")}}}}).toJson(), &error);
+        if (tracks.isEmpty() && error.isEmpty() && body.value("collection").toObject().value("totalCount").toInt() > 0) error = tr("Playlist songs are unavailable. Check account and access permissions.");
+        emit albumTracksReady(id, tracks, error, body.value("collection").toObject().toVariantMap());
+    });
+}
 void OnlineMusicProvider::cancelResolve() { ++m_resolveGeneration; }
 void OnlineMusicProvider::resolve(qint64 trackId, const QString &songId, const QString &quality) {
     const auto generation = ++m_resolveGeneration;
@@ -203,7 +243,7 @@ void OnlineMusicProvider::loadAlbumTracks(const QString &albumId) {
         }
         if (tracks.isEmpty() && error.isEmpty()) error = tr("No playable tracks listed for this album.");
         emit albumTracksReady(albumId, tracks, error,
-            {{"providerId", albumId}, {"title", album.value("name").toString()}, {"artist", albumArtist},
+            {{"kind", "album"}, {"partial", false}, {"totalCount", tracks.size()}, {"providerId", albumId}, {"title", album.value("name").toString()}, {"artist", albumArtist},
              {"artwork", album.value("picUrl").toString()}, {"publishTime", album.value("publishTime").toVariant()},
              {"description", album.value("description").toString()}, {"trackCount", tracks.size()}, {"source", "NetEase"}});
     });

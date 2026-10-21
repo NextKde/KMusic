@@ -24,6 +24,8 @@ public:
     QString errorMessage() const;
     void search(const QString &query, int limit = 30);
     void resolve(qint64 trackId, const QString &songId, const QString &quality);
+    void searchCollections(const QString &query, const QString &kind);
+    void loadPlaylistTracks(const QString &id);
     void cancelResolve();
     void loadLyrics(qint64 trackId, const QString &songId);
     void loadDetail(const QString &songId);
@@ -34,6 +36,7 @@ public:
 signals:
     void sessionExpired();
     void searchingChanged();
+    void collectionsReady(const QVariantList &collections);
     void resultsReady(const QList<TrackRecord> &tracks);
     void errorMessageChanged();
     void resolved(qint64 trackId, const QUrl &url, bool trial, const QString &level);

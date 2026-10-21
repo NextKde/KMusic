@@ -217,6 +217,9 @@ void MusicController::initialize()
             this, &MusicController::onlineErrorChanged);
     connect(&m_onlineProvider, &OnlineMusicProvider::resultsReady,
             &m_onlineModel, &TrackListModel::setTracks);
+    connect(&m_onlineProvider, &OnlineMusicProvider::collectionsReady, this, [this](const QVariantList &rows) {
+        m_onlineCollections = rows; emit onlineCollectionsChanged();
+    });
     connect(&m_onlineProvider, &OnlineMusicProvider::newAlbumsReady, this, [this](const QVariantList &albums, const QString &error) {
         m_discoveryLoading = false; m_discoveryError = error; m_discoveryAlbums = albums; emit discoveryChanged();
     });
@@ -728,7 +731,8 @@ void MusicController::setSearch(const QString &search)
 
 void MusicController::searchOnline(const QString &query)
 {
-    m_onlineProvider.search(query);
+    if (m_onlineSearchKind == "song") m_onlineProvider.search(query);
+    else m_onlineProvider.searchCollections(query, m_onlineSearchKind);
 }
 
 qint64 MusicController::storeOnlineTrack(int row)
@@ -1947,7 +1951,7 @@ void MusicController::openDiscoveryAlbum(int row)
     const auto album = m_discoveryAlbums.at(row).toMap();
     if (album.value("providerId").toString().isEmpty()) return;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
-    m_onlineAlbum = album; m_albumLoading = false; m_albumTracks.clear(); m_albumTracksModel.setSearch({});
+    m_onlineAlbum = album; m_onlineAlbum.insert("kind", "album"); m_albumLoading = false; m_albumTracks.clear(); m_albumTracksModel.setSearch({});
     retryOnlineAlbum();
 }
 void MusicController::retryOnlineAlbum()
@@ -1956,7 +1960,8 @@ void MusicController::retryOnlineAlbum()
     if (id.isEmpty() || m_albumLoading) return;
     m_albumLoading = true; m_albumError.clear(); m_albumMessage.clear();
     m_albumTracks.clear(); m_albumTracksModel.setTracks({}); emit onlineAlbumChanged();
-    m_onlineProvider.loadAlbumTracks(id);
+    if (m_onlineAlbum.value("kind").toString() == "playlist") m_onlineProvider.loadPlaylistTracks(id);
+    else m_onlineProvider.loadAlbumTracks(id);
 }
 void MusicController::playDiscoveryAlbum(int row)
 {
@@ -1987,9 +1992,16 @@ void MusicController::playOnlineAlbumRow(int row)
 {
     const auto selected = m_albumTracksModel.trackAt(row);
     if (!selected) return;
-    const auto found = std::find_if(m_albumTracks.cbegin(), m_albumTracks.cend(), [&selected](const auto &track) { return track.providerId == selected->providerId; });
-    if (found == m_albumTracks.cend()) return;
-    const int index = int(std::distance(m_albumTracks.cbegin(), found));
+    // Repeated song IDs are legitimate playlist entries. Preserve the clicked
+    // occurrence after filtering rather than always jumping to the first one.
+    const auto visible = m_albumTracksModel.visibleTracks();
+    int occurrence = 0;
+    for (int i = 0; i < row; ++i) if (visible.at(i).providerId == selected->providerId) ++occurrence;
+    int index = -1;
+    for (int i = 0; i < m_albumTracks.size(); ++i) {
+        if (m_albumTracks.at(i).providerId == selected->providerId && occurrence-- == 0) { index = i; break; }
+    }
+    if (index < 0) return;
     const auto ids = storeAlbumTracks();
     if (index >= ids.size()) return;
     setQueue(ids, index); startCurrentTrack();
@@ -2015,4 +2027,19 @@ QString MusicController::currentProviderId() const
 {
     const auto track = findTrack(currentTrackId());
     return track ? track->providerId : QString{};
+}
+
+void MusicController::setOnlineSearchKind(const QString &kind)
+{
+    if (kind != "song" && kind != "album" && kind != "playlist") return;
+    if (m_onlineSearchKind == kind) return;
+    m_onlineSearchKind = kind; m_onlineCollections.clear(); m_onlineModel.setTracks({});
+    m_onlineProvider.search({}); emit onlineCollectionsChanged();
+}
+void MusicController::openOnlineCollection(int row)
+{
+    if (row < 0 || row >= m_onlineCollections.size()) return;
+    m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
+    m_onlineAlbum = m_onlineCollections.at(row).toMap(); m_albumLoading = false;
+    m_albumTracks.clear(); m_albumTracksModel.setSearch({}); retryOnlineAlbum();
 }

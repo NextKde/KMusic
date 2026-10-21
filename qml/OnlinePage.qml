@@ -6,7 +6,8 @@ Item {
     id: page
     required property var music
     property real bottomContentInset: 0
-    readonly property alias reviewList: songContent.reviewList
+    signal collectionRequested(int row)
+    readonly property var reviewList: music.onlineSearchKind === "song" ? songContent.reviewList : collections
     property alias queryText: query.text
     function openQualityMenu() { qualitySelect.openMenu() }
     Item {
@@ -16,9 +17,40 @@ Item {
     SongsPage {
         id: songContent
         anchors.fill: parent
+        visible: page.music.onlineSearchKind === "song"
         showHeading: false; topContentInset: fixedHeader.height + 12
         music: page.music; bottomContentInset: page.bottomContentInset; trackModel: page.music.onlineModel; onlineView: true
         onDetailsRequested: row => { page.music.requestOnlineDetail(row); details.open() }
+    }
+    ListView {
+        id: collections
+        anchors.fill: parent; clip: true
+        visible: page.music.onlineSearchKind !== "song"
+        model: page.music.onlineCollections
+        header: Item { width: collections.width; height: fixedHeader.height + 12 }
+        footer: Item { width: collections.width; height: page.bottomContentInset }
+        ScrollBar.vertical: ScrollBar {}
+        delegate: ItemDelegate {
+            id: resultRow
+            required property var modelData
+            required property int index
+            objectName: index === 0 ? "reviewCollectionFirst" : ""
+            x: 24; width: collections.width - 48; height: 82; hoverEnabled: true
+            onClicked: page.collectionRequested(index)
+            background: Rectangle { radius: 6; color: resultRow.hovered ? MusicColors.hoverFill : "transparent" }
+            contentItem: RowLayout {
+                spacing: 14
+                Artwork { Layout.preferredWidth: 58; Layout.preferredHeight: 58; source: resultRow.modelData.artwork || ""; title: resultRow.modelData.title; radius: 6 }
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 6
+                    Label { Layout.fillWidth: true; text: resultRow.modelData.title; color: AppTheme.text; font.pixelSize: 14; elide: Text.ElideRight }
+                    Label { Layout.fillWidth: true; text: resultRow.modelData.kind === "playlist" ? qsTr("Playlist · %1").arg(resultRow.modelData.artist) : qsTr("Album · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
+                }
+                Label { text: resultRow.modelData.totalCount > 0 ? qsTr("%1 songs").arg(resultRow.modelData.totalCount) : ""; color: AppTheme.mutedText; font.pixelSize: 11 }
+                VectorIcon { name: "back"; rotation: 180; color: AppTheme.mutedText; size: 16 }
+            }
+        }
+        Label { anchors.centerIn: parent; visible: collections.count === 0; text: page.music.onlineSearching ? qsTr("Searching…") : page.music.onlineError || qsTr("No results. Try another search."); width: parent.width - 64; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; color: AppTheme.mutedText }
     }
     }
     // Independent sibling source: no header controls, no recursive sampling.
@@ -33,18 +65,27 @@ Item {
         }
         ColumnLayout {
             anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; anchors.topMargin: 18; anchors.bottomMargin: 10; spacing: 9
-            Label { text: qsTr("Online search"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { text: qsTr("Online search"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true }
+                MusicSelect {
+                    model: [qsTr("Songs"), qsTr("Playlists"), qsTr("Albums")]; materialForm: true
+                    currentIndex: page.music.onlineSearchKind === "playlist" ? 1 : page.music.onlineSearchKind === "album" ? 2 : 0
+                    onActivated: index => { page.music.onlineSearchKind = ["song", "playlist", "album"][index]; page.music.searchOnline(query.text) }
+                }
+            }
             RowLayout {
                 Layout.fillWidth: true; spacing: 8
                 LiquidTextField {
                     id: query
                     Layout.fillWidth: true; materialForm: true
-                    placeholderText: qsTr("Search songs on NetEase")
+                    placeholderText: qsTr("Search NetEase")
                     onAccepted: page.music.searchOnline(text)
                 }
                 MusicActionButton { text: page.music.onlineSearching ? qsTr("Searching…") : qsTr("Search"); enabled: query.text.trim().length > 0 && !page.music.onlineSearching; onClicked: page.music.searchOnline(query.text) }
                 MusicSelect {
                     id: qualitySelect
+                    visible: page.music.onlineSearchKind === "song"
                     model: ["Standard", "320k", "Lossless"]; materialForm: true; appearanceMode: AppTheme.appearanceMode
                     currentIndex: page.music.onlineQuality === "320k" ? 1 : page.music.onlineQuality === "flac" ? 2 : 0
                     onActivated: index => page.music.onlineQuality = ["128k", "320k", "flac"][index]

@@ -117,3 +117,11 @@ and track permissions still apply. The review capture hook refuses images while
 a sign-in code or account identity is visible.
 
 Build dependencies additionally include Qt6Keychain and libqrencode.
+
+Online search offers Songs, Playlists and Albums. Collection results open the
+same detail browser without changing playback or the queue. Playlist details
+follow the provider's track-ID order and retrieve missing song metadata for the
+first 200 entries. When more songs exist, the loaded/total counts and partial
+status are explicit, and actions say **Play loaded songs / Queue loaded songs**.
+Only that loaded subset is played or enqueued; the app does not claim the full
+playlist is available. Individual playback still resolves current permissions.
