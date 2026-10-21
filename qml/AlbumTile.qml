@@ -14,7 +14,7 @@ Item {
         objectName: tile.actionObjectName
         anchors.fill: cover; hoverEnabled: true; Accessible.name: tile.title
         onClicked: tile.clicked()
-        background: Rectangle { radius: 8; color: parent.down ? "#18000000" : parent.hovered ? "#0affffff" : "transparent"; border.width: parent.activeFocus ? 2 : 0; border.color: AppTheme.focusRing }
+        background: Rectangle { radius: 8; color: parent.down ? "#18000000" : parent.hovered ? "#0affffff" : "transparent"; border.width: parent.visualFocus ? 2 : 0; border.color: AppTheme.focusRing }
     }
     Column {
         anchors.top: cover.bottom; anchors.topMargin: 8; width: parent.width; spacing: 3

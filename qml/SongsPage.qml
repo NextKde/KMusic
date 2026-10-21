@@ -5,6 +5,8 @@ import Kos.Ui
 ColumnLayout {
     id: page
     required property var music
+    property real bottomContentInset: 0
+    readonly property alias reviewList: list
     property var trackModel: music.libraryModel
     property string heading: qsTr("Songs")
     property bool onlineView: false
@@ -18,8 +20,8 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true; Layout.topMargin: 24; Layout.leftMargin: 32; Layout.rightMargin: 32
         Label { text: page.heading; color: AppTheme.text; font.pixelSize: 32; font.weight: Font.Bold; Layout.fillWidth: true }
-        LiquidActionButton { visible: !page.queueView && !page.onlineView; text: qsTr("Import"); onClicked: page.importRequested() }
-        LiquidActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
+        MusicActionButton { visible: !page.queueView && !page.onlineView; text: qsTr("Import"); onClicked: page.importRequested() }
+        MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
     Label { Layout.leftMargin: 32; text: page.trackModel.count + qsTr(" songs"); color: AppTheme.mutedText }
     Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
@@ -28,6 +30,7 @@ ColumnLayout {
         Layout.fillWidth: true; Layout.fillHeight: true; clip: true
         model: page.trackModel
         leftMargin: 24; rightMargin: 24
+        footer: Item { width: list.width; height: page.bottomContentInset }
         ScrollBar.vertical: ScrollBar {}
         delegate: ItemDelegate {
             id: row
@@ -46,7 +49,7 @@ ColumnLayout {
                 else if (page.playlistView) page.music.playPlaylistRow(index)
                 else page.music.playTrack(trackId)
             }
-            background: Rectangle { radius: 6; color: row.hovered ? AppTheme.cardHover : row.index % 2 ? AppTheme.card : "transparent" }
+            background: Rectangle { radius: 6; color: row.hovered ? MusicColors.hoverFill : row.index % 2 ? MusicColors.rowFill : "transparent" }
             contentItem: RowLayout {
                 spacing: 12
                 Label { text: row.index + 1; color: AppTheme.mutedText; Layout.preferredWidth: 22; horizontalAlignment: Text.AlignHCenter }
@@ -58,12 +61,12 @@ ColumnLayout {
                 }
                 Label { text: row.album; color: AppTheme.mutedText; Layout.preferredWidth: Math.max(60, list.width * .17); elide: Text.ElideRight }
                 Label { text: row.durationText; color: AppTheme.mutedText; Layout.preferredWidth: 45 }
-                LiquidActionButton { iconOnly: true;
+                MusicActionButton { iconOnly: true;
                     text: page.queueView ? "−" : "+"; implicitWidth: 34; implicitHeight: 30
                     Accessible.name: page.queueView ? qsTr("Remove from queue") : qsTr("Add to queue")
                     onClicked: { if (page.queueView) page.music.removeQueueRow(row.index); else if (page.onlineView) page.music.enqueueOnlineRow(row.index); else page.music.enqueueTrack(row.trackId) }
                 }
-                LiquidActionButton {
+                MusicActionButton {
                     iconOnly: true
                     visible: !page.queueView; text: "···"; implicitWidth: 34; implicitHeight: 30
                     Accessible.name: page.onlineView ? qsTr("Song details") : qsTr("Add to playlist"); onClicked: { if (page.onlineView) page.detailsRequested(row.index); else page.addToPlaylistRequested(row.trackId) }

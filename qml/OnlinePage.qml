@@ -5,6 +5,7 @@ import Kos.Ui
 ColumnLayout {
     id: page
     required property var music
+    property real bottomContentInset: 0
     property alias queryText: query.text
     function openQualityMenu() { qualitySelect.openMenu() }
     spacing: 12
@@ -16,10 +17,9 @@ ColumnLayout {
             placeholderText: qsTr("Search songs on NetEase")
             onAccepted: page.music.searchOnline(text)
         }
-        LiquidActionButton { text: page.music.onlineSearching ? qsTr("Searching…") : qsTr("Search"); enabled: query.text.trim().length > 0 && !page.music.onlineSearching; onClicked: page.music.searchOnline(query.text) }
-        LiquidSelect {
+        MusicActionButton { text: page.music.onlineSearching ? qsTr("Searching…") : qsTr("Search"); enabled: query.text.trim().length > 0 && !page.music.onlineSearching; onClicked: page.music.searchOnline(query.text) }
+        MusicSelect {
             id: qualitySelect
-            accentColor: AppTheme.accent
             model: ["Standard", "320k", "Lossless"]; materialForm: false; appearanceMode: AppTheme.appearanceMode
             currentIndex: page.music.onlineQuality === "320k" ? 1 : page.music.onlineQuality === "flac" ? 2 : 0
             onActivated: index => page.music.onlineQuality = ["128k", "320k", "flac"][index]
@@ -33,7 +33,7 @@ ColumnLayout {
     }
     SongsPage {
         Layout.fillWidth: true; Layout.fillHeight: true
-        music: page.music; trackModel: page.music.onlineModel; onlineView: true
+        music: page.music; bottomContentInset: page.bottomContentInset; trackModel: page.music.onlineModel; onlineView: true
         heading: qsTr("Online search")
         onDetailsRequested: row => { page.music.requestOnlineDetail(row); details.open() }
     }

@@ -45,6 +45,8 @@ ColumnLayout {
         spacing: 16
         LiquidSegmentedControl {
             id: modeSelector
+            backgroundColor: MusicColors.controlSurface
+            selectionColor: MusicColors.rowFill
             Layout.preferredWidth: 220
             materialForm: false
             labels: [qsTr("Overview"), qsTr("Lyrics")]
@@ -99,7 +101,7 @@ ColumnLayout {
                     text: !page.music.lyricsEnabled ? qsTr("Lyrics off") : page.music.lyricsLoading ? qsTr("Loading lyrics…") : page.music.lyricsError || qsTr("Lyrics unavailable")
                     color: AppTheme.mutedText
                 }
-                LiquidActionButton {
+                MusicActionButton {
                     Layout.alignment: Qt.AlignHCenter
                     visible: page.music.lyricsEnabled && !page.music.lyricsLoading && page.music.currentTrackId >= 0
                     text: qsTr("Retry lyrics")

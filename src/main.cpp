@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
             else if (action == "materialSequence") {
                 const QString control = data.value("control").toString();
                 const QString directory = data.value("directory").toString();
-                if ((control != "switch" && control != "segment" && control != "hero") || !QDir::isAbsolutePath(directory)) return;
+                if ((control != "switch" && control != "segment" && control != "hero" && control != "player") || !QDir::isAbsolutePath(directory)) return;
                 QDir().mkpath(directory);
                 const int index = data.value("index").toInt(1);
                 auto elapsed = std::make_shared<QElapsedTimer>(); elapsed->start();
@@ -119,11 +119,11 @@ int main(int argc, char *argv[]) {
                 // between frames can invalidate static SVG/effect texture caches.
                 auto grabs = std::make_shared<QList<QSharedPointer<QQuickItemGrabResult>>>();
                 auto stateAction = [window, index, control](const QString &state) {
-                    if (control != "hero") {
+                    if (control != "hero" && control != "player") {
                         QMetaObject::invokeMethod(window, "reviewMaterialAction", Q_ARG(QVariant, state), Q_ARG(QVariant, index));
                         return;
                     }
-                    auto *item = findReviewItem(window->contentItem(), "reviewHeroPlay");
+                    auto *item = findReviewItem(window->contentItem(), control == "player" ? "reviewPlayerPlay" : "reviewHeroPlay");
                     if (!item || !item->isVisible() || !item->isEnabled()) return;
                     const bool release = state.endsWith("Release");
                     const QPointF position = release ? QPointF(window->width() - 120, 40)
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
                                 {"stateAtRequest", QJsonDocument::fromJson(state.toString().toUtf8()).object()}});
                             QFile metadata(QDir(directory).filePath("frames.json"));
                             if (metadata.open(QIODevice::WriteOnly)) metadata.write(QJsonDocument(QJsonObject{
-                                {"trigger", control == "hero" ? "actual QtQuick QMouseEvent delivery; release outside button; no system pointer movement" : "shared control state entry; no synthetic pointer or keyboard events"},
+                                {"trigger", (control == "hero" || control == "player") ? "actual QtQuick QMouseEvent delivery; release outside button; no system pointer movement" : "shared control state entry; no synthetic pointer or keyboard events"},
                                 {"pressAtMs", 0}, {"releaseScheduledMs", 200}, {"frames", *frames}}).toJson());
                             if (frames->size() == 8) grabs->clear();
                             writer->deleteLater();
@@ -170,6 +170,29 @@ int main(int argc, char *argv[]) {
             else if (action == "materialReview") {
                 QMetaObject::invokeMethod(window, "reviewMaterialAction",
                     Q_ARG(QVariant, data.value("state").toString()), Q_ARG(QVariant, data.value("index").toInt()));
+            }
+            else if (action == "scroll") {
+                QVariant state;
+                QMetaObject::invokeMethod(window, "reviewScroll", Q_RETURN_ARG(QVariant, state), Q_ARG(QVariant, data.value("fraction").toDouble()));
+                QFile response(QDir(reviewDir).filePath("response.json"));
+                if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument::fromVariant(state).toJson());
+            } else if (action == "focus") {
+                const QString name = data.value("control").toString();
+                if (name == "reviewPlayerPlay" || name == "reviewDiscoverNav") {
+                    if (auto *item = findReviewItem(window->contentItem(), name)) item->forceActiveFocus(Qt::TabFocusReason);
+                }
+            } else if (action == "slider") {
+                const QString name = data.value("control").toString();
+                if (name != "reviewPlayerSeek" && name != "reviewPlayerVolume") return;
+                auto *item = findReviewItem(window->contentItem(), name);
+                if (!item || !item->isVisible() || !item->isEnabled()) return;
+                const qreal fraction = qBound(0., data.value("fraction").toDouble(), 1.);
+                const QPointF position = item->mapToScene(QPointF(11 + fraction * (item->width() - 22), item->height() / 2));
+                for (const auto type : {QEvent::MouseMove, QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
+                    QMouseEvent event(type, position, window->mapToGlobal(position.toPoint()), type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton,
+                        type == QEvent::MouseButtonPress ? Qt::LeftButton : Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
+                }
             }
             else if (action == "activate") window->requestActivate();
             else if (action == "retryLyrics") music.reloadLyrics();
@@ -190,7 +213,7 @@ int main(int argc, char *argv[]) {
                     {"windowVisibility", static_cast<int>(window->visibility())},
                     {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
                     {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
-                    {"durationMs", music.durationMs()}, {"providerStatus", music.providerStatus()},
+                    {"durationMs", music.durationMs()}, {"volume", music.volume()}, {"providerStatus", music.providerStatus()},
                     {"lyricsEnabled", music.lyricsEnabled()}, {"lyricsLoading", music.lyricsLoading()}, {"lyricsCount", music.lyrics().size()},
                     {"lyricsError", music.lyricsError()}, {"lyricRequestCount", music.lyricRequestCount()},
                     {"playbackSession", QJsonObject::fromVariantMap(music.playbackSessionInfo())},

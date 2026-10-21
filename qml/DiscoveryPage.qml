@@ -6,6 +6,7 @@ import Kos.Ui
 ScrollView {
     id: page
     required property var music
+    property real bottomContentInset: 0
     signal importRequested()
     signal onlineRequested()
     signal nowPlayingRequested()
@@ -22,7 +23,7 @@ ScrollView {
         RowLayout {
             Layout.fillWidth: true; Layout.topMargin: 14
             Label { text: qsTr("Discover"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true }
-            LiquidActionButton { text: qsTr("Search music"); implicitHeight: 30; onClicked: page.onlineRequested() }
+            MusicActionButton { text: qsTr("Search music"); implicitHeight: 30; onClicked: page.onlineRequested() }
         }
         ColumnLayout {
             Layout.fillWidth: true; spacing: 6
@@ -74,8 +75,8 @@ ScrollView {
                         Label { text: page.music.providerStatus || page.music.currentAlbum; color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight; ToolTip.text: text; ToolTip.visible: statusHover.hovered; HoverHandler { id: statusHover } }
                         Item { Layout.fillHeight: true }
                         RowLayout {
-                            LiquidActionButton { id: heroPlay; objectName: "reviewHeroPlay"; backdrop: featureBackdrop; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
-                            LiquidActionButton { visible: page.music.currentTrackId > 0; iconOnly: true; iconName: "more"; implicitWidth: 30; implicitHeight: 30; flat: true; onClicked: page.nowPlayingRequested(); Accessible.name: qsTr("Now playing details") }
+                            MusicActionButton { id: heroPlay; objectName: "reviewHeroPlay"; backdrop: featureBackdrop; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
+                            MusicActionButton { visible: page.music.currentTrackId > 0; iconOnly: true; iconName: "more"; implicitWidth: 30; implicitHeight: 30; flat: true; onClicked: page.nowPlayingRequested(); Accessible.name: qsTr("Now playing details") }
                         }
                     }
                 }
@@ -89,7 +90,7 @@ ScrollView {
                 Label { text: qsTr("NetEase · public new albums, not personalized"); color: AppTheme.mutedText; font.pixelSize: 11 }
             }
             Item { Layout.fillWidth: true }
-            LiquidActionButton { text: page.music.discoveryLoading ? qsTr("Loading…") : page.music.discoveryError.length ? qsTr("Retry") : qsTr("Refresh"); implicitHeight: 30; enabled: !page.music.discoveryLoading; onClicked: page.music.reloadDiscovery() }
+            MusicActionButton { text: page.music.discoveryLoading ? qsTr("Loading…") : page.music.discoveryError.length ? qsTr("Retry") : qsTr("Refresh"); implicitHeight: 30; enabled: !page.music.discoveryLoading; onClicked: page.music.reloadDiscovery() }
         }
         Label { visible: page.music.discoveryLoading || page.music.discoveryError.length > 0; text: page.music.discoveryLoading ? qsTr("Loading new albums from NetEase…") : page.music.discoveryError; color: page.music.discoveryError.length ? AppTheme.destructive : AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
         Flickable {
@@ -117,7 +118,7 @@ ScrollView {
         RowLayout {
             Layout.fillWidth: true
             Label { text: qsTr("Albums from your library"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold; Layout.fillWidth: true }
-            LiquidActionButton { text: qsTr("Import music"); implicitHeight: 30; onClicked: page.importRequested() }
+            MusicActionButton { text: qsTr("Import music"); implicitHeight: 30; onClicked: page.importRequested() }
         }
         RowLayout {
             Layout.fillWidth: true; spacing: 18
@@ -133,6 +134,6 @@ ScrollView {
             Item { Layout.fillWidth: true; visible: page.music.albums.length < 4 }
         }
         Label { visible: page.music.albums.length === 0; text: qsTr("No albums yet. Add a music folder to build your library."); color: AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-        Item { implicitHeight: 16 }
+        Item { implicitHeight: 16 + page.bottomContentInset }
     }
 }

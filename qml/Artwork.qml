@@ -13,7 +13,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: root.radius
-        color: AppTheme.withAlpha(AppTheme.accent, AppTheme.dark ? 0.18 : 0.12)
+        color: MusicColors.placeholder
         border.width: 1
         border.color: AppTheme.border
 
@@ -48,7 +48,7 @@ Item {
             anchors.centerIn: parent
             text: root.title.trim().length > 0
                 ? root.title.trim().charAt(0).toUpperCase() : ""
-            color: AppTheme.withAlpha(AppTheme.accent, 0.9)
+            color: MusicColors.icon
             font.pixelSize: Math.max(18, Math.min(parent.width, parent.height) * 0.36)
             font.weight: Font.DemiBold
             visible: image.status !== Image.Ready
