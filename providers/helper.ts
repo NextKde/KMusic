@@ -9,6 +9,7 @@ import lyric from "./netease/modules/lyric_new.ts";
 import albumNew from "./netease/modules/album_new.ts";
 import album from "./netease/modules/album.ts";
 import artists from "./netease/modules/artists.ts";
+import artistAlbum from "./netease/modules/artist_album.ts";
 import playlist from "./netease/modules/playlist_detail.ts";
 
 import qrKey from "./netease/modules/login_qr_key.ts";
@@ -25,7 +26,7 @@ function mergeCookies(lines: string[]) {
   for (const line of lines) Object.assign(session, cookieToJson(line.split(";")[0]));
 }
 function sessionString() { return Object.entries(session).map(([k,v]) => `${k}=${v}`).join("; "); }
-const modules = { search: cloudsearch, detail: songDetail, lyric, album, playlist, newAlbums: albumNew };
+const modules = { artistAlbums: artistAlbum, search: cloudsearch, detail: songDetail, lyric, album, playlist, newAlbums: albumNew };
 const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
 const emit = (data: unknown) => process.stdout.write(JSON.stringify(data) + "\n");
 input.on("line", async (line) => {

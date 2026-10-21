@@ -223,6 +223,22 @@ void MusicController::initialize()
     connect(&m_onlineProvider, &OnlineMusicProvider::newAlbumsReady, this, [this](const QVariantList &albums, const QString &error) {
         m_discoveryLoading = false; m_discoveryError = error; m_discoveryAlbums = albums; emit discoveryChanged();
     });
+    connect(&m_onlineProvider, &OnlineMusicProvider::artistAlbumsReady, this,
+        [this](const QString &id, const QVariantList &albums, int total, bool more, int nextOffset, const QString &error) {
+            if (id != m_artistId) return;
+            m_artistAlbumsLoading = false; m_artistAlbumsError = error;
+            if (error.isEmpty()) {
+                QSet<QString> ids;
+                for (const auto &row : std::as_const(m_artistAlbums)) ids.insert(row.toMap().value("providerId").toString());
+                for (const auto &row : albums) {
+                    const auto albumId = row.toMap().value("providerId").toString();
+                    if (!ids.contains(albumId)) { m_artistAlbums.append(row); ids.insert(albumId); }
+                }
+                if (total > 0) m_artistAlbumsTotal = total;
+                m_artistAlbumsMore = more; m_artistAlbumOffset = nextOffset;
+            }
+            emit onlineAlbumChanged();
+        });
     connect(&m_onlineProvider, &OnlineMusicProvider::albumTracksReady, this,
         [this](const QString &albumId, const QList<TrackRecord> &tracks, const QString &error, const QVariantMap &album) {
             if (albumId != m_onlineAlbum.value("providerId").toString()) return;
@@ -245,6 +261,10 @@ void MusicController::initialize()
                 m_onlineAlbum.insert("trackCount", m_albumTracks.size());
                 if (m_onlineAlbum.value("kind").toString() == "playlist")
                     m_onlineAlbum.insert("partial", m_albumTracks.size() < m_onlineAlbum.value("totalCount").toInt());
+            }
+            if (error.isEmpty() && m_onlineAlbum.value("kind").toString() == "artist" && albumId == m_artistId) {
+                m_artistProfile = m_onlineAlbum; m_artistHotTracks = m_albumTracks;
+                if (m_artistAlbumsTotal == 0) m_artistAlbumsTotal = m_onlineAlbum.value("catalogueAlbumCount").toInt();
             }
             m_albumTracksModel.setTracks(m_albumTracks);
             emit onlineAlbumChanged();
@@ -1964,6 +1984,7 @@ void MusicController::openDiscoveryAlbum(int row)
 {
     if (row < 0 || row >= m_discoveryAlbums.size()) return;
     const auto album = m_discoveryAlbums.at(row).toMap();
+    resetArtistBrowse();
     if (album.value("providerId").toString().isEmpty()) return;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
     m_onlineAlbum = album; m_onlineAlbum.insert("kind", "album"); m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear(); m_albumTracks.clear(); m_albumTracksModel.setSearch({});
@@ -2056,7 +2077,10 @@ void MusicController::openOnlineCollection(int row)
 {
     if (row < 0 || row >= m_onlineCollections.size()) return;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
-    m_onlineAlbum = m_onlineCollections.at(row).toMap(); m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear();
+    resetArtistBrowse();
+    m_onlineAlbum = m_onlineCollections.at(row).toMap();
+    if (m_onlineAlbum.value("kind").toString() == "artist") m_artistId = m_onlineAlbum.value("providerId").toString();
+    m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear();
     m_albumTracks.clear(); m_albumTracksModel.setSearch({}); retryOnlineAlbum();
 }
 
@@ -2066,4 +2090,44 @@ void MusicController::loadMorePlaylistTracks()
         || !m_onlineAlbum.value("hasMore").toBool()) return;
     m_albumLoadingMore = true; m_albumLoadMoreError.clear(); m_albumMessage.clear(); emit onlineAlbumChanged();
     m_onlineProvider.loadPlaylistTracks(m_onlineAlbum.value("providerId").toString(), m_onlineAlbum.value("nextOffset").toInt());
+}
+
+void MusicController::resetArtistBrowse()
+{
+    m_onlineProvider.cancelArtistAlbums();
+    m_artistId.clear(); m_artistProfile.clear(); m_artistHotTracks.clear(); m_artistAlbums.clear();
+    m_artistAlbumsVisible = false; m_artistAlbumsLoading = false; m_artistAlbumsError.clear();
+    m_artistAlbumOffset = 0; m_artistAlbumsTotal = 0; m_artistAlbumsMore = true;
+}
+void MusicController::showArtistAlbums()
+{
+    if (m_onlineAlbum.value("kind").toString() != "artist" || m_albumLoading) return;
+    m_artistAlbumsVisible = true; emit onlineAlbumChanged();
+    if (m_artistAlbums.isEmpty() && !m_artistAlbumsLoading) loadMoreArtistAlbums();
+}
+void MusicController::showArtistPopularSongs()
+{
+    m_artistAlbumsVisible = false; emit onlineAlbumChanged();
+}
+void MusicController::loadMoreArtistAlbums()
+{
+    if (m_artistId.isEmpty() || m_artistAlbumsLoading || !m_artistAlbumsMore) return;
+    m_artistAlbumsLoading = true; m_artistAlbumsError.clear(); emit onlineAlbumChanged();
+    m_onlineProvider.loadArtistAlbums(m_artistId, m_artistAlbumOffset);
+}
+void MusicController::openArtistAlbum(int row)
+{
+    if (row < 0 || row >= m_artistAlbums.size() || m_artistProfile.isEmpty()) return;
+    m_onlineAlbum = m_artistAlbums.at(row).toMap();
+    m_artistAlbumsVisible = false; m_albumLoading = false; m_albumLoadingMore = false;
+    m_albumLoadMoreError.clear(); m_albumTracks.clear(); m_albumTracksModel.setSearch({}); retryOnlineAlbum();
+}
+void MusicController::restoreArtistDetails()
+{
+    if (m_artistProfile.isEmpty()) return;
+    m_onlineProvider.cancelCollectionRequests();
+    m_onlineAlbum = m_artistProfile; m_albumTracks = m_artistHotTracks;
+    m_artistAlbumsVisible = true; m_albumLoading = false; m_albumLoadingMore = false;
+    m_albumError.clear(); m_albumLoadMoreError.clear(); m_albumMessage.clear();
+    m_albumTracksModel.setSearch({}); m_albumTracksModel.setTracks(m_albumTracks); emit onlineAlbumChanged();
 }

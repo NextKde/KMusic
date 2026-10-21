@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
                     {"discoveryFirst", "reviewDiscoveryFirst"}, {"discoverySecond", "reviewDiscoverySecond"},
                     {"account", "reviewAccountButton"}, {"signIn", "reviewAccountGenerate"}, {"cancelSignIn", "reviewAccountCancel"},
                     {"immersivePlay", "reviewImmersivePlay"}, {"nextQueued", "reviewNextQueued"},
-                    {"albumMore", "reviewAlbumMore"}, {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
+                    {"artistAlbums", "reviewArtistAlbums"}, {"artistAlbumsMore", "reviewArtistAlbumsMore"}, {"artistAlbumFirst", "reviewArtistAlbumFirst"}, {"albumBack", "reviewAlbumBack"}, {"albumMore", "reviewAlbumMore"}, {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
                     {"albumSong", "reviewAlbumFirstSong"}, {"albumEnqueue", "reviewAlbumEnqueueFirst"}, {"albumRetry", "reviewAlbumRetry"}
                 };
                 if (!namedControls.contains(control) ||
@@ -242,7 +242,9 @@ int main(int argc, char *argv[]) {
                     {"discoveryError", music.discoveryError()}, {"discoveryPlaying", music.discoveryPlaying()},
                     {"accountState", music.account()->state()}, {"accountQrVisible", !music.account()->qrImage().isEmpty()}, {"accountAuthenticated", music.account()->authenticated()},
                     {"onlineAlbumId", music.onlineAlbum().value("providerId").toString()},
-                    {"artistCatalogueCount", music.onlineAlbum().value("catalogueTrackCount").toInt()}, {"collectionScope", music.onlineAlbum().value("scope").toString()},
+                    {"artistAlbumsCount", music.artistAlbums().size()}, {"artistAlbumsVisible", music.artistAlbumsVisible()}, {"artistAlbumsTotal", music.artistAlbumsTotal()},
+                    {"artistAlbumsMore", music.artistAlbumsMore()}, {"artistAlbumsLoading", music.artistAlbumsLoading()}, {"artistAlbumsError", music.artistAlbumsError()},
+                    {"artistParentAvailable", music.artistParentAvailable()}, {"artistCatalogueCount", music.onlineAlbum().value("catalogueTrackCount").toInt()}, {"collectionScope", music.onlineAlbum().value("scope").toString()},
                     {"collectionKind", music.onlineAlbum().value("kind").toString()}, {"collectionPartial", music.onlineAlbum().value("partial").toBool()},
                     {"collectionTotal", music.onlineAlbum().value("totalCount").toInt()}, {"collectionResults", music.onlineCollections().size()}, {"searchKind", music.onlineSearchKind()},
                     {"albumTracksCount", music.albumTracksModel()->count()}, {"albumLoadedCount", music.onlineAlbum().value("trackCount").toInt()},

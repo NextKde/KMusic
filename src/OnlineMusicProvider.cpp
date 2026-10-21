@@ -130,6 +130,28 @@ void OnlineMusicProvider::searchCollections(const QString &query, const QString 
         emit collectionsReady(rows);
     });
 }
+void OnlineMusicProvider::loadArtistAlbums(const QString &id, int offset) {
+    const auto generation = ++m_artistAlbumGeneration;
+    request("artistAlbums", {{"id", id}, {"offset", offset}, {"limit", 30}}, [this, id, offset, generation](const QJsonObject &response) {
+        if (generation != m_artistAlbumGeneration) return;
+        if (!response.value("ok").toBool()) { emit artistAlbumsReady(id, {}, 0, false, offset, failureText(response)); return; }
+        const auto body = response.value("body").toObject();
+        const auto raw = body.value("hotAlbums").toArray();
+        QVariantList rows;
+        for (const auto &value : raw) {
+            const auto album = value.toObject();
+            const QString artist = joinedArtists(album.value("artists").toArray());
+            rows.append(QVariantMap{{"kind", "album"}, {"providerId", QString::number(album.value("id").toVariant().toLongLong())},
+                {"title", album.value("name").toString()}, {"artwork", album.value("picUrl").toString()},
+                {"artist", artist.isEmpty() ? album.value("artist").toObject().value("name").toString() : artist},
+                {"totalCount", album.value("size").toInt()}, {"source", "NetEase"}});
+        }
+        const int total = body.value("artist").toObject().value("albumSize").toInt();
+        const bool more = body.contains("more") ? body.value("more").toBool() : offset + raw.size() < total;
+        if (raw.isEmpty() && more) { emit artistAlbumsReady(id, {}, total, false, offset, tr("NetEase returned no albums for this batch. Retry.")); return; }
+        emit artistAlbumsReady(id, rows, total, more, offset + raw.size(), {});
+    });
+}
 void OnlineMusicProvider::loadArtistTracks(const QString &id) {
     const auto generation = ++m_albumGeneration;
     request("artistTracks", {{"id", id}}, [this, id, generation](const QJsonObject &response) {

@@ -40,6 +40,13 @@ class MusicController : public QObject {
     Q_PROPERTY(bool albumLoadingMore READ albumLoadingMore NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString albumLoadMoreError READ albumLoadMoreError NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString currentProviderId READ currentProviderId NOTIFY currentTrackChanged)
+    Q_PROPERTY(QVariantList artistAlbums READ artistAlbums NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(bool artistAlbumsVisible READ artistAlbumsVisible NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(bool artistAlbumsLoading READ artistAlbumsLoading NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(QString artistAlbumsError READ artistAlbumsError NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(int artistAlbumsTotal READ artistAlbumsTotal NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(bool artistAlbumsMore READ artistAlbumsMore NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(bool artistParentAvailable READ artistParentAvailable NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QVariantList onlineCollections READ onlineCollections NOTIFY onlineCollectionsChanged)
     Q_PROPERTY(QString onlineSearchKind READ onlineSearchKind WRITE setOnlineSearchKind NOTIFY onlineCollectionsChanged)
     Q_PROPERTY(QVariantList discoveryAlbums READ discoveryAlbums NOTIFY discoveryChanged)
@@ -117,6 +124,18 @@ public:
     QString onlineSearchKind() const { return m_onlineSearchKind; }
     void setOnlineSearchKind(const QString &kind);
     Q_INVOKABLE void openOnlineCollection(int row);
+    QVariantList artistAlbums() const { return m_artistAlbums; }
+    bool artistAlbumsVisible() const { return m_artistAlbumsVisible; }
+    bool artistAlbumsLoading() const { return m_artistAlbumsLoading; }
+    QString artistAlbumsError() const { return m_artistAlbumsError; }
+    int artistAlbumsTotal() const { return m_artistAlbumsTotal; }
+    bool artistAlbumsMore() const { return m_artistAlbumsMore; }
+    bool artistParentAvailable() const { return !m_artistId.isEmpty() && m_onlineAlbum.value("kind").toString() != "artist"; }
+    Q_INVOKABLE void showArtistAlbums();
+    Q_INVOKABLE void showArtistPopularSongs();
+    Q_INVOKABLE void loadMoreArtistAlbums();
+    Q_INVOKABLE void openArtistAlbum(int row);
+    Q_INVOKABLE void restoreArtistDetails();
     TrackListModel *albumTracksModel() { return &m_albumTracksModel; }
     QVariantMap onlineAlbum() const { return m_onlineAlbum; }
     bool albumLoading() const { return m_albumLoading; }
@@ -343,6 +362,14 @@ private:
     QList<TrackRecord> m_albumTracks;
     QVariantMap m_onlineAlbum;
     QVariantList m_onlineCollections;
+    void resetArtistBrowse();
+    QString m_artistId;
+    QVariantMap m_artistProfile;
+    QList<TrackRecord> m_artistHotTracks;
+    QVariantList m_artistAlbums;
+    bool m_artistAlbumsVisible = false, m_artistAlbumsLoading = false, m_artistAlbumsMore = true;
+    QString m_artistAlbumsError;
+    int m_artistAlbumOffset = 0, m_artistAlbumsTotal = 0;
     QString m_onlineSearchKind = "song";
     bool m_albumLoading = false;
     bool m_albumLoadingMore = false;

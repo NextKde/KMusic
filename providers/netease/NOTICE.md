@@ -30,3 +30,5 @@ No additional upstream code or web interface was imported for this adapter.
 Playlist pagination uses the same attributed playlist_detail and song_detail modules. KMusic keeps a bounded in-memory track-ID snapshot and requests successive 200-ID batches; it does not impose a permanent 200-song cap. Session restore/logout clears snapshots.
 
 Artist browsing adds modules/artists.ts from the same fixed SPlayer Next revision (05a4e5929030df21a8448ddb24c77dbd353f974e), adapting only relative .ts import suffixes; original AGPL-3.0 authorship/license retained. cloudsearch type100 searches artists. The artist response is labelled popular songs, not a complete discography.
+
+Artist albums adds modules/artist_album.ts from the same fixed upstream revision, adapting only relative .ts imports and retaining its AGPL license/authorship. Actual hotAlbums/more/artist.albumSize supply list pagination and catalogue metadata; artist popular tracks and albums remain independent browsing models.

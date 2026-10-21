@@ -27,6 +27,9 @@ public:
     void searchCollections(const QString &query, const QString &kind);
     void loadPlaylistTracks(const QString &id, int offset = 0);
     void loadArtistTracks(const QString &id);
+    void loadArtistAlbums(const QString &id, int offset = 0);
+    void cancelArtistAlbums() { ++m_artistAlbumGeneration; }
+    void cancelCollectionRequests() { ++m_albumGeneration; }
     void cancelResolve();
     void loadLyrics(qint64 trackId, const QString &songId);
     void loadDetail(const QString &songId);
@@ -37,6 +40,7 @@ public:
 signals:
     void sessionExpired();
     void searchingChanged();
+    void artistAlbumsReady(const QString &id, const QVariantList &albums, int total, bool more, int nextOffset, const QString &error);
     void collectionsReady(const QVariantList &collections);
     void resultsReady(const QList<TrackRecord> &tracks);
     void errorMessageChanged();
@@ -63,5 +67,6 @@ private:
     quint64 m_lyricGeneration = 0;
     quint64 m_discoveryGeneration = 0;
     quint64 m_albumGeneration = 0;
+    quint64 m_artistAlbumGeneration = 0;
     bool m_searching = false;
 };
