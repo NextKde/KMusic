@@ -28,7 +28,7 @@ ApplicationWindow {
             radius: player.radius, bottomInset: window.playerContentInset }
         state.sidebarSampling = sidebarMaterial.sampling
         state.appBackdropAvailable = appBackdrop.available
-        state.underlay = "actual current track artwork, pure QML"
+        state.underlay = "actual app artwork confined to right content; sidebar is native alpha, unsampled"
         return JSON.stringify(state)
     }
     function reviewScroll(fraction) {
@@ -48,7 +48,7 @@ ApplicationWindow {
     Connections { target: music; function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() } }
     readonly property real playerContentInset: player.height + 32 + (music.errorMessage.length > 0 || music.scanning ? 36 : 0)
     readonly property color shellColor: AppTheme.dark ? "#202326" : "#eff0f1"
-    readonly property color contentColor: AppTheme.dark ? "#2a2d31" : "#e3e5e7"
+    readonly property color contentColor: AppTheme.dark ? "#2a2d31" : "#ffffff"
     font.family: "Inter"; font.pixelSize: 13
     Item {
         id: appCanvas
@@ -60,8 +60,8 @@ ApplicationWindow {
         // This is real current-track artwork inside the app scene, never desktop imagery.
         Item {
             id: artworkUnderlay
-            anchors.fill: parent
-            Rectangle { anchors.fill: parent; color: window.shellColor }
+            x: 236; y: 0; width: parent.width - x; height: parent.height
+            Rectangle { anchors.fill: parent; color: window.contentColor }
             Image {
                 id: currentCoverUnderlay
                 anchors.fill: parent
@@ -78,9 +78,9 @@ ApplicationWindow {
         LiquidSurface {
             id: sidebarMaterial
             width: 236; height: parent.height; radius: 0
-            backdrop: appBackdrop; tintColor: window.shellColor
-            tintStrength: .56; readability: .1; blurStrength: 3
-            reflectionStrength: .25; refractionStrength: 2; magnification: 1.015
+            backdrop: null; tintColor: AppTheme.dark ? "#202326" : "#ffffff"
+            tintStrength: AppTheme.dark ? .76 : .70; readability: 0; blurStrength: 0
+            reflectionStrength: .12; refractionStrength: 0; magnification: 1
         }
         ScrollView {
             id: sidebar
@@ -181,6 +181,15 @@ ApplicationWindow {
                 }
                 OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music }
                 NowPlaying { id: nowPlaying; anchors.fill: parent; anchors.bottomMargin: window.playerContentInset; visible: window.destination === "now"; music: window.music }
+            }
+        }
+        // A soft QML edge, not a compositor blur or copied desktop texture.
+        Rectangle {
+            x: 236; y: 30; width: 7; height: parent.height - y
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: AppTheme.dark ? "#18000000" : "#0b000000" }
+                GradientStop { position: 1; color: "transparent" }
             }
         }
         Rectangle {
