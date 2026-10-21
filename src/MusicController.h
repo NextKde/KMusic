@@ -290,6 +290,7 @@ signals:
     void discoveryChanged();
     void playlistsChanged();
     void preparedPlaylistTrackChanged();
+    void preparedPlaylistTrackSaved();
     void libraryFoldersChanged();
     void scanningChanged();
     void errorMessageChanged();

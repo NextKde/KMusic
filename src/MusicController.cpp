@@ -1289,6 +1289,9 @@ bool MusicController::savePreparedPlaylistTrack(qlonglong playlistId)
     if (!m_ready || !m_preparedPlaylistTrack) return false;
     QString error;
     if (m_database.saveTrackToPlaylist(playlistId, *m_preparedPlaylistTrack, &error) < 0) { setError(error); return false; }
+    // The playlist model refresh can destroy the invoking row delegate. Let the
+    // stable window close its picker before refreshing those delegates.
+    emit preparedPlaylistTrackSaved();
     refreshLibrary();
     return true;
 }

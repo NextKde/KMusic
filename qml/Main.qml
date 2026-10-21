@@ -65,7 +65,11 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+O"; onActivated: folderDialog.open() }
     Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
     Shortcut { sequence: "Ctrl+F"; onActivated: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
-    Connections { target: music; function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() } }
+    Connections {
+        target: music
+        function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
+        function onPreparedPlaylistTrackSaved() { addDialog.close() }
+    }
     readonly property real playerContentInset: player.height + 32 + (music.errorMessage.length > 0 || music.scanning ? 36 : 0)
     readonly property color shellColor: AppTheme.dark ? "#242426" : "#f2f2f4"
     readonly property color contentColor: AppTheme.dark ? "#1c1c1e" : "#ffffff"
@@ -290,7 +294,7 @@ ApplicationWindow {
                     required property int index
                     objectName: index === 0 ? "reviewSavePlaylistFirst" : ""
                     Layout.fillWidth: true; text: modelData.name
-                    onClicked: { if (music.savePreparedPlaylistTrack(modelData.id)) addDialog.close() }
+                    onClicked: music.savePreparedPlaylistTrack(modelData.id)
                 }
             }
         }
