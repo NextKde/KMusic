@@ -11,9 +11,10 @@ The approved project plan is in [docs/ProjectPlan.zh-CN.md](docs/ProjectPlan.zh-
 ## Development milestone
 
 Native Qt Quick music player consuming the pinned `Kos.Ui` module from
-[nextkdeAppDemo](https://github.com/NextKde/nextkdeAppDemo). The first UI milestone
-uses original, explicitly labelled offline editorial art and the existing NextKde
-local library/playback backend. The NetEase page now uses the attributed SPlayer
+[nextkdeAppDemo](https://github.com/NextKde/nextkdeAppDemo). The current whole-home candidate
+uses actual current-track artwork and library albums with an honest empty state,
+a settings-style square shell, and a compact persistent player. The existing
+NextKde local library/playback backend is retained. The NetEase page now uses the attributed SPlayer
 Next request/crypto modules through a plain Node helper: search, song details,
 lyrics and playable URL resolution feed the real GStreamer player. Preview-only,
 unavailable, account and network states are explicit. Login and broader catalogue

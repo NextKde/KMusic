@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
             if (action == "capture") {
                 const QString path = data.value("path").toString();
                 auto result = window->contentItem()->grabToImage();
+                window->update();
                 if (result) QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, reviewDir] {
                     const bool ok = result->saveToFile(path);
                     QFile response(QDir(reviewDir).filePath("response.json"));
@@ -144,6 +145,8 @@ int main(int argc, char *argv[]) {
                 if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
                     {"ok", true}, {"renderer", renderer},
                     {"materialReview", QJsonDocument::fromJson(materialState.toString().toUtf8()).object()},
+                    {"page", window->property("destination").toString()}, {"windowVisible", window->isVisible()},
+                    {"windowVisibility", static_cast<int>(window->visibility())},
                     {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
                     {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
                     {"durationMs", music.durationMs()}, {"providerStatus", music.providerStatus()},
