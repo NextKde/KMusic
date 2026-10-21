@@ -16,6 +16,7 @@ ColumnLayout {
     property Component headerContent: null
     property string emptyMessage: page.queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
     signal detailsRequested(int row)
+    signal saveToPlaylistRequested(int row)
     property bool queueView: false
     property bool playlistView: false
     property double playlistId: -1
@@ -53,7 +54,7 @@ ColumnLayout {
             required property string durationText
             required property string artworkUrl
             required property string providerId
-            objectName: page.albumView && index === 0 ? "reviewAlbumFirstSong" : ""
+            objectName: index === 0 ? (page.albumView ? "reviewAlbumFirstSong" : page.playlistView ? "reviewLocalPlaylistFirstSong" : "") : ""
             width: list.width - 48; x: 24; height: 62
             hoverEnabled: true
             onClicked: {
@@ -80,6 +81,13 @@ ColumnLayout {
                     text: page.queueView ? "−" : "+"; implicitWidth: 34; implicitHeight: 30
                     Accessible.name: page.queueView ? qsTr("Remove from queue") : qsTr("Add to queue")
                     onClicked: { if (page.queueView) page.music.removeQueueRow(row.index); else if (page.albumView) page.music.enqueueAlbumRow(row.index); else if (page.onlineView) page.music.enqueueOnlineRow(row.index); else page.music.enqueueTrack(row.trackId) }
+                }
+                MusicActionButton {
+                    iconOnly: true; iconName: "playlist"; implicitWidth: 30; implicitHeight: 30
+                    objectName: row.index === 0 ? (page.albumView ? "reviewSaveAlbumFirst" : "reviewSaveOnlineFirst") : ""
+                    visible: page.onlineView || page.albumView
+                    Accessible.name: qsTr("Save to local playlist")
+                    onClicked: page.saveToPlaylistRequested(row.index)
                 }
                 MusicActionButton {
                     iconOnly: true

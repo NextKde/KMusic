@@ -16,10 +16,17 @@ ApplicationWindow {
     onDestinationChanged: if (destination !== "now") lastContentDestination = destination
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
-    property double pendingTrack: -1
     readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
     property int sensitiveContentRevision: 0
     onSensitiveContentVisibleChanged: if (sensitiveContentVisible) ++sensitiveContentRevision
+    function openPlaylistPicker(source, rowOrId) { if (music.preparePlaylistTrack(source, rowOrId)) addDialog.open() }
+    function reviewClosePlaylistPicker() { addDialog.reject() }
+    function reviewPlaylistName(text) { newPlaylistName.text = text }
+    function reviewOpenLocalPlaylist(row) {
+        if (row < 0 || row >= music.playlists.length) return
+        const entry = music.playlists[row]; window.selectedPlaylist = entry.id; music.selectPlaylist(entry.id)
+        window.destination = "playlist"; window.pageTitle = entry.name
+    }
     function openAccount() { accountDialog.open() }
     function reviewOnlineSearch(text) { music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
@@ -108,7 +115,7 @@ ApplicationWindow {
                     queueView: window.destination === "queue"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
                     onImportRequested: folderDialog.open()
-                    onAddToPlaylistRequested: trackId => { window.pendingTrack = trackId; addDialog.open() }
+                    onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
                 ScrollView {
                     id: groupScroll
@@ -128,8 +135,8 @@ ApplicationWindow {
                         Item { Layout.preferredHeight: window.playerContentInset; Layout.fillWidth: true }
                     }
                 }
-                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination }
-                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row) }
+                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
+                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row) }
             }
         }
         Rectangle {
@@ -266,15 +273,24 @@ ApplicationWindow {
         onAccepted: { if (playlistName.text.trim()) music.createPlaylist(playlistName.text.trim()); playlistName.text = "" }
     }
     LiquidDialog {
-        id: addDialog; anchors.centerIn: parent; width: 360; modal: true; title: qsTr("Add to playlist"); standardButtons: Dialog.Close
+        id: addDialog; anchors.centerIn: parent; width: 360; modal: true; title: qsTr("Save to local playlist"); standardButtons: Dialog.Close
+        onClosed: music.clearPreparedPlaylistTrack()
         contentItem: ColumnLayout {
-            Label { visible: music.playlists.length === 0; text: qsTr("Create a playlist in the sidebar first."); color: AppTheme.text; wrapMode: Text.WordWrap }
+            Label { text: music.preparedPlaylistTitle; color: AppTheme.text; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+            RowLayout {
+                Layout.fillWidth: true
+                LiquidTextField { id: newPlaylistName; materialForm: true; placeholderText: qsTr("New playlist name"); Layout.fillWidth: true }
+                MusicActionButton { objectName: "reviewCreateLocalPlaylist"; text: qsTr("Create"); enabled: newPlaylistName.text.trim().length > 0; onClicked: { music.createPlaylist(newPlaylistName.text.trim()); newPlaylistName.text = "" } }
+            }
+            Label { visible: music.playlists.length === 0; text: qsTr("Create a playlist above, then choose it to save this song."); color: AppTheme.text; wrapMode: Text.WordWrap }
             Repeater {
                 model: music.playlists
                 delegate: MusicNavigationButton {
                     required property var modelData
+                    required property int index
+                    objectName: index === 0 ? "reviewSavePlaylistFirst" : ""
                     Layout.fillWidth: true; text: modelData.name
-                    onClicked: { music.addTrackToPlaylist(modelData.id, window.pendingTrack); addDialog.close() }
+                    onClicked: { if (music.savePreparedPlaylistTrack(modelData.id)) addDialog.close() }
                 }
             }
         }

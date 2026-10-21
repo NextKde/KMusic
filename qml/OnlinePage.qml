@@ -7,6 +7,7 @@ Item {
     required property var music
     property real bottomContentInset: 0
     signal collectionRequested(int row)
+    signal saveToPlaylistRequested(int row)
     readonly property var reviewList: music.onlineSearchKind === "song" ? songContent.reviewList : collections
     property alias queryText: query.text
     function openQualityMenu() { qualitySelect.openMenu() }
@@ -20,6 +21,7 @@ Item {
         visible: page.music.onlineSearchKind === "song"
         showHeading: false; topContentInset: fixedHeader.height + 12
         music: page.music; bottomContentInset: page.bottomContentInset; trackModel: page.music.onlineModel; onlineView: true
+        onSaveToPlaylistRequested: row => page.saveToPlaylistRequested(row)
         onDetailsRequested: row => { page.music.requestOnlineDetail(row); details.open() }
     }
     CollectionList {

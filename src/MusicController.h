@@ -55,6 +55,7 @@ class MusicController : public QObject {
     Q_PROPERTY(bool discoveryPlaying READ discoveryPlaying NOTIFY discoveryChanged)
     Q_PROPERTY(QVariantList albums READ albums NOTIFY libraryChanged)
     Q_PROPERTY(QVariantList artists READ artists NOTIFY libraryChanged)
+    Q_PROPERTY(QString preparedPlaylistTitle READ preparedPlaylistTitle NOTIFY preparedPlaylistTrackChanged)
     Q_PROPERTY(QVariantList playlists READ playlists NOTIFY playlistsChanged)
     Q_PROPERTY(QStringList libraryFolders READ libraryFolders NOTIFY libraryFoldersChanged)
     Q_PROPERTY(bool ready READ ready NOTIFY readyChanged)
@@ -262,6 +263,10 @@ public:
     void setRepeatMode(const QString &mode);
     void setPlaybackMode(const QString &mode);
 
+    QString preparedPlaylistTitle() const { return m_preparedPlaylistTrack ? m_preparedPlaylistTrack->title : QString{}; }
+    Q_INVOKABLE bool preparePlaylistTrack(const QString &source, qlonglong rowOrId);
+    Q_INVOKABLE bool savePreparedPlaylistTrack(qlonglong playlistId);
+    Q_INVOKABLE void clearPreparedPlaylistTrack();
     Q_INVOKABLE void createPlaylist(const QString &name);
     Q_INVOKABLE void renamePlaylist(qlonglong playlistId, const QString &name);
     Q_INVOKABLE void removePlaylist(qlonglong playlistId);
@@ -284,6 +289,7 @@ signals:
     void onlineAlbumChanged();
     void discoveryChanged();
     void playlistsChanged();
+    void preparedPlaylistTrackChanged();
     void libraryFoldersChanged();
     void scanningChanged();
     void errorMessageChanged();
@@ -421,6 +427,7 @@ private:
     QVariantList m_allAlbums;
     QVariantList m_allArtists;
     QVariantList m_playlists;
+    std::optional<TrackRecord> m_preparedPlaylistTrack;
     QStringList m_libraryFolders;
     QStringList m_scanWarnings;
     QString m_dataPath;

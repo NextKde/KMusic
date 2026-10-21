@@ -1275,6 +1275,28 @@ void MusicController::setOnlineQuality(const QString &quality)
     emit onlineQualityChanged();
 }
 
+bool MusicController::preparePlaylistTrack(const QString &source, qlonglong rowOrId)
+{
+    if (source == "online") m_preparedPlaylistTrack = m_onlineModel.trackAt(int(rowOrId));
+    else if (source == "album") m_preparedPlaylistTrack = m_albumTracksModel.trackAt(int(rowOrId));
+    else if (source == "library") m_preparedPlaylistTrack = findTrack(rowOrId);
+    else m_preparedPlaylistTrack.reset();
+    emit preparedPlaylistTrackChanged();
+    return m_preparedPlaylistTrack.has_value();
+}
+bool MusicController::savePreparedPlaylistTrack(qlonglong playlistId)
+{
+    if (!m_ready || !m_preparedPlaylistTrack) return false;
+    QString error;
+    if (m_database.saveTrackToPlaylist(playlistId, *m_preparedPlaylistTrack, &error) < 0) { setError(error); return false; }
+    refreshLibrary();
+    return true;
+}
+void MusicController::clearPreparedPlaylistTrack()
+{
+    m_preparedPlaylistTrack.reset(); emit preparedPlaylistTrackChanged();
+}
+
 void MusicController::createPlaylist(const QString &name)
 {
     if (!m_ready)

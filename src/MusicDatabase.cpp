@@ -396,6 +396,15 @@ qint64 MusicDatabase::addExternalTrack(const TrackRecord &track, QString *errorM
     return stored ? stored->id : -1;
 }
 
+qint64 MusicDatabase::saveTrackToPlaylist(qint64 playlistId, const TrackRecord &track, QString *errorMessage)
+{
+    if (!m_database.transaction()) { setError(errorMessage, m_database.lastError().text()); return -1; }
+    const qint64 id = track.id >= 0 && this->track(track.id).has_value() ? track.id : addExternalTrack(track, errorMessage);
+    if (id < 0 || !addTrackToPlaylist(playlistId, id, errorMessage)) { m_database.rollback(); return -1; }
+    if (!m_database.commit()) { setError(errorMessage, m_database.lastError().text()); m_database.rollback(); return -1; }
+    return id;
+}
+
 bool MusicDatabase::removeTrack(qint64 trackId, QString *errorMessage)
 {
     QSqlQuery query(m_database);

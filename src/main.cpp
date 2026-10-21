@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
                     {"discoveryFirst", "reviewDiscoveryFirst"}, {"discoverySecond", "reviewDiscoverySecond"},
                     {"account", "reviewAccountButton"}, {"signIn", "reviewAccountGenerate"}, {"cancelSignIn", "reviewAccountCancel"},
                     {"immersivePlay", "reviewImmersivePlay"}, {"nextQueued", "reviewNextQueued"},
-                    {"artistAlbums", "reviewArtistAlbums"}, {"artistAlbumsMore", "reviewArtistAlbumsMore"}, {"artistAlbumFirst", "reviewArtistAlbumFirst"}, {"albumBack", "reviewAlbumBack"}, {"albumMore", "reviewAlbumMore"}, {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
+                    {"saveOnline", "reviewSaveOnlineFirst"}, {"saveAlbum", "reviewSaveAlbumFirst"}, {"savePlaylist", "reviewSavePlaylistFirst"}, {"createLocalPlaylist", "reviewCreateLocalPlaylist"}, {"localPlaylistSong", "reviewLocalPlaylistFirstSong"}, {"artistAlbums", "reviewArtistAlbums"}, {"artistAlbumsMore", "reviewArtistAlbumsMore"}, {"artistAlbumFirst", "reviewArtistAlbumFirst"}, {"albumBack", "reviewAlbumBack"}, {"albumMore", "reviewAlbumMore"}, {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
                     {"albumSong", "reviewAlbumFirstSong"}, {"albumEnqueue", "reviewAlbumEnqueueFirst"}, {"albumRetry", "reviewAlbumRetry"}
                 };
                 if (!namedControls.contains(control) ||
@@ -122,6 +122,12 @@ int main(int argc, char *argv[]) {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "collectionSearch") {
                 QMetaObject::invokeMethod(window, "reviewCollectionSearch", Q_ARG(QVariant, data.value("query").toString()), Q_ARG(QVariant, data.value("kind").toString()));
+            } else if (action == "cancelPlaylistSave") {
+                QMetaObject::invokeMethod(window, "reviewClosePlaylistPicker");
+            } else if (action == "playlistName") {
+                QMetaObject::invokeMethod(window, "reviewPlaylistName", Q_ARG(QVariant, data.value("name").toString()));
+            } else if (action == "localPlaylist") {
+                QMetaObject::invokeMethod(window, "reviewOpenLocalPlaylist", Q_ARG(QVariant, data.value("row").toInt()));
             } else if (action == "albumFilter") {
                 QMetaObject::invokeMethod(window, "reviewAlbumFilter", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playDiscovery") music.playDiscoveryAlbum(data.value("row").toInt());
@@ -242,7 +248,8 @@ int main(int argc, char *argv[]) {
                     {"discoveryError", music.discoveryError()}, {"discoveryPlaying", music.discoveryPlaying()},
                     {"accountState", music.account()->state()}, {"accountQrVisible", !music.account()->qrImage().isEmpty()}, {"accountAuthenticated", music.account()->authenticated()},
                     {"onlineAlbumId", music.onlineAlbum().value("providerId").toString()},
-                    {"artistAlbumsCount", music.artistAlbums().size()}, {"artistAlbumsVisible", music.artistAlbumsVisible()}, {"artistAlbumsTotal", music.artistAlbumsTotal()},
+                    {"localPlaylistCount", music.playlists().size()}, {"localPlaylistTracks", music.playlistTracksModel()->count()}, {"libraryCount", music.libraryModel()->count()},
+                    {"preparedPlaylistTitle", music.preparedPlaylistTitle()}, {"artistAlbumsCount", music.artistAlbums().size()}, {"artistAlbumsVisible", music.artistAlbumsVisible()}, {"artistAlbumsTotal", music.artistAlbumsTotal()},
                     {"artistAlbumsMore", music.artistAlbumsMore()}, {"artistAlbumsLoading", music.artistAlbumsLoading()}, {"artistAlbumsError", music.artistAlbumsError()},
                     {"artistParentAvailable", music.artistParentAvailable()}, {"artistCatalogueCount", music.onlineAlbum().value("catalogueTrackCount").toInt()}, {"collectionScope", music.onlineAlbum().value("scope").toString()},
                     {"collectionKind", music.onlineAlbum().value("kind").toString()}, {"collectionPartial", music.onlineAlbum().value("partial").toBool()},

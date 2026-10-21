@@ -31,6 +31,7 @@ public:
     std::optional<TrackRecord> trackForPath(const QString &path,
                                             QString *errorMessage = nullptr) const;
     qint64 addExternalTrack(const TrackRecord &track, QString *errorMessage = nullptr);
+    qint64 saveTrackToPlaylist(qint64 playlistId, const TrackRecord &track, QString *errorMessage = nullptr);
     bool removeTrack(qint64 trackId, QString *errorMessage = nullptr);
     bool recordPlayed(qint64 trackId, QString *errorMessage = nullptr);
 

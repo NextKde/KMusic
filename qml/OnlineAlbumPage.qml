@@ -8,6 +8,7 @@ Item {
     property real bottomContentInset: 0
     property alias filterText: search.text
     signal backRequested()
+    signal saveToPlaylistRequested(int row)
     readonly property var reviewList: music.artistAlbumsVisible ? artistAlbums : songs.reviewList
     property string displayedAlbumId: ""
     Connections {
@@ -31,6 +32,7 @@ Item {
         music: page.music; trackModel: page.music.albumTracksModel
         showHeading: false; albumView: true; bottomContentInset: page.bottomContentInset
         emptyMessage: page.music.albumLoading ? (page.artistView ? qsTr("Loading popular songs…") : page.playlistView ? qsTr("Loading playlist…") : qsTr("Loading album…")) : page.music.albumError || (search.text.length ? qsTr("No matching songs") : qsTr("No songs available"))
+        onSaveToPlaylistRequested: row => page.saveToPlaylistRequested(row)
         visible: !page.music.artistAlbumsVisible
         headerContent: detailHeader
     }
