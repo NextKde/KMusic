@@ -67,4 +67,4 @@ Previous component checks do not establish whole-app design acceptance.
 
 The next gate is one coherent, running 1280×800 main window, with a 1024×640 layout check: kos-settings exterior, music sidebar/content/player proportions, consistent vector icons and Forma details. Use genuine source-backed music/artwork or honest empty states. Remove repetitive abstract fixture covers and ad hoc text-symbol icons. Preserve the existing source, playback, preview and lyrics work. General visual fixes still belong in the shared library and require Gallery regression.
 
-Automatic polling remains paused. Run the bounded runtime review only in the VM, following the latest user instructions. Publish only genuine evidence with its actual source/runtime identity; do not claim whole-app acceptance.
+Automatic polling remains paused. Run this bounded review locally in dedicated App / Gallery windows, following the latest explicit user authorization. Publish only genuine evidence with its actual source/runtime identity; do not claim whole-app acceptance.
