@@ -29,6 +29,11 @@ establish whole-app acceptance.
 - The user requires at least a 30% height reduction: reduce the 76px candidate to
   52px (about 31.6%), scaling artwork, icons, type and padding together while
   preserving the supplied internal order and thin middle-region seek track.
+- The user clarified shell colors and transparency: the light content pane is
+  white, while the sidebar must actually reveal the desktop through window alpha.
+  Remove opaque ancestors and cover imagery behind the sidebar; keep text opaque.
+  Do not request native/KWin blur. QML shadows soften boundaries, not external
+  desktop pixels. Playback glass continues sampling actual in-window page content.
 - Review light/dark appearances at 1280×800 and 1024×640, including spacing,
   readability, final-item reachability, playback, seeking and volume. Regress any
   compatible shared-control interfaces in Gallery.
