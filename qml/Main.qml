@@ -7,7 +7,7 @@ import Kos.Ui
 ApplicationWindow {
     id: window
     required property var music
-    width: 1280; height: 800; minimumWidth: 1024; minimumHeight: 640
+    width: 1100; height: 680; minimumWidth: 1024; minimumHeight: 640
     visible: true; title: "KMusic"; color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
     property string destination: "new"
@@ -68,7 +68,7 @@ ApplicationWindow {
             id: sidebarMaterial
             width: 236; height: parent.height; radius: 0
             backdrop: null; tintColor: AppTheme.dark ? "#202326" : "#ffffff"
-            tintStrength: AppTheme.dark ? .76 : .70; readability: 0; blurStrength: 0
+            tintStrength: .95; readability: 0; blurStrength: 0
             reflectionStrength: .12; refractionStrength: 0; magnification: 1
         }
         ScrollView {
