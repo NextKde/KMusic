@@ -69,10 +69,13 @@ int main(int argc, char *argv[]) {
                     return;
                 }
                 const QString path = data.value("path").toString();
+                const int privacyRevision = window->property("sensitiveContentRevision").toInt();
                 auto result = window->contentItem()->grabToImage();
                 window->update();
-                if (result) QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, reviewDir] {
-                    const bool ok = result->saveToFile(path);
+                if (result) QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, path, reviewDir, window, privacyRevision] {
+                    const bool privacyBlocked = window->property("sensitiveContentVisible").toBool()
+                        || window->property("sensitiveContentRevision").toInt() != privacyRevision;
+                    const bool ok = !privacyBlocked && result->saveToFile(path);
                     QFile response(QDir(reviewDir).filePath("response.json"));
                     if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{{"ok", ok}, {"path", path}}).toJson());
                 });
@@ -81,9 +84,9 @@ int main(int argc, char *argv[]) {
                 // restricted to named product controls; never moves the system cursor.
                 const QString control = data.value("control").toString();
                 const QString state = data.value("state").toString();
-                if ((control != "hero" && control != "player" && control != "discoveryFirst" && control != "volume" && control != "account" && control != "signIn" && control != "cancelSignIn") ||
+                if ((control != "hero" && control != "player" && control != "discoveryFirst" && control != "volume" && control != "account" && control != "signIn" && control != "cancelSignIn" && control != "immersivePlay" && control != "nextQueued") ||
                     (state != "hover" && state != "press" && state != "cancel" && state != "click")) return;
-                auto *item = findReviewItem(window->contentItem(), control == "account" ? "reviewAccountButton" : control == "signIn" ? "reviewAccountGenerate" : control == "cancelSignIn" ? "reviewAccountCancel" : control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : control == "volume" ? "reviewPlayerVolumeButton" : "reviewDiscoveryFirst");
+                auto *item = findReviewItem(window->contentItem(), control == "immersivePlay" ? "reviewImmersivePlay" : control == "nextQueued" ? "reviewNextQueued" : control == "account" ? "reviewAccountButton" : control == "signIn" ? "reviewAccountGenerate" : control == "cancelSignIn" ? "reviewAccountCancel" : control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : control == "volume" ? "reviewPlayerVolumeButton" : "reviewDiscoveryFirst");
                 if (!item || !item->isVisible() || !item->isEnabled()) {
                     QFile response(QDir(reviewDir).filePath("response.json"));
                     if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
@@ -189,11 +192,11 @@ int main(int argc, char *argv[]) {
                 }
             } else if (action == "slider") {
                 const QString name = data.value("control").toString();
-                if (name != "reviewPlayerSeek" && name != "reviewPlayerVolume") return;
+                if (name != "reviewPlayerSeek" && name != "reviewPlayerVolume" && name != "reviewImmersiveSeek") return;
                 auto *item = findReviewItem(window->contentItem(), name);
                 if (!item || !item->isVisible() || !item->isEnabled()) return;
                 const qreal fraction = qBound(0., data.value("fraction").toDouble(), 1.);
-                const QPointF position = item->mapToScene(QPointF(11 + fraction * (item->width() - 22), item->height() / 2));
+                const QPointF position = item->mapToScene(QPointF(item->property("edgeInset").toDouble() + fraction * (item->width() - 2 * item->property("edgeInset").toDouble()), item->height() / 2));
                 for (const auto type : {QEvent::MouseMove, QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
                     QMouseEvent event(type, position, window->mapToGlobal(position.toPoint()), type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton,
                         type == QEvent::MouseButtonPress ? Qt::LeftButton : Qt::NoButton, Qt::NoModifier);

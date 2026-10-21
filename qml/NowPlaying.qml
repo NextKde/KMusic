@@ -164,6 +164,7 @@ Item {
                 delegate: ItemDelegate {
                     id: queueRow
                     required property int index
+                    objectName: index === page.music.queueIndex + 1 ? "reviewNextQueued" : ""
                     required property string title
                     required property string artist
                     required property string album

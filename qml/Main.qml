@@ -17,6 +17,8 @@ ApplicationWindow {
     property double selectedPlaylist: -1
     property double pendingTrack: -1
     readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
+    property int sensitiveContentRevision: 0
+    onSensitiveContentVisibleChanged: if (sensitiveContentVisible) ++sensitiveContentRevision
     function openAccount() { accountDialog.open() }
     function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
