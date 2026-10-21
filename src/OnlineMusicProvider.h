@@ -31,6 +31,8 @@ public:
     void cancelArtistAlbums() { ++m_artistAlbumGeneration; }
     void cancelCollectionRequests() { ++m_albumGeneration; }
     void cancelResolve();
+    int ignoredResolveReplies() const { return m_ignoredResolveReplies; }
+    int ignoredResolveSuccesses() const { return m_ignoredResolveSuccesses; }
     void loadLyrics(qint64 trackId, const QString &songId);
     void loadDetail(const QString &songId);
     void loadNewAlbums();
@@ -69,4 +71,5 @@ private:
     quint64 m_albumGeneration = 0;
     quint64 m_artistAlbumGeneration = 0;
     bool m_searching = false;
+    int m_ignoredResolveReplies = 0, m_ignoredResolveSuccesses = 0;
 };

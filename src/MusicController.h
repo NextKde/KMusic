@@ -468,6 +468,7 @@ private:
     qint64 m_loadedTrackId = -1;
     qint64 m_resumePositionMs = 0;
     bool m_playWhenReady = true;
+    bool m_pausedPreparation = false;
     bool m_lyricsEnabled = true;
     bool m_usingCachedAudio = false;
     bool m_preparationFailed = false;

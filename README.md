@@ -135,3 +135,5 @@ Online song rows and collection-detail songs offer **Save to local playlist**. O
 **Local favorites** are stored only in the local music database (schema 3). Heart actions on song rows and Now Playing explicitly add/remove a local favorite; online metadata is stored only when adding. Removing a favorite keeps the song, playlists and playback queue. The sidebar shows actual local favorites after restart. This does not read or synchronize the NetEase account liked-song list.
 
 **Recently played** is local history recorded only after the audio engine enters Playing, once per loaded playback attempt. Source URL resolution/loading, browsing and permission failures do not add history. Each song has one entry ordered by its last successful start; it survives restart and explicit online replay resolves current permissions again. Schema 4 starts a confirmed history table rather than reclassifying older load-time timestamps as verified playback.
+
+Pausing while a playback URL is still resolving invalidates that attempt. Late URL/error responses cannot start playback or replace the paused state; an explicit resumed play resolves again.

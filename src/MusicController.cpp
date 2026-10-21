@@ -577,6 +577,8 @@ QString MusicController::playbackState() const
 {
     if (m_preparationFailed)
         return QStringLiteral("Error");
+    if (m_pausedPreparation)
+        return QStringLiteral("Paused");
     if (m_resolvingTrackId >= 0)
         return m_playWhenReady ? QStringLiteral("Loading") : QStringLiteral("Paused");
     if (m_loadedTrackId != currentTrackId() && m_resumePositionMs > 0)
@@ -1141,6 +1143,17 @@ void MusicController::pause()
 {
     if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     m_playWhenReady = false;
+    if (m_resolvingTrackId >= 0) {
+        const auto savedPosition = positionMs();
+        cancelRecovery();
+        if (m_sourceService) m_sourceService->cancelResolves();
+        m_resolvingTrackId = -1;
+        m_resumePositionMs = savedPosition;
+        m_pausedPreparation = true;
+        const auto track = findTrack(currentTrackId());
+        if (track && track->source == QLatin1String("netease")) m_providerStatus = tr("NetEase · paused");
+        emit playbackStatusChanged();
+    }
     m_skipTimer.stop();
     m_attemptTimeout.stop();
     m_trackTimeout.stop();
@@ -1163,6 +1176,7 @@ void MusicController::stop()
     if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     cancelRecovery();
     m_playWhenReady = false;
+    m_pausedPreparation = false;
     m_failedTracks.clear();
     m_preparationFailed = false;
     m_resolvingTrackId = -1;
@@ -1791,6 +1805,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     m_attemptName.clear();
     m_sourceCandidates.clear();
     m_preparationFailed = false;
+    m_pausedPreparation = false;
     m_sourceService->cancelResolves();
     m_loadedTrackId = -1;
     m_resumePositionMs = std::max<qint64>(0, startPositionMs);
@@ -2058,6 +2073,8 @@ QVariantMap MusicController::playbackSessionInfo() const
             {"lastStreamDurationMs", matches ? m_streamDurationMs : 0},
             {"providerResolveRequests", m_providerResolveRequests},
             {"providerResolutions", m_providerResolutions},
+            {"ignoredResolveReplies", m_onlineProvider.ignoredResolveReplies()},
+            {"ignoredResolveSuccesses", m_onlineProvider.ignoredResolveSuccesses()},
             {"engineLoadRequests", m_engineLoadRequests},
             {"engineLoaded", m_loadedTrackId >= 0 && m_loadedTrackId == currentTrackId()},
             {"engineHasSource", !m_engine.source().isEmpty()}};

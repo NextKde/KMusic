@@ -181,7 +181,11 @@ void OnlineMusicProvider::resolve(qint64 trackId, const QString &songId, const Q
     const auto generation = ++m_resolveGeneration;
     const QString level = quality == "flac" || quality == "flac24bit" ? "lossless" : quality == "320k" ? "exhigh" : "standard";
     request("resolve", {{"songId", songId}, {"level", level}}, [this, generation, trackId](const QJsonObject &response) {
-        if (generation != m_resolveGeneration) return;
+        if (generation != m_resolveGeneration) {
+            ++m_ignoredResolveReplies;
+            if (response.value("ok").toBool()) ++m_ignoredResolveSuccesses;
+            return;
+        }
         if (!response.value("ok").toBool()) { emit resolveFailed(trackId, failureText(response)); return; }
         const auto body = response.value("body").toObject();
         const QUrl url(body.value("url").toString());
