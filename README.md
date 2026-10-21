@@ -1,8 +1,8 @@
 # KMusic progress
 
-Updated: 2026-10-21T22:15:23.747452+08:00
+Updated: 2026-10-21T22:20:11.846245+08:00
 
-Runtime `4ddb3f51` · shared `96ff101` · native Qt/QML, local rendering
+Runtime `7be94946` · shared `96ff101` · native Qt/QML, local rendering
 
 - Available: QR login UI/session lifecycle, real search/play/pause/next/seek and lyrics; human phone scan and authenticated persistence still require user acceptance.
 - Current player fix: local metadata readability plate; optical background kept at panel sides. No second scene capture added.
@@ -10,12 +10,12 @@ Runtime `4ddb3f51` · shared `96ff101` · native Qt/QML, local rendering
 - New candidate: real album detail browsing with independent track model and explicit play/queue actions. Browsing did not alter queue or start playback; real helper interruption showed an error, Retry restored 20 tracks; actual album/single enqueue kept playback paused; Play album and track-row playback advanced real audio. Search filtering and error Retry checked. Fixed toolbar samples the opaque real page scene.
 - Design: immersive left playback/right real queue, plain content buttons, fixed liquid overlays. Final visual acceptance belongs to user.
 
-![Current capture](screenshots/round-20261021-2214/current.png)
+![Current capture](screenshots/round-20261021-2219/current.png)
 
-[Exact capture metadata](screenshots/round-20261021-2214/metadata.json)
+[Exact capture metadata](screenshots/round-20261021-2219/metadata.json)
 
 ![Current-track readability, light](screenshots/round-20261021-212941/panel-light.png)
 
 ![Current-track readability, dark](screenshots/round-20261021-212941/panel-dark.png)
 
-- Source candidate `7be9494` adds real playlist/album search and loaded/total reporting; build completed, local UI checks pending. Captured runtime remains `4ddb3f5`.
+- Real playlist/album search, detail, loaded-song enqueue/play and failure Retry checked locally on `7be9494`. Current playlist loads 200/836 tracks and explicitly labels partial data; load-more support is next.
