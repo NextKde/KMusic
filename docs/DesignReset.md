@@ -19,6 +19,13 @@ establish whole-app acceptance.
 - Extend content behind the panel and add enough scroll-end space to bring the
   final item fully above it. The square outer window does not prohibit rounded
   floating playback controls.
+- The user's subsequent screenshot directly defines the internal order: shuffle,
+  previous, play/pause, next and repeat on the left; artwork and two metadata lines
+  in the middle, with a thin seek track along that region's lower edge; actual
+  preview status, queue list and a volume entry on the right. Open volume on demand,
+  omit a separate Now Playing button, and do not move transport to the middle.
+  Use a capsule outline and eliminate discrete blur replicas and repeated
+  refraction; inspect actual motion frames.
 - Review light/dark appearances at 1280×800 and 1024×640, including spacing,
   readability, final-item reachability, playback, seeking and volume. Regress any
   compatible shared-control interfaces in Gallery.
