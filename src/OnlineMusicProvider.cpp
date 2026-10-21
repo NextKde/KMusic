@@ -54,6 +54,10 @@ void OnlineMusicProvider::request(const QString &action, const QJsonObject &para
         m_process.setProgram(node);
         m_process.setArguments({QStringLiteral("--experimental-strip-types"), helper});
         m_process.start();
+        // The child may restart after a transport/process failure. Restore its
+        // private session before queued requests; id0 has no public callback.
+        m_process.write(QJsonDocument(QJsonObject{{"id", 0}, {"action", "sessionRestore"},
+            {"params", QJsonObject{{"cookie", m_sessionCookie}}}}).toJson(QJsonDocument::Compact) + '\n');
     }
     const qint64 id = ++m_sequence;
     m_pending.insert(id, std::move(callback));
@@ -74,6 +78,9 @@ void OnlineMusicProvider::readOutput() {
         const auto data = QJsonDocument::fromJson(line).object();
         const auto id = data.value("id").toVariant().toLongLong();
         if (!m_pending.contains(id)) continue;
+        const auto accountBody = data.value("body").toObject();
+        if (data.value("ok").toBool() && !accountBody.value("sessionCookie").toString().isEmpty())
+            m_sessionCookie = accountBody.value("sessionCookie").toString();
         if (data.value("sessionExpired").toBool()) emit sessionExpired();
         const auto done = m_pending.take(id); done(data);
     }
@@ -175,13 +182,13 @@ void OnlineMusicProvider::loadAlbumTracks(const QString &albumId) {
     const quint64 generation = ++m_albumGeneration;
     request("album", {{"id", albumId}}, [this, albumId, generation](const QJsonObject &response) {
         if (generation != m_albumGeneration) return;
-        if (!response.value("ok").toBool()) { emit albumTracksReady(albumId, {}, failureText(response)); return; }
+        if (!response.value("ok").toBool()) { emit albumTracksReady(albumId, {}, failureText(response), {}); return; }
         const auto body = response.value("body").toObject();
         const QJsonObject adapted{{"code", body.value("code")}, {"result", QJsonObject{{"songs", body.value("songs")}}}};
         QString error;
         auto tracks = parseNeteaseSearch(QJsonDocument(adapted).toJson(), &error);
         // A catalogue response is not playback permission; resolution stays fresh.
-        tracks = tracks.mid(0, 100);
+        // Keep the response order and complete track list for album playback.
         const auto album = body.value("album").toObject();
         QString albumArtist = joinedArtists(album.value("artists").toArray());
         if (albumArtist.isEmpty()) albumArtist = album.value("artist").toObject().value("name").toString();
@@ -191,6 +198,9 @@ void OnlineMusicProvider::loadAlbumTracks(const QString &albumId) {
             if (track.artworkUrl.isEmpty()) track.artworkUrl = album.value("picUrl").toString();
         }
         if (tracks.isEmpty() && error.isEmpty()) error = tr("No playable tracks listed for this album.");
-        emit albumTracksReady(albumId, tracks, error);
+        emit albumTracksReady(albumId, tracks, error,
+            {{"providerId", albumId}, {"title", album.value("name").toString()}, {"artist", albumArtist},
+             {"artwork", album.value("picUrl").toString()}, {"publishTime", album.value("publishTime").toVariant()},
+             {"description", album.value("description").toString()}, {"trackCount", tracks.size()}, {"source", "NetEase"}});
     });
 }

@@ -97,10 +97,13 @@ session confirmation facts for targeted restart/resume checks.
 
 Discover loads eight public new albums from the pinned SPlayer NetEase
 `album_new` adapter. Loading, provider failure and Retry are explicit; the list
-is not personalized and never starts audio automatically. Selecting an album
-loads its real tracks and uses fresh playback URL/preview validation through the
-existing player. Selecting another track, pause or stop cancels a pending album
-selection. Account/rights restrictions can still prevent playback.
+is not personalized and never starts audio automatically. Clicking an album cover
+opens its actual metadata and song list without changing playback or saving songs.
+Use Play album, an individual row, or Add to queue to act explicitly. The toolbar
+stays above the real scrolling content; Find in album filters the loaded songs.
+The small play action on a cover is a direct album-play shortcut. Actual playback
+always resolves a fresh address; account/rights restrictions may still limit it
+to a preview or prevent playback.
 
 ### NetEase sign-in
 

@@ -38,9 +38,10 @@ ApplicationWindow {
         state.underlay = "single real contentScene; original hidden, raw right proxy plus sampled sidebar"
         return JSON.stringify(state)
     }
+    function reviewOnlineAlbum(row) { music.openDiscoveryAlbum(row); destination = "onlineAlbum" }
     function reviewReleaseScroll(fraction) { return discover.scrollReleaseReview(fraction) }
     function reviewScroll(fraction) {
-        const view = window.destination === "new" ? discover.contentItem : songsPage.reviewList
+        const view = window.destination === "new" ? discover.contentItem : window.destination === "onlineAlbum" ? albumPage.reviewList : window.destination === "online" ? onlinePage.reviewList : songsPage.reviewList
         view.contentY = Math.max(0, view.contentHeight - view.height) * Math.max(0, Math.min(1, fraction))
         return JSON.stringify({ contentY: view.contentY, contentHeight: view.contentHeight, viewportHeight: view.height,
             bottomInset: window.playerContentInset })
@@ -91,6 +92,7 @@ ApplicationWindow {
                     visible: window.destination === "new"; music: window.music
                     onImportRequested: folderDialog.open()
                     onOnlineRequested: window.navigate("online", qsTr("Online search"))
+                    onOnlineAlbumRequested: row => window.reviewOnlineAlbum(row)
                     onNowPlayingRequested: window.destination = "now"
                     onAlbumRequested: (filter, title) => { window.music.setLibraryView("album", filter); window.pageTitle = title; window.destination = "detail" }
                 }
@@ -122,6 +124,7 @@ ApplicationWindow {
                         Item { Layout.preferredHeight: window.playerContentInset; Layout.fillWidth: true }
                     }
                 }
+                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = "new" }
                 OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music }
             }
         }

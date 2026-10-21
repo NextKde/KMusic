@@ -10,6 +10,7 @@ ScrollView {
     property real sidebarUnderlap: 0
     signal importRequested()
     signal onlineRequested()
+    signal onlineAlbumRequested(int row)
     signal nowPlayingRequested()
     signal albumRequested(string filter, string title)
     contentWidth: availableWidth; clip: true
@@ -115,14 +116,16 @@ ScrollView {
                     delegate: AlbumTile {
                         required property var modelData
                         required property int index
-                        actionObjectName: index === 0 ? "reviewDiscoveryFirst" : ""
+                        actionObjectName: index === 0 ? "reviewDiscoveryFirst" : index === 1 ? "reviewDiscoverySecond" : ""
                         width: 128; title: modelData.title; subtitle: modelData.artist; artwork: modelData.artwork
-                        onClicked: page.music.playDiscoveryAlbum(index)
+                        showPlayAction: true
+                        onClicked: page.onlineAlbumRequested(index)
+                        onPlayRequested: page.music.playDiscoveryAlbum(index)
                     }
                 }
             }
         }
-        Label { visible: page.music.discoveryAlbums.length > 0; text: page.music.discoveryPlaying ? qsTr("Loading album tracks…") : qsTr("Select an album to play. Preview and account restrictions may apply."); color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+        Label { visible: page.music.discoveryAlbums.length > 0; text: page.music.discoveryPlaying ? qsTr("Loading album tracks…") : qsTr("Open an album to browse its songs. Playback restrictions may apply."); color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         RowLayout {
             Layout.fillWidth: true
             Label { text: qsTr("Albums from your library"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold; Layout.fillWidth: true }

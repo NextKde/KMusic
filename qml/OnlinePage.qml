@@ -6,6 +6,7 @@ Item {
     id: page
     required property var music
     property real bottomContentInset: 0
+    readonly property alias reviewList: songContent.reviewList
     property alias queryText: query.text
     function openQualityMenu() { qualitySelect.openMenu() }
     SongsPage {

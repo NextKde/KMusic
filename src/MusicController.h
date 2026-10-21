@@ -32,6 +32,12 @@ class MusicController : public QObject {
     Q_PROPERTY(TrackListModel *queueModel READ queueModel CONSTANT)
     Q_PROPERTY(TrackListModel *playlistTracksModel READ playlistTracksModel CONSTANT)
     Q_PROPERTY(TrackListModel *onlineModel READ onlineModel CONSTANT)
+    Q_PROPERTY(TrackListModel *albumTracksModel READ albumTracksModel CONSTANT)
+    Q_PROPERTY(QVariantMap onlineAlbum READ onlineAlbum NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(bool albumLoading READ albumLoading NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(QString albumError READ albumError NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(QString albumMessage READ albumMessage NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(QString currentProviderId READ currentProviderId NOTIFY currentTrackChanged)
     Q_PROPERTY(QVariantList discoveryAlbums READ discoveryAlbums NOTIFY discoveryChanged)
     Q_PROPERTY(bool discoveryLoading READ discoveryLoading NOTIFY discoveryChanged)
     Q_PROPERTY(QString discoveryError READ discoveryError NOTIFY discoveryChanged)
@@ -103,6 +109,18 @@ public:
     TrackListModel *queueModel();
     TrackListModel *playlistTracksModel();
     TrackListModel *onlineModel();
+    TrackListModel *albumTracksModel() { return &m_albumTracksModel; }
+    QVariantMap onlineAlbum() const { return m_onlineAlbum; }
+    bool albumLoading() const { return m_albumLoading; }
+    QString albumError() const { return m_albumError; }
+    QString albumMessage() const { return m_albumMessage; }
+    QString currentProviderId() const;
+    Q_INVOKABLE void openDiscoveryAlbum(int row);
+    Q_INVOKABLE void retryOnlineAlbum();
+    Q_INVOKABLE void playOnlineAlbum();
+    Q_INVOKABLE void playOnlineAlbumRow(int row);
+    Q_INVOKABLE void enqueueOnlineAlbum();
+    Q_INVOKABLE void enqueueAlbumRow(int row);
     QVariantList discoveryAlbums() const { return m_discoveryAlbums; }
     bool discoveryLoading() const { return m_discoveryLoading; }
     QString discoveryError() const { return m_discoveryError; }
@@ -232,6 +250,7 @@ public:
 signals:
     void readyChanged();
     void libraryChanged();
+    void onlineAlbumChanged();
     void discoveryChanged();
     void playlistsChanged();
     void libraryFoldersChanged();
@@ -295,6 +314,7 @@ private:
     void persistPlaybackPosition();
     QString audioCacheKey(const TrackRecord &track) const;
     qint64 storeOnlineTrack(int row);
+    QList<qint64> storeAlbumTracks();
     void advance(bool fromEndOfStream);
     QList<TrackRecord> tracksForIds(const QList<qint64> &ids) const;
     std::optional<TrackRecord> findTrack(qint64 id) const;
@@ -307,6 +327,11 @@ private:
     TrackListModel m_queueModel;
     TrackListModel m_playlistTracksModel;
     TrackListModel m_onlineModel;
+    TrackListModel m_albumTracksModel;
+    QList<TrackRecord> m_albumTracks;
+    QVariantMap m_onlineAlbum;
+    bool m_albumLoading = false;
+    QString m_albumError, m_albumMessage;
     OnlineMusicProvider m_onlineProvider;
     AccountController m_account;
     QString m_onlineQuality = QStringLiteral("128k");

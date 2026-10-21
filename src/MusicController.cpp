@@ -66,6 +66,7 @@ MusicController::MusicController(QObject *parent)
     , m_queueModel(this)
     , m_playlistTracksModel(this)
     , m_onlineModel(this)
+    , m_albumTracksModel(this)
     , m_onlineProvider(this)
     , m_account(&m_onlineProvider, this)
     , m_scanWatcher(this)
@@ -73,6 +74,7 @@ MusicController::MusicController(QObject *parent)
     m_queueModel.setMode(QStringLiteral("queue"));
     m_playlistTracksModel.setMode(QStringLiteral("queue"));
     m_onlineModel.setMode(QStringLiteral("queue"));
+    m_albumTracksModel.setMode(QStringLiteral("queue"));
     connect(&m_scanWatcher, &QFutureWatcher<ScanResult>::finished,
             this, &MusicController::scanFinished);
     connect(&m_engine, &PlaybackEngine::stateChanged,
@@ -206,7 +208,7 @@ void MusicController::initialize()
         if (!track || track->source != QLatin1String("netease")) return;
         cancelRecovery(); m_engine.stop(); m_loadedTrackId = -1; m_resolvingTrackId = -1;
         m_playWhenReady = false; m_streamAvailabilityConfirmed = false;
-        m_providerStatus = tr("Account changed · press play to recheck availability");
+        m_providerStatus = tr("NetEase · account updated");
         emit playbackStateChanged(); emit playbackStatusChanged(); emit seekableChanged();
     });
     connect(&m_onlineProvider, &OnlineMusicProvider::searchingChanged,
@@ -219,19 +221,18 @@ void MusicController::initialize()
         m_discoveryLoading = false; m_discoveryError = error; m_discoveryAlbums = albums; emit discoveryChanged();
     });
     connect(&m_onlineProvider, &OnlineMusicProvider::albumTracksReady, this,
-        [this](const QString &albumId, const QList<TrackRecord> &tracks, const QString &error) {
-            if (albumId != m_pendingDiscoveryAlbum) return;
-            m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
-            if (!error.isEmpty()) { setError(error); return; }
-            QList<qint64> ids;
-            for (const auto &track : tracks) {
-                QString failure;
-                const auto id = m_database.addExternalTrack(track, &failure);
-                if (id < 0) { setError(failure); return; }
-                ids.append(id);
+        [this](const QString &albumId, const QList<TrackRecord> &tracks, const QString &error, const QVariantMap &album) {
+            if (albumId != m_onlineAlbum.value("providerId").toString()) return;
+            m_albumLoading = false; m_albumError = error; m_albumTracks = tracks;
+            if (error.isEmpty()) {
+                for (auto it = album.cbegin(); it != album.cend(); ++it)
+                    if (it.value().isValid() && !it.value().toString().isEmpty()) m_onlineAlbum.insert(it.key(), it.value());
             }
-            if (ids.isEmpty()) return;
-            refreshLibrary(); setQueue(ids, 0); startCurrentTrack();
+            m_albumTracksModel.setTracks(tracks);
+            emit onlineAlbumChanged();
+            const bool playRequested = m_pendingDiscoveryAlbum == albumId;
+            m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
+            if (playRequested && error.isEmpty()) playOnlineAlbum();
         });
     connect(&m_onlineProvider, &OnlineMusicProvider::detailReady, this, [this](const QVariantMap &detail) {
         m_onlineDetail = detail; emit onlineDetailChanged();
@@ -251,7 +252,7 @@ void MusicController::initialize()
             // The catalogue duration is not the length of this fresh URL.
             // Wait for the decoder to report the actual stream duration.
             m_streamDurationMs = 0;
-            m_providerStatus = trial ? tr("NetEase · preview only (account/rights restriction)")
+            m_providerStatus = trial ? tr("NetEase · preview only")
                                     : tr("NetEase · %1").arg(level);
             loadPreparedTrack(url);
             persistPlaybackPosition();
@@ -1681,7 +1682,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     if (track->source == QLatin1String("netease")) {
         m_streamAvailabilityConfirmed = false;
         ++m_providerResolveRequests;
-        m_providerStatus = tr("NetEase · resolving playback address…");
+        m_providerStatus = tr("NetEase · loading…");
         emit playbackStatusChanged();
         emit playbackStateChanged();
         m_trackTimeout.start();
@@ -1916,9 +1917,9 @@ QString MusicController::providerStatus() const
     if (track->source != QLatin1String("netease")) return {};
     if (m_streamMetadataTrackId == track->id && m_streamAvailability == QLatin1String("preview"))
         return m_streamAvailabilityConfirmed
-            ? tr("NetEase · preview only (account/rights restriction)")
-            : tr("NetEase · previous preview; playback must be checked again");
-    return tr("NetEase · playback availability must be checked before playing");
+            ? tr("NetEase · preview only")
+            : tr("NetEase · preview limits may apply");
+    return tr("NetEase · account and track permissions apply");
 }
 
 QVariantMap MusicController::playbackSessionInfo() const
@@ -1940,11 +1941,78 @@ void MusicController::reloadDiscovery()
     m_discoveryLoading = true; m_discoveryError.clear(); emit discoveryChanged();
     m_onlineProvider.loadNewAlbums();
 }
-void MusicController::playDiscoveryAlbum(int row)
+void MusicController::openDiscoveryAlbum(int row)
 {
     if (row < 0 || row >= m_discoveryAlbums.size()) return;
-    const auto albumId = m_discoveryAlbums.at(row).toMap().value("providerId").toString();
-    if (albumId.isEmpty()) return;
-    m_pendingDiscoveryAlbum = albumId; emit discoveryChanged();
-    m_onlineProvider.loadAlbumTracks(albumId);
+    const auto album = m_discoveryAlbums.at(row).toMap();
+    if (album.value("providerId").toString().isEmpty()) return;
+    m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
+    m_onlineAlbum = album; m_albumLoading = false; m_albumTracks.clear(); m_albumTracksModel.setSearch({});
+    retryOnlineAlbum();
+}
+void MusicController::retryOnlineAlbum()
+{
+    const QString id = m_onlineAlbum.value("providerId").toString();
+    if (id.isEmpty() || m_albumLoading) return;
+    m_albumLoading = true; m_albumError.clear(); m_albumMessage.clear();
+    m_albumTracks.clear(); m_albumTracksModel.setTracks({}); emit onlineAlbumChanged();
+    m_onlineProvider.loadAlbumTracks(id);
+}
+void MusicController::playDiscoveryAlbum(int row)
+{
+    openDiscoveryAlbum(row);
+    if (row >= 0 && row < m_discoveryAlbums.size() && m_albumLoading)
+        m_pendingDiscoveryAlbum = m_onlineAlbum.value("providerId").toString();
+    emit discoveryChanged();
+}
+QList<qint64> MusicController::storeAlbumTracks()
+{
+    QList<qint64> ids;
+    if (m_albumLoading || !m_albumError.isEmpty()) return ids;
+    for (const auto &track : m_albumTracks) {
+        QString error;
+        const qint64 id = m_database.addExternalTrack(track, &error);
+        if (id < 0) { setError(error); return {}; }
+        ids.append(id);
+    }
+    refreshLibrary(); return ids;
+}
+void MusicController::playOnlineAlbum()
+{
+    const auto ids = storeAlbumTracks();
+    if (ids.isEmpty()) return;
+    setQueue(ids, 0); startCurrentTrack();
+}
+void MusicController::playOnlineAlbumRow(int row)
+{
+    const auto selected = m_albumTracksModel.trackAt(row);
+    if (!selected) return;
+    const auto found = std::find_if(m_albumTracks.cbegin(), m_albumTracks.cend(), [&selected](const auto &track) { return track.providerId == selected->providerId; });
+    if (found == m_albumTracks.cend()) return;
+    const int index = int(std::distance(m_albumTracks.cbegin(), found));
+    const auto ids = storeAlbumTracks();
+    if (index >= ids.size()) return;
+    setQueue(ids, index); startCurrentTrack();
+}
+void MusicController::enqueueOnlineAlbum()
+{
+    const auto ids = storeAlbumTracks();
+    if (ids.isEmpty()) return;
+    m_queueIds.append(ids); if (m_queueIndex < 0) m_queueIndex = 0;
+    refreshQueueModel(); persistQueue(); emit queueChanged();
+    m_albumMessage = tr("Added %1 songs to the queue").arg(ids.size()); emit onlineAlbumChanged();
+}
+void MusicController::enqueueAlbumRow(int row)
+{
+    const auto track = m_albumTracksModel.trackAt(row);
+    if (!track) return;
+    QString error; const auto id = m_database.addExternalTrack(*track, &error);
+    if (id < 0) { setError(error); return; }
+    refreshLibrary(); enqueueTrack(id);
+    m_albumMessage = tr("Added to the queue"); emit onlineAlbumChanged();
+}
+QString MusicController::currentProviderId() const
+{
+    const auto track = findTrack(currentTrackId());
+    return track ? track->providerId : QString{};
 }
