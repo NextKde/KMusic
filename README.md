@@ -1,6 +1,6 @@
 # KMusic progress
 
-Updated: 2026-10-21T22:47:58.784762+08:00
+Updated: 2026-10-21T22:51:49.340600+08:00
 
 Runtime `5b3cb6e3` · shared `96ff101` · native Qt/QML, local rendering
 
@@ -10,9 +10,9 @@ Runtime `5b3cb6e3` · shared `96ff101` · native Qt/QML, local rendering
 - New candidate: real album detail browsing with independent track model and explicit play/queue actions. Browsing did not alter queue or start playback; real helper interruption showed an error, Retry restored 20 tracks; actual album/single enqueue kept playback paused; Play album and track-row playback advanced real audio. Search filtering and error Retry checked. Fixed toolbar samples the opaque real page scene.
 - Design: immersive left playback/right real queue, plain content buttons, fixed liquid overlays. Final visual acceptance belongs to user.
 
-![Current capture](screenshots/round-20261021-2244/current.png)
+![Current capture](screenshots/round-20261021-2249/current.png)
 
-[Exact capture metadata](screenshots/round-20261021-2244/metadata.json)
+[Exact capture metadata](screenshots/round-20261021-2249/metadata.json)
 
 ![Current-track readability, light](screenshots/round-20261021-212941/panel-light.png)
 
@@ -20,4 +20,4 @@ Runtime `5b3cb6e3` · shared `96ff101` · native Qt/QML, local rendering
 
 - Real playlist/album search, detail, loaded-song enqueue/play and failure Retry checked locally on `7be9494`. Load-more now fetched all 836/836 tracks in real 200-ID batches; loading failure preserves the existing list and Retry resumes. Changing detail pages ignores the delayed old result. Queue/playback remain unchanged during loading.
 
-- Artist search/detail now shows real popular songs separately from catalogue counts. Enqueue stays paused; actual playback returned a labelled 30-second preview. Artist albums now loaded 45/45; opening an album and Back preserves artist state. Tested album playback returned an anonymous account/rights error (no successful URL or engine load); this failure remains visible. Online save-to-local-playlist candidate: opening/cancelling picker did not write tracks; explicit selection saved metadata and playlist item without starting audio. Restart/fresh-resolution checks remain in progress.
+- Artist search/detail now shows real popular songs separately from catalogue counts. Enqueue stays paused; actual playback returned a labelled 30-second preview. Artist albums now loaded 45/45; opening an album and Back preserves artist state. Tested album playback returned an anonymous account/rights error (no successful URL or engine load); this failure remains visible. Online save-to-local-playlist candidate: opening/cancelling picker did not write tracks; explicit selection saved metadata and playlist item without starting audio. Actual restart retained two saved songs, queue and preview position while staying paused with zero resolves/loads. Explicit Play freshly resolved the preview and advanced 1715→3161ms; database audit found no persisted NetEase stream URLs.
