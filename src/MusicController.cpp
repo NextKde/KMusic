@@ -113,6 +113,7 @@ MusicController::MusicController(QObject *parent)
     connect(&m_skipTimer, &QTimer::timeout, this, &MusicController::advanceAfterFailure);
     connect(&m_engine, &PlaybackEngine::stateChanged, this, [this] {
         if (m_engine.state() == QLatin1String("Playing")) {
+            setError({});
             if (m_loadedTrackId == currentTrackId() && m_loadedTrackId > 0 && m_recentRecordedLoad != m_engineLoadRequests) {
                 QString error;
                 if (m_database.recordPlayed(m_loadedTrackId, &error)) {
