@@ -115,6 +115,9 @@ int main(int argc, char *argv[]) {
                 const int index = data.value("index").toInt(1);
                 auto elapsed = std::make_shared<QElapsedTimer>(); elapsed->start();
                 auto frames = std::make_shared<QJsonArray>();
+                // Keep grab layers alive for the batch: destroying each result
+                // between frames can invalidate static SVG/effect texture caches.
+                auto grabs = std::make_shared<QList<QSharedPointer<QQuickItemGrabResult>>>();
                 auto stateAction = [window, index, control](const QString &state) {
                     if (control != "hero") {
                         QMetaObject::invokeMethod(window, "reviewMaterialAction", Q_ARG(QVariant, state), Q_ARG(QVariant, index));
@@ -136,26 +139,28 @@ int main(int argc, char *argv[]) {
                 stateAction(control + "Press");
                 QTimer::singleShot(200, window, [stateAction, control] { stateAction(control + "Release"); });
                 const QList<int> delays{0, 40, 100, 160, 240, 300, 380, 500};
-                for (const int delay : delays) QTimer::singleShot(delay, window, [window, directory, control, delay, elapsed, frames] {
+                for (const int delay : delays) QTimer::singleShot(delay, window, [window, directory, control, delay, elapsed, frames, grabs] {
                     QVariant state;
                     QMetaObject::invokeMethod(window, "materialReviewState", Q_RETURN_ARG(QVariant, state));
                     const qint64 requestedAt = elapsed->elapsed();
                     auto result = window->contentItem()->grabToImage();
                     window->update();
                     if (!result) return;
+                    grabs->append(result);
                     const QString path = QDir(directory).filePath(control + QStringLiteral("-%1.png").arg(delay, 3, 10, QLatin1Char('0')));
-                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, window, path, directory, control, delay, requestedAt, elapsed, state, frames] {
+                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, window, path, directory, control, delay, requestedAt, elapsed, state, frames, grabs] {
                         const qint64 readyAt = elapsed->elapsed();
                         // PNG compression must not stall the animation/event loop.
                         const QImage image = result->image();
                         auto *writer = new QFutureWatcher<bool>(window);
-                        QObject::connect(writer, &QFutureWatcher<bool>::finished, window, [writer, path, directory, control, delay, requestedAt, readyAt, state, frames] {
+                        QObject::connect(writer, &QFutureWatcher<bool>::finished, window, [writer, path, directory, control, delay, requestedAt, readyAt, state, frames, grabs] {
                             frames->append(QJsonObject{{"scheduledMs", delay}, {"requestedAtMs", requestedAt}, {"grabReadyAtMs", readyAt}, {"saved", writer->result()}, {"path", path},
                                 {"stateAtRequest", QJsonDocument::fromJson(state.toString().toUtf8()).object()}});
                             QFile metadata(QDir(directory).filePath("frames.json"));
                             if (metadata.open(QIODevice::WriteOnly)) metadata.write(QJsonDocument(QJsonObject{
                                 {"trigger", control == "hero" ? "actual QtQuick QMouseEvent delivery; release outside button; no system pointer movement" : "shared control state entry; no synthetic pointer or keyboard events"},
                                 {"pressAtMs", 0}, {"releaseScheduledMs", 200}, {"frames", *frames}}).toJson());
+                            if (frames->size() == 8) grabs->clear();
                             writer->deleteLater();
                         });
                         writer->setFuture(QtConcurrent::run([image, path] { return image.save(path); }));

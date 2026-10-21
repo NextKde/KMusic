@@ -181,6 +181,14 @@ void OnlineMusicProvider::loadAlbumTracks(const QString &albumId) {
         auto tracks = parseNeteaseSearch(QJsonDocument(adapted).toJson(), &error);
         // A catalogue response is not playback permission; resolution stays fresh.
         tracks = tracks.mid(0, 100);
+        const auto album = body.value("album").toObject();
+        QString albumArtist = joinedArtists(album.value("artists").toArray());
+        if (albumArtist.isEmpty()) albumArtist = album.value("artist").toObject().value("name").toString();
+        for (auto &track : tracks) {
+            // Album identity follows the album artist, not per-song guest credits.
+            if (!albumArtist.isEmpty()) track.albumArtist = albumArtist;
+            if (track.artworkUrl.isEmpty()) track.artworkUrl = album.value("picUrl").toString();
+        }
         if (tracks.isEmpty() && error.isEmpty()) error = tr("No playable tracks listed for this album.");
         emit albumTracksReady(albumId, tracks, error);
     });
