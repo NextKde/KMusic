@@ -8,7 +8,7 @@ LiquidCard {
     property real lastCommittedSeek: -1
     signal queueRequested()
     signal nowPlayingRequested()
-    height: 76; radius: height / 2; padding: 12
+    height: 52; radius: height / 2; padding: 8
     shadowEnabled: true; shadowOpacity: AppTheme.dark ? .22 : .14
     tintColor: AppTheme.dark ? "#282c32" : "#f8f9fa"
     tintStrength: AppTheme.dark ? .20 : .22
@@ -22,32 +22,32 @@ LiquidCard {
             lastCommittedSeek: lastCommittedSeek, seekable: bar.music.seekable, volumePopup: volumePopup.opened }
     }
     RowLayout {
-        anchors.fill: parent; spacing: 16
+        anchors.fill: parent; spacing: 12
         RowLayout {
-            Layout.preferredWidth: 188; Layout.maximumWidth: 188
-            Layout.alignment: Qt.AlignVCenter; spacing: 6
-            MusicActionButton { backdrop: null; iconOnly: true; iconName: "shuffle"; implicitWidth: 26; implicitHeight: 32; flat: true; checked: bar.music.shuffle; onClicked: bar.music.shuffle = !bar.music.shuffle; Accessible.name: qsTr("Shuffle") }
-            MusicActionButton { backdrop: null; iconOnly: true; iconName: "mediaPrevious"; iconFilled: true; iconSize: 24; iconColor: AppTheme.text; implicitWidth: 34; implicitHeight: 34; flat: true; enabled: bar.music.canGoPrevious; onClicked: bar.music.previous(); Accessible.name: qsTr("Previous") }
-            MusicActionButton { id: playAction; backdrop: null; objectName: "reviewPlayerPlay"; iconOnly: true; iconName: bar.music.playbackState === "Playing" ? "mediaPause" : "mediaPlay"; iconFilled: true; iconSize: 24; iconColor: AppTheme.text; implicitWidth: 34; implicitHeight: 36; flat: true; enabled: bar.music.currentTrackId > 0; onClicked: bar.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
-            MusicActionButton { backdrop: null; iconOnly: true; iconName: "mediaNext"; iconFilled: true; iconSize: 24; iconColor: AppTheme.text; implicitWidth: 34; implicitHeight: 34; flat: true; enabled: bar.music.canGoNext; onClicked: bar.music.next(); Accessible.name: qsTr("Next") }
-            MusicActionButton { backdrop: null; iconOnly: true; iconName: "repeat"; implicitWidth: 26; implicitHeight: 32; flat: true; checked: bar.music.repeatMode !== "none"; onClicked: bar.music.repeatMode = bar.music.repeatMode === "none" ? "playlist" : bar.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: qsTr("Repeat mode"); ToolTip.text: bar.music.repeatMode; ToolTip.visible: hovered }
+            Layout.preferredWidth: 164; Layout.maximumWidth: 164
+            Layout.alignment: Qt.AlignVCenter; spacing: 5
+            MusicActionButton { backdrop: null; iconOnly: true; iconName: "shuffle"; implicitWidth: 24; implicitHeight: 26; flat: true; checked: bar.music.shuffle; onClicked: bar.music.shuffle = !bar.music.shuffle; Accessible.name: qsTr("Shuffle") }
+            MusicActionButton { backdrop: null; iconOnly: true; iconName: "mediaPrevious"; iconFilled: true; iconSize: 20; iconColor: AppTheme.text; implicitWidth: 28; implicitHeight: 26; flat: true; enabled: bar.music.canGoPrevious; onClicked: bar.music.previous(); Accessible.name: qsTr("Previous") }
+            MusicActionButton { id: playAction; backdrop: null; objectName: "reviewPlayerPlay"; iconOnly: true; iconName: bar.music.playbackState === "Playing" ? "mediaPause" : "mediaPlay"; iconFilled: true; iconSize: 20; iconColor: AppTheme.text; implicitWidth: 30; implicitHeight: 28; flat: true; enabled: bar.music.currentTrackId > 0; onClicked: bar.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
+            MusicActionButton { backdrop: null; iconOnly: true; iconName: "mediaNext"; iconFilled: true; iconSize: 20; iconColor: AppTheme.text; implicitWidth: 28; implicitHeight: 26; flat: true; enabled: bar.music.canGoNext; onClicked: bar.music.next(); Accessible.name: qsTr("Next") }
+            MusicActionButton { backdrop: null; iconOnly: true; iconName: "repeat"; implicitWidth: 24; implicitHeight: 26; flat: true; checked: bar.music.repeatMode !== "none"; onClicked: bar.music.repeatMode = bar.music.repeatMode === "none" ? "playlist" : bar.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: qsTr("Repeat mode"); ToolTip.text: bar.music.repeatMode; ToolTip.visible: hovered }
         }
         Item {
             Layout.fillWidth: true; Layout.minimumWidth: 180; Layout.fillHeight: true
             RowLayout {
                 anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
-                height: 42; spacing: 10
-                Artwork { source: bar.music.currentArtworkUrl; title: bar.music.currentTitle; Layout.preferredWidth: 42; Layout.preferredHeight: 42; radius: 6 }
+                height: 30; spacing: 8
+                Artwork { source: bar.music.currentArtworkUrl; title: bar.music.currentTitle; Layout.preferredWidth: 30; Layout.preferredHeight: 30; radius: 4 }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2
-                    Label { text: bar.music.currentTitle || qsTr("Nothing playing"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 14; font.weight: Font.DemiBold }
-                    Label { text: bar.music.currentArtist ? bar.music.currentArtist + (bar.music.currentAlbum ? " — " + bar.music.currentAlbum : "") : qsTr("Choose a song to begin"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 12 }
+                    Label { text: bar.music.currentTitle || qsTr("Nothing playing"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 12; font.weight: Font.DemiBold }
+                    Label { text: bar.music.currentArtist ? bar.music.currentArtist + (bar.music.currentAlbum ? " — " + bar.music.currentAlbum : "") : qsTr("Choose a song to begin"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 10.5 }
                 }
             }
             LiquidSlider {
                 id: seekSlider; objectName: "reviewPlayerSeek"
                 anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.bottomMargin: -3
-                height: 14; trackHeight: 2; thumbWidth: 8; thumbHeight: 8; showThumb: _hovered || _pressed; materialForm: false
+                height: 10; trackHeight: 1.5; thumbWidth: 8; thumbHeight: 8; showThumb: _hovered || _pressed; materialForm: false
                 enabled: bar.music.seekable
                 property real previewValue: -1
                 value: previewValue >= 0 ? previewValue : bar.music.durationMs > 0 ? bar.music.positionMs / bar.music.durationMs : 0
@@ -62,14 +62,14 @@ LiquidCard {
             Layout.alignment: Qt.AlignVCenter; spacing: 8
             Rectangle {
                 visible: bar.music.playbackSession.availability === "preview"
-                Layout.preferredWidth: 44; Layout.preferredHeight: 24; radius: 12
+                Layout.preferredWidth: 40; Layout.preferredHeight: 20; radius: 10
                 color: AppTheme.withAlpha(AppTheme.text, .45)
-                Label { anchors.centerIn: parent; text: qsTr("Preview"); color: AppTheme.dark ? "#202326" : "#ffffff"; font.pixelSize: 10; font.weight: Font.DemiBold }
+                Label { anchors.centerIn: parent; text: qsTr("Preview"); color: AppTheme.dark ? "#202326" : "#ffffff"; font.pixelSize: 9; font.weight: Font.DemiBold }
                 ToolTip.text: bar.music.providerStatus; ToolTip.visible: badgeHover.hovered
                 HoverHandler { id: badgeHover }
             }
-            MusicActionButton { backdrop: null; iconOnly: true; iconName: "queueList"; iconColor: AppTheme.text; iconSize: 22; implicitWidth: 30; implicitHeight: 32; flat: true; onClicked: bar.queueRequested(); Accessible.name: qsTr("Queue") }
-            MusicActionButton { id: volumeAction; objectName: "reviewPlayerVolumeButton"; backdrop: null; iconOnly: true; iconName: "volume"; iconColor: AppTheme.text; iconSize: 22; implicitWidth: 30; implicitHeight: 32; flat: true; onClicked: volumePopup.opened ? volumePopup.close() : volumePopup.open(); Accessible.name: qsTr("Volume") }
+            MusicActionButton { backdrop: null; iconOnly: true; iconName: "queueList"; iconColor: AppTheme.text; iconSize: 18; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: bar.queueRequested(); Accessible.name: qsTr("Queue") }
+            MusicActionButton { id: volumeAction; objectName: "reviewPlayerVolumeButton"; backdrop: null; iconOnly: true; iconName: "volume"; iconColor: AppTheme.text; iconSize: 18; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: volumePopup.opened ? volumePopup.close() : volumePopup.open(); Accessible.name: qsTr("Volume") }
         }
     }
     Popup {
