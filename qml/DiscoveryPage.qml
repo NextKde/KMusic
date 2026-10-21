@@ -56,8 +56,11 @@ ScrollView {
                     MultiEffect {
                         width: featureArtwork.width; height: parent.height
                         source: featureArtwork; maskEnabled: true; maskSource: featureMask
-                        blurEnabled: true; blurMax: 48; blur: .4; autoPaddingEnabled: false
-                        opacity: AppTheme.dark ? .18 : .12
+                        // MultiEffect defaults to thresholding nonzero mask alpha;
+                        // span the complete alpha range for a continuous fade.
+                        maskThresholdMin: .5; maskSpreadAtMin: 1
+                        blurEnabled: true; blurMax: 48; blur: .65; autoPaddingEnabled: false
+                        opacity: AppTheme.dark ? .16 : .10
                     }
                 }
                 LiquidBackdrop { id: featureBackdrop; sourceItem: featureUnderlay; registerAsDefault: false }
