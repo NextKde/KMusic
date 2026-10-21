@@ -119,15 +119,6 @@ ApplicationWindow {
                 NowPlaying { id: nowPlaying; anchors.fill: parent; anchors.bottomMargin: window.playerContentInset; visible: window.destination === "now"; music: window.music }
             }
         }
-        // A soft QML edge, not a compositor blur or copied desktop texture.
-        Rectangle {
-            x: 236; y: 30; width: 7; height: parent.height - y
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: AppTheme.dark ? "#18000000" : "#0b000000" }
-                GradientStop { position: 1; color: "transparent" }
-            }
-        }
         Rectangle {
             x: 252; y: parent.height - window.playerContentInset - 28
             width: parent.width - x - 16; height: 28
@@ -147,20 +138,36 @@ ApplicationWindow {
             sourceItem: contentScene; hideSource: true; registerAsDefault: false
             blur: .45; maximumTextureSize: 2560
         }
-        // Reuse the same capture unfiltered only in the opaque right region.
-        // Source items retain their normal input handling while hideSource is set.
-        LiquidSurface {
+        // Display the content crop directly, without a full-page optical
+        // surface or antialiased material boundary at the sidebar join.
+        Item {
             x: 236; y: 0; width: parent.width - x; height: parent.height
-            backdrop: sidebarBackdrop; unfilteredBackdrop: true
-            radius: 0; tintStrength: 0; blurStrength: 0; readability: 0
-            refractionStrength: 0; magnification: 1; reflectionStrength: 0
+            Rectangle { anchors.fill: parent; color: window.contentColor }
+            ShaderEffectSource {
+                anchors.fill: parent
+                sourceItem: contentScene
+                sourceRect: Qt.rect(236, 0, parent.width, parent.height)
+                hideSource: true
+                live: true
+                recursive: false
+                smooth: true
+            }
+        }
+        // Back only the antialiased joining pixel so it cannot expose desktop.
+        Rectangle {
+            x: 235; y: 0; width: 1; height: parent.height
+            color: window.shellColor
         }
         LiquidSurface {
             id: sidebarMaterial
             width: 236; height: parent.height; radius: 0
-            backdrop: sidebarBackdrop; tintColor: window.shellColor
-            tintStrength: .98; diffuseStrength: .85; readability: 0; blurStrength: .15
-            reflectionStrength: 0; refractionStrength: 5; magnification: 1.025
+            backdrop: sidebarBackdrop
+            tintColor: window.shellColor
+            tintStrength: .95
+            diffuseStrength: 0; readability: 0
+            blurStrength: .15
+            refractionStrength: 5; magnification: 1.025
+            reflectionStrength: 0
         }
         ScrollView {
             id: sidebar
@@ -170,7 +177,7 @@ ApplicationWindow {
                 width: 212; x: 12; spacing: 4
                 RowLayout {
                     Layout.leftMargin: 10; Layout.topMargin: 8; Layout.bottomMargin: 14; spacing: 9
-                    VectorIcon { name: "music"; size: 20; color: MusicColors.icon }
+                    Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
                     Label { text: "KMusic"; color: AppTheme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
                 }
                 LiquidTextField {
@@ -196,13 +203,13 @@ ApplicationWindow {
                 RowLayout {
                     Layout.fillWidth: true; Layout.topMargin: 18; Layout.leftMargin: 10
                     Label { text: qsTr("Playlists"); color: AppTheme.mutedText; font.pixelSize: 11; font.weight: Font.DemiBold; Layout.fillWidth: true }
-                    MusicActionButton { iconOnly: true; iconName: "plus"; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
+                    MusicActionButton { iconOnly: true; iconName: "plus"; iconColor: MusicColors.sidebarAccent; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
                 }
                 Repeater {
                     model: music.playlists
                     delegate: MusicNavigationButton {
                         required property var modelData
-                        Layout.fillWidth: true; implicitHeight: 30; cornerRadius: height / 2; text: modelData.name; iconName: "music"
+                        Layout.fillWidth: true; implicitHeight: 30; cornerRadius: height / 2; text: modelData.name; iconName: "playlist"
                         checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
                         onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
                     }

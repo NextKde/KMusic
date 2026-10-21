@@ -2,7 +2,8 @@ import QtQuick
 import Kos.Ui
 LiquidNavigationButton {
     showIdleBackground: false
-    iconColor: checked ? MusicColors.text : MusicColors.icon
+    iconColor: MusicColors.sidebarAccent
+    iconSource: iconName.length ? MusicColors.sidebarIconSource(iconName) : ""
     selectionColor: MusicColors.selectedTint
     hoverColor: MusicColors.hoverFill
     focusRingColor: MusicColors.focus
