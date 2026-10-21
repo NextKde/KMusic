@@ -49,8 +49,8 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+F"; onActivated: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
     Connections { target: music; function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() } }
     readonly property real playerContentInset: player.height + 32 + (music.errorMessage.length > 0 || music.scanning ? 36 : 0)
-    readonly property color shellColor: AppTheme.dark ? "#202326" : "#eff0f1"
-    readonly property color contentColor: AppTheme.dark ? "#2a2d31" : "#ffffff"
+    readonly property color shellColor: AppTheme.dark ? "#242426" : "#f2f2f4"
+    readonly property color contentColor: AppTheme.dark ? "#1c1c1e" : "#ffffff"
     font.family: "Inter"; font.pixelSize: 13
     Item {
         id: appCanvas
@@ -158,7 +158,7 @@ ApplicationWindow {
         LiquidSurface {
             id: sidebarMaterial
             width: 236; height: parent.height; radius: 0
-            backdrop: sidebarBackdrop; tintColor: AppTheme.dark ? "#24282b" : "#eceef0"
+            backdrop: sidebarBackdrop; tintColor: window.shellColor
             tintStrength: .98; diffuseStrength: .85; readability: 0; blurStrength: .15
             reflectionStrength: 0; refractionStrength: 5; magnification: 1.025
         }
@@ -176,19 +176,19 @@ ApplicationWindow {
                 LiquidTextField {
                     id: search
                     backdrop: sidebarBackdrop; unfilteredBackdrop: true
-                    mutedTextColor: AppTheme.text; shadowEnabled: true; shadowOpacity: .06
+                    mutedTextColor: AppTheme.mutedText; shadowEnabled: false
                     Layout.fillWidth: true; Layout.bottomMargin: 10; implicitHeight: 30
                     materialForm: false; liquidFinish: true; placeholderText: qsTr("Search library"); font.pixelSize: 12
                     onTextChanged: { if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search") }; music.setSearch(text) }
                 }
-                MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; implicitHeight: 32; cornerRadius: 8; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
-                MusicNavigationButton { Layout.fillWidth: true; implicitHeight: 32; cornerRadius: 8; iconName: "search"; text: qsTr("Online search"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
+                MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
+                MusicNavigationButton { Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2; iconName: "search"; text: qsTr("Online search"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
                 Label { text: qsTr("Library"); color: AppTheme.mutedText; font.pixelSize: 11; font.weight: Font.DemiBold; Layout.topMargin: 18; Layout.bottomMargin: 4; Layout.leftMargin: 10 }
                 Repeater {
                     model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}, {key:"queue", label:qsTr("Play queue"), icon:"queue"}]
                     delegate: MusicNavigationButton {
                         required property var modelData
-                        Layout.fillWidth: true; implicitHeight: 32; cornerRadius: 8
+                        Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2
                         text: modelData.label; iconName: modelData.icon; checked: window.destination === modelData.key
                         onClicked: window.navigate(modelData.key, modelData.label)
                     }
@@ -202,7 +202,7 @@ ApplicationWindow {
                     model: music.playlists
                     delegate: MusicNavigationButton {
                         required property var modelData
-                        Layout.fillWidth: true; implicitHeight: 30; cornerRadius: 8; text: modelData.name; iconName: "music"
+                        Layout.fillWidth: true; implicitHeight: 30; cornerRadius: height / 2; text: modelData.name; iconName: "music"
                         checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
                         onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
                     }

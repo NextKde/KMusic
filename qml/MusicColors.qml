@@ -4,7 +4,7 @@ import Kos.Ui
 QtObject {
     readonly property color text: AppTheme.text
     readonly property color icon: AppTheme.dark ? "#cdd1d7" : "#555b63"
-    readonly property color controlSurface: AppTheme.dark ? "#30343a" : "#ffffff"
+    readonly property color controlSurface: AppTheme.dark ? "#20252f" : "#ffffff"
     readonly property color selectedTint: AppTheme.dark ? "#a0a5ac" : "#707780"
     readonly property color hoverFill: AppTheme.withAlpha(text, .07)
     readonly property color sliderFill: AppTheme.dark ? "#bfc5cd" : "#747b84"

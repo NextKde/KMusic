@@ -1,7 +1,7 @@
 import QtQuick
 import Kos.Ui
 LiquidActionButton {
-    shadowEnabled: !flat
+    shadowEnabled: false
     shadowOpacity: .06
     iconColor: destructive ? AppTheme.destructive : MusicColors.icon
     surfaceColor: MusicColors.controlSurface
