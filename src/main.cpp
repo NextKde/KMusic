@@ -120,6 +120,8 @@ int main(int argc, char *argv[]) {
                 }).toJson());
             } else if (action == "onlineSearch") {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
+            } else if (action == "albumFilter") {
+                QMetaObject::invokeMethod(window, "reviewAlbumFilter", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playDiscovery") music.playDiscoveryAlbum(data.value("row").toInt());
             else if (action == "reloadDiscovery") music.reloadDiscovery();
             else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());

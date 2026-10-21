@@ -29,7 +29,7 @@ ColumnLayout {
         MusicActionButton { visible: !page.queueView && !page.onlineView; text: qsTr("Import"); onClicked: page.importRequested() }
         MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
-    Label { visible: page.showHeading; Layout.leftMargin: 32; text: page.trackModel.count + qsTr(" songs"); color: AppTheme.mutedText }
+    Label { visible: page.showHeading; Layout.leftMargin: 32; text: page.trackModel.count === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.trackModel.count); color: AppTheme.mutedText }
     Rectangle { visible: page.showHeading; Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
     ListView {
         id: list

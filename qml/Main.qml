@@ -38,6 +38,7 @@ ApplicationWindow {
         state.underlay = "single real contentScene; original hidden, raw right proxy plus sampled sidebar"
         return JSON.stringify(state)
     }
+    function reviewAlbumFilter(text) { albumPage.filterText = text }
     function reviewOnlineAlbum(row) { music.openDiscoveryAlbum(row); destination = "onlineAlbum" }
     function reviewReleaseScroll(fraction) { return discover.scrollReleaseReview(fraction) }
     function reviewScroll(fraction) {

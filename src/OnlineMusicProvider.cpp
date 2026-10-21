@@ -27,7 +27,11 @@ QString failureText(const QJsonObject &data) {
 OnlineMusicProvider::OnlineMusicProvider(QObject *parent) : QObject(parent) {
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &OnlineMusicProvider::readOutput);
     connect(&m_process, &QProcess::readyReadStandardError, this, [this] { m_process.readAllStandardError(); });
-    connect(&m_process, &QProcess::errorOccurred, this, [this] { failPending(tr("NetEase helper could not start. Install Node.js 22.19 or newer.")); });
+    connect(&m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        failPending(error == QProcess::FailedToStart
+            ? tr("NetEase helper could not start. Install Node.js 22.19 or newer.")
+            : tr("NetEase connection interrupted. Retry the request."));
+    });
     connect(&m_process, &QProcess::finished, this, [this](int, QProcess::ExitStatus) { failPending(tr("NetEase helper exited; retry the request.")); });
 }
 OnlineMusicProvider::~OnlineMusicProvider() { m_process.kill(); m_process.waitForFinished(500); }

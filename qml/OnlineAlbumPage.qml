@@ -6,6 +6,7 @@ Item {
     id: page
     required property var music
     property real bottomContentInset: 0
+    property alias filterText: search.text
     signal backRequested()
     readonly property alias reviewList: songs.reviewList
     property string displayedAlbumId: ""
@@ -34,7 +35,7 @@ Item {
                         Label { text: page.music.onlineAlbum.title || qsTr("Album"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
                         Label { text: page.music.onlineAlbum.artist || ""; color: MusicColors.sidebarAccent; font.pixelSize: 18; Layout.fillWidth: true; elide: Text.ElideRight }
                         Label {
-                            text: "NetEase" + (page.music.onlineAlbum.publishTime ? " · " + new Date(Number(page.music.onlineAlbum.publishTime)).getFullYear() : "") + (page.music.onlineAlbum.trackCount !== undefined ? " · " + page.music.onlineAlbum.trackCount + qsTr(" songs") : "")
+                            text: "NetEase" + (page.music.onlineAlbum.publishTime ? " · " + new Date(Number(page.music.onlineAlbum.publishTime)).getFullYear() : "") + (page.music.onlineAlbum.trackCount !== undefined ? " · " + (page.music.onlineAlbum.trackCount === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.music.onlineAlbum.trackCount)) : "")
                             color: AppTheme.mutedText; font.pixelSize: 11
                         }
                         Label { text: page.music.onlineAlbum.description || ""; visible: text.length > 0; color: AppTheme.mutedText; font.pixelSize: 11; wrapMode: Text.WordWrap; maximumLineCount: 3; elide: Text.ElideRight; Layout.fillWidth: true }
@@ -61,7 +62,7 @@ Item {
         LiquidSurface { anchors.fill: parent; radius: 0; backdrop: toolbarBackdrop; tintColor: AppTheme.dark ? "#1c1c1e" : "#ffffff"; tintStrength: .84; readability: 0; blurStrength: 0; refractionStrength: 2; reflectionStrength: .2 }
         RowLayout {
             anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 24; spacing: 12
-            MusicActionButton { iconOnly: true; iconName: "previous"; flat: true; implicitWidth: 30; implicitHeight: 30; onClicked: page.backRequested(); Accessible.name: qsTr("Back to discovery") }
+            MusicActionButton { iconOnly: true; iconName: "back"; flat: true; implicitWidth: 30; implicitHeight: 30; onClicked: page.backRequested(); Accessible.name: qsTr("Back to discovery") }
             Label { text: page.music.onlineAlbum.title || qsTr("Album"); color: AppTheme.text; font.pixelSize: 13; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
             MusicActionButton { objectName: "reviewAlbumRetry"; visible: page.music.albumError.length > 0; text: qsTr("Retry"); onClicked: page.music.retryOnlineAlbum() }
             LiquidTextField {
