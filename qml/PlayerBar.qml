@@ -12,7 +12,7 @@ LiquidCard {
     shadowEnabled: true; shadowOpacity: AppTheme.dark ? .22 : .14
     tintColor: AppTheme.dark ? "#282c32" : "#f8f9fa"
     tintStrength: AppTheme.dark ? .20 : .22
-    readability: .12; blurStrength: .25
+    readability: .12; blurStrength: 0
     refractionStrength: 5; magnification: 1.035; reflectionStrength: .55
     function reviewState() {
         return { sampling: bar.sampling, seekValue: seekSlider.value, volume: volumeSlider.value,
@@ -37,6 +37,7 @@ LiquidCard {
             RowLayout {
                 anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
                 height: 30; spacing: 8
+                TapHandler { onTapped: bar.nowPlayingRequested() }
                 Artwork { source: bar.music.currentArtworkUrl; title: bar.music.currentTitle; Layout.preferredWidth: 30; Layout.preferredHeight: 30; radius: 4 }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2

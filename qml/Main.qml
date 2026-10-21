@@ -11,6 +11,8 @@ ApplicationWindow {
     visible: true; title: "KMusic"; color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
     property string destination: "new"
+    property string lastContentDestination: "new"
+    onDestinationChanged: if (destination !== "now") lastContentDestination = destination
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
     property double pendingTrack: -1
@@ -60,6 +62,7 @@ ApplicationWindow {
         Item {
             id: pageScene
             objectName: "musicPageScene"
+            visible: window.destination !== "now"
             anchors.fill: parent
         Item {
             id: contentScene
@@ -118,7 +121,6 @@ ApplicationWindow {
                     }
                 }
                 OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music }
-                NowPlaying { id: nowPlaying; anchors.fill: parent; anchors.bottomMargin: window.playerContentInset; visible: window.destination === "now"; music: window.music }
             }
         }
         Rectangle {
@@ -235,10 +237,15 @@ ApplicationWindow {
             }
         }
         }
-        LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; blur: .45; maximumTextureSize: 2560 }
-        PlayerBar { id: player; anchors.bottom: parent.bottom; anchors.bottomMargin: 16
+        LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; blur: .19; maximumTextureSize: 2560 }
+        PlayerBar { id: player; visible: window.destination !== "now"; anchors.bottom: parent.bottom; anchors.bottomMargin: 16
             width: Math.min(820, parent.width - 236 - 32); x: 236 + (parent.width - 236 - width) / 2
             backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", qsTr("Play queue")); onNowPlayingRequested: window.destination = "now" }
+        NowPlaying {
+            id: nowPlaying; anchors.fill: parent
+            visible: window.destination === "now"; music: window.music
+            onCloseRequested: window.destination = window.lastContentDestination
+        }
         WindowChrome { width: parent.width; targetWindow: window }
     }
     AccountDialog { id: accountDialog; account: music.account }
