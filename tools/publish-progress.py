@@ -105,17 +105,21 @@ def main():
             destination = "data-" + data_file.parent.name + "-" + data_file.name
             shutil.copyfile(data_file, output / destination)
             attachments.append(destination)
+        captured = next((item["captureRuntime"] for item in images if item["captureRuntime"]), {})
         metadata = {"round": stamp, "publishedAt": now.isoformat(),
                     "reviewedData": attachments,
                     "summary": args.summary, "status": getattr(args, key + "_status"),
                     "source": sources[key], "relatedSources": sources,
                     "appRuntime": (images[0]["captureRuntime"] or runtime) if key == "music" and images else None,
                     "runtimeAtPublication": runtime if key == "music" else None,
-                    "captureMethod": "Local visible Qt Quick window item grab; no image editing",
+                    "captureMethod": "Visible Qt Quick window item grab; no image editing",
+                    "captureHost": captured.get("host", "unspecified; see per-image runtime"),
                     "captureLimit": "Client content only; compositor chrome and separate popup windows excluded",
-                    "sessionType": os.getenv("XDG_SESSION_TYPE", "unknown"),
-                    "system": platform.system(), "architecture": platform.machine(),
-                    "qtVersion": run(["pkg-config", "--modversion", "Qt6Core"]),
+                    "sessionType": captured.get("sessionType", "unknown"),
+                    "system": captured.get("system", "unknown"),
+                    "architecture": captured.get("architecture", "unknown"),
+                    "qtVersion": captured.get("qtVersion", "unknown"),
+                    "publicationHost": {"system": platform.system(), "architecture": platform.machine()},
                     "images": images, "personallyReviewed": True}
         (output / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n")
         body = f"# {'KMusic' if key == 'music' else 'Gallery'} progress\n\n"
