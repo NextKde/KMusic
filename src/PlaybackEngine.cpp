@@ -22,15 +22,21 @@ QString gstErrorMessage(const GError *error, const gchar *debug)
     return message;
 }
 
-// Runs on whatever streaming thread posted the message. It must not touch Qt
-// object members; it only queues pollBus() onto the engine's thread so the
-// bus is drained on the UI event loop instead of a polling timer.
+GQuark eosGenerationKey() { return g_quark_from_static_string("kmusic-eos-generation"); }
+
+// Runs on streaming threads: read only the atomic epoch, never Qt state. Tag EOS
+// at posting time so an old queued EOS cannot acquire a new identity at delivery.
+// Other messages keep their preroll/seek behavior across pause/resume.
 GstBusSyncReply busSyncHandler(GstBus *bus, GstMessage *message,
                                gpointer userData)
 {
     Q_UNUSED(bus)
-    Q_UNUSED(message)
     auto *engine = static_cast<PlaybackEngine *>(userData);
+    if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
+        auto *epoch = new quint64(engine->generation());
+        gst_mini_object_set_qdata(GST_MINI_OBJECT(message), eosGenerationKey(), epoch,
+            +[](gpointer data) { delete static_cast<quint64 *>(data); });
+    }
     QMetaObject::invokeMethod(engine, "pollBus", Qt::QueuedConnection);
     return GST_BUS_PASS;
 }
@@ -196,6 +202,10 @@ bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositio
 {
     if (!m_playbin)
         return false;
+    m_generation.fetch_add(1, std::memory_order_acq_rel);
+    m_requestedPlaying = false;
+    // NULL flushes old pipeline messages; keep it explicit while replacing URI.
+    if (m_bus) gst_bus_set_flushing(m_bus, TRUE);
     gst_element_set_state(m_playbin, GST_STATE_NULL);
     finishDownload();
     if (source.isEmpty() || !source.isValid()) {
@@ -240,6 +250,7 @@ bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositio
     emit positionChanged();
     emit durationChanged();
     emit seekableChanged();
+    if (m_bus) gst_bus_set_flushing(m_bus, FALSE);
     const GstStateChangeReturn result = gst_element_set_state(
         m_playbin, autoPlay && m_pendingPositionMs < 0 ? GST_STATE_PLAYING : GST_STATE_PAUSED);
     if (result == GST_STATE_CHANGE_FAILURE) {
@@ -254,6 +265,7 @@ void PlaybackEngine::play()
 {
     if (!m_playbin || m_source.isEmpty())
         return;
+    m_generation.fetch_add(1, std::memory_order_acq_rel);
     m_requestedPlaying = true;
     setState(QStringLiteral("Loading"));
     if (m_pendingPositionMs >= 0)
@@ -269,6 +281,7 @@ void PlaybackEngine::pause()
 {
     if (!m_playbin || m_source.isEmpty())
         return;
+    m_generation.fetch_add(1, std::memory_order_acq_rel);
     m_requestedPlaying = false;
     updatePosition();
     if (gst_element_set_state(m_playbin, GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE) {
@@ -282,12 +295,15 @@ void PlaybackEngine::stop()
 {
     if (!m_playbin)
         return;
+    m_generation.fetch_add(1, std::memory_order_acq_rel);
     m_requestedPlaying = false;
     m_pendingPositionMs = -1;
     m_downloading = false;
     m_downloadTimer.stop();
+    if (m_bus) gst_bus_set_flushing(m_bus, TRUE);
     gst_element_set_state(m_playbin, GST_STATE_NULL);
     finishDownload();
+    if (m_bus) gst_bus_set_flushing(m_bus, FALSE);
     if (m_positionMs != 0) {
         m_positionMs = 0;
         emit positionChanged();
@@ -369,15 +385,24 @@ void PlaybackEngine::pollBus()
             setState(QStringLiteral("Error"));
             break;
         }
-        case GST_MESSAGE_EOS:
+        case GST_MESSAGE_EOS: {
+            const auto *epoch = static_cast<quint64 *>(gst_mini_object_get_qdata(GST_MINI_OBJECT(message), eosGenerationKey()));
+            if (!epoch || *epoch != generation() || *epoch == m_eosDeliveredGeneration
+                || !m_requestedPlaying || GST_MESSAGE_SRC(message) != GST_OBJECT(m_playbin)) {
+                ++m_ignoredEosCount;
+                break;
+            }
+            const auto completedGeneration = *epoch;
+            m_eosDeliveredGeneration = completedGeneration; ++m_naturalEosCount;
             m_requestedPlaying = false;
             if (m_durationMs > 0 && m_positionMs != m_durationMs) {
                 m_positionMs = m_durationMs;
                 emit positionChanged();
             }
             setState(QStringLiteral("Stopped"));
-            emit endOfStream();
+            emit endOfStream(completedGeneration);
             break;
+        }
         case GST_MESSAGE_DURATION_CHANGED:
             updatePosition();
             break;

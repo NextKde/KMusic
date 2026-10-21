@@ -176,7 +176,13 @@ MusicController::MusicController(QObject *parent)
             setError(m_engine.errorMessage());
         }
     });
-    connect(&m_engine, &PlaybackEngine::endOfStream, this, [this] { m_failedTracks.clear(); advance(true); });
+    connect(&m_engine, &PlaybackEngine::endOfStream, this, [this](quint64 generation) {
+        if (!m_playWhenReady || m_pausedPreparation || m_preparationFailed
+            || m_loadedTrackId != currentTrackId() || generation != m_activeEngineGeneration
+            || generation != m_engine.generation()) { ++m_ignoredEos; return; }
+        ++m_acceptedEos; m_activeEngineGeneration = 0;
+        m_failedTracks.clear(); advance(true);
+    });
 
     const auto notifyTranscode = [this] { emit transcodeChanged(); };
     connect(&m_transcoder, &Transcoder::activeChanged, this, notifyTranscode);
@@ -1136,11 +1142,13 @@ void MusicController::play()
         startCurrentTrack(positionMs());
     } else {
         m_engine.play();
+        m_activeEngineGeneration = m_engine.generation();
     }
 }
 
 void MusicController::pause()
 {
+    m_activeEngineGeneration = 0;
     if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     m_playWhenReady = false;
     if (m_resolvingTrackId >= 0) {
@@ -1791,6 +1799,7 @@ void MusicController::loadPreparedTrack(const QUrl &url)
     m_resolvingTrackId = -1;
     ++m_engineLoadRequests;
     m_engine.load(url, m_playWhenReady, m_resumePositionMs);
+    m_activeEngineGeneration = m_engine.generation();
     emit playbackStateChanged();
 }
 
@@ -1856,6 +1865,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
 
 void MusicController::cancelRecovery()
 {
+    m_activeEngineGeneration = 0;
     m_onlineProvider.cancelResolve();
     ++m_attemptGeneration;
     m_attemptTimeout.stop();
@@ -1993,6 +2003,7 @@ void MusicController::advanceAfterFailure()
 
 void MusicController::advance(bool fromEndOfStream)
 {
+    if (fromEndOfStream && !m_playWhenReady) return;
     if (m_queueIds.isEmpty())
         return;
     if (fromEndOfStream && m_repeatMode == QLatin1String("track")) {
@@ -2008,7 +2019,7 @@ void MusicController::advance(bool fromEndOfStream)
         if (m_repeatMode == QLatin1String("playlist"))
             nextIndex = 0;
         else {
-            m_engine.stop();
+            stop();
             return;
         }
     }
@@ -2077,7 +2088,11 @@ QVariantMap MusicController::playbackSessionInfo() const
             {"ignoredResolveSuccesses", m_onlineProvider.ignoredResolveSuccesses()},
             {"engineLoadRequests", m_engineLoadRequests},
             {"engineLoaded", m_loadedTrackId >= 0 && m_loadedTrackId == currentTrackId()},
-            {"engineHasSource", !m_engine.source().isEmpty()}};
+            {"engineHasSource", !m_engine.source().isEmpty()},
+            {"playIntent", m_playWhenReady}, {"engineGeneration", QVariant::fromValue(m_engine.generation())},
+            {"activeEngineGeneration", QVariant::fromValue(m_activeEngineGeneration)},
+            {"naturalEosCount", m_engine.naturalEosCount()}, {"ignoredEngineEos", m_engine.ignoredEosCount()},
+            {"acceptedEosCount", m_acceptedEos}, {"ignoredControllerEos", m_ignoredEos}};
 }
 
 void MusicController::reloadDiscovery()

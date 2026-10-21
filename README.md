@@ -137,3 +137,5 @@ Online song rows and collection-detail songs offer **Save to local playlist**. O
 **Recently played** is local history recorded only after the audio engine enters Playing, once per loaded playback attempt. Source URL resolution/loading, browsing and permission failures do not add history. Each song has one entry ordered by its last successful start; it survives restart and explicit online replay resolves current permissions again. Schema 4 starts a confirmed history table rather than reclassifying older load-time timestamps as verified playback.
 
 Pausing while a playback URL is still resolving invalidates that attempt. Late URL/error responses cannot start playback or replace the paused state; an explicit resumed play resolves again.
+
+At the repeat-none queue boundary, playback fully stops and cancels pending preparation/recovery. Natural EOS carries its posting-time engine epoch and is accepted only for the current loaded track and active play intent; pause/stop/track replacement invalidates prior EOS.

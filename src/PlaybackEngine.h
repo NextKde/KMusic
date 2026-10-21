@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QUrl>
+#include <atomic>
 
 typedef struct _GstElement GstElement;
 typedef struct _GstBus GstBus;
@@ -14,6 +15,9 @@ public:
     explicit PlaybackEngine(QObject *parent = nullptr);
     ~PlaybackEngine() override;
 
+    quint64 generation() const { return m_generation.load(std::memory_order_acquire); }
+    int naturalEosCount() const { return m_naturalEosCount; }
+    int ignoredEosCount() const { return m_ignoredEosCount; }
     bool available() const;
     QString backendName() const;
     QString state() const;
@@ -43,7 +47,7 @@ signals:
     void durationChanged();
     void seekableChanged();
     void volumeChanged();
-    void endOfStream();
+    void endOfStream(quint64 generation);
     void seeked(qint64 positionMs);
     void bufferingChanged();
     void downloadCompleted(const QString &path);
@@ -61,6 +65,9 @@ private:
     void updateDownloadProgress();
     void finishDownload();
 
+    std::atomic<quint64> m_generation{0};
+    quint64 m_eosDeliveredGeneration = 0;
+    int m_naturalEosCount = 0, m_ignoredEosCount = 0;
     GstElement *m_playbin = nullptr;
     GstBus *m_bus = nullptr;
     QTimer m_positionTimer;

@@ -469,6 +469,8 @@ private:
     qint64 m_resumePositionMs = 0;
     bool m_playWhenReady = true;
     bool m_pausedPreparation = false;
+    quint64 m_activeEngineGeneration = 0;
+    int m_acceptedEos = 0, m_ignoredEos = 0;
     bool m_lyricsEnabled = true;
     bool m_usingCachedAudio = false;
     bool m_preparationFailed = false;
