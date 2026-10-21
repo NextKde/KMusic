@@ -75,9 +75,9 @@ int main(int argc, char *argv[]) {
                 // restricted to named product controls; never moves the system cursor.
                 const QString control = data.value("control").toString();
                 const QString state = data.value("state").toString();
-                if ((control != "hero" && control != "player" && control != "discoveryFirst") ||
+                if ((control != "hero" && control != "player" && control != "discoveryFirst" && control != "volume") ||
                     (state != "hover" && state != "press" && state != "cancel" && state != "click")) return;
-                auto *item = findReviewItem(window->contentItem(), control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : "reviewDiscoveryFirst");
+                auto *item = findReviewItem(window->contentItem(), control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : control == "volume" ? "reviewPlayerVolumeButton" : "reviewDiscoveryFirst");
                 if (!item || !item->isVisible() || !item->isEnabled()) {
                     QFile response(QDir(reviewDir).filePath("response.json"));
                     if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
                 QVariant state;
                 QMetaObject::invokeMethod(window, "reviewScroll", Q_RETURN_ARG(QVariant, state), Q_ARG(QVariant, data.value("fraction").toDouble()));
                 QFile response(QDir(reviewDir).filePath("response.json"));
-                if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument::fromVariant(state).toJson());
+                if (response.open(QIODevice::WriteOnly)) response.write(state.toString().toUtf8());
             } else if (action == "focus") {
                 const QString name = data.value("control").toString();
                 if (name == "reviewPlayerPlay" || name == "reviewDiscoverNav") {
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
                     {"windowVisibility", static_cast<int>(window->visibility())},
                     {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
                     {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},
-                    {"durationMs", music.durationMs()}, {"volume", music.volume()}, {"providerStatus", music.providerStatus()},
+                    {"durationMs", music.durationMs()}, {"volume", music.volume()}, {"seekable", music.seekable()}, {"providerStatus", music.providerStatus()},
                     {"lyricsEnabled", music.lyricsEnabled()}, {"lyricsLoading", music.lyricsLoading()}, {"lyricsCount", music.lyrics().size()},
                     {"lyricsError", music.lyricsError()}, {"lyricRequestCount", music.lyricRequestCount()},
                     {"playbackSession", QJsonObject::fromVariantMap(music.playbackSessionInfo())},

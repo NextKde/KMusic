@@ -60,6 +60,7 @@ class MusicController : public QObject {
 
     Q_PROPERTY(QVariantMap onlineDetail READ onlineDetail NOTIFY onlineDetailChanged)
     Q_PROPERTY(QString providerStatus READ providerStatus NOTIFY playbackStatusChanged)
+    Q_PROPERTY(QVariantMap playbackSession READ playbackSessionInfo NOTIFY playbackStatusChanged)
     Q_PROPERTY(bool engineAvailable READ engineAvailable CONSTANT)
     Q_PROPERTY(QString engineBackend READ engineBackend CONSTANT)
     Q_PROPERTY(bool mprisRegistered READ mprisRegistered NOTIFY mprisRegisteredChanged)

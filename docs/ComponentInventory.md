@@ -69,3 +69,21 @@ MultiEffect then sampled by LiquidSurface with directional reflections and
 refraction. No desktop image or platform blur dependency. The square outer
 window, 30px CSD, 14px right controls and low-contrast shell/content planes follow
 kos-settings. Overall light/dark, narrow-window and pointer-state review pending.
+
+
+Limited player/palette revision (long-term work remains paused): app-only semantic
+bindings inherit Kos.Ui ActionButton/NavigationButton/Select, using neutral ordinary
+icons, hover, selection and progress. System keyboard focus stays independent.
+Shared defaults are unchanged. LiquidCard samples a separate real scrolling page
+scene, with optional LiquidBackdrop continuous blur, one panel refraction pass,
+capsule geometry and an outside-only analytic shadow. Child transport buttons do
+not resample the page. Filled media paths and optional slider thumb remain shared
+APIs. Player layout follows the supplied reference: transport left, artwork and
+metadata/seek center, genuine preview badge/queue/volume popup right.
+
+本轮仅修配色和悬浮播放器，长期任务仍暂停。App以语义属性继承Kos.Ui，普通
+图标/悬停/选中/进度使用中性色，系统键盘焦点独立；共享默认值不变。播放器
+只采独立的真实滚动页面一次，连续QML预模糊后保留折射/高光；内部按钮不重复
+采页面，外投影不在玻璃内部垫黑底。实心媒体图标和可选隐藏滑块头均归共享库。
+内部按用户图固定为左侧控制、中间封面/信息及细进度线、右侧真实试听标记/队列/
+音量弹层。源码/正常构建完成不等于视觉或真实seek已通过；结果见developer检查点。

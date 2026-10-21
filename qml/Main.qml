@@ -34,8 +34,8 @@ ApplicationWindow {
     function reviewScroll(fraction) {
         const view = window.destination === "new" ? discover.contentItem : songsPage.reviewList
         view.contentY = Math.max(0, view.contentHeight - view.height) * Math.max(0, Math.min(1, fraction))
-        return { contentY: view.contentY, contentHeight: view.contentHeight, viewportHeight: view.height,
-            bottomInset: window.playerContentInset }
+        return JSON.stringify({ contentY: view.contentY, contentHeight: view.contentHeight, viewportHeight: view.height,
+            bottomInset: window.playerContentInset })
     }
     function setReviewTheme(theme) { AppTheme.appearanceMode = theme }
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
