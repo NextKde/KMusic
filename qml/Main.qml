@@ -175,8 +175,8 @@ ApplicationWindow {
                 }
                 LiquidTextField {
                     id: search
-                    backdrop: sidebarBackdrop; unfilteredBackdrop: true; blurStrength: .12
-                    readability: .60; mutedTextColor: AppTheme.text; shadowEnabled: true; shadowOpacity: .06
+                    backdrop: sidebarBackdrop; unfilteredBackdrop: true
+                    mutedTextColor: AppTheme.text; shadowEnabled: true; shadowOpacity: .06
                     Layout.fillWidth: true; Layout.bottomMargin: 10; implicitHeight: 30
                     materialForm: false; liquidFinish: true; placeholderText: qsTr("Search library"); font.pixelSize: 12
                     onTextChanged: { if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search") }; music.setSearch(text) }
