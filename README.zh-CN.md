@@ -7,19 +7,36 @@
 已移除重复抽象离线封面；没有资料时显示真实空态，不将搜索结果冒充推荐。
 本地导入、搜索、播放、队列和歌单使用现有 NextKde 后端。SPlayer Next 网易云请求/加密模块
 已通过纯 Node 辅助进程接入搜索、详情、歌词与播放地址，并交给真实 GStreamer 播放器。
-试听、不可播、网络和账号失效有明确状态。账号登录及更广的目录流程仍待完善，不代表最终验收通过。
+试听、不可播、网络和账号失效有明确状态。二维码登录和歌曲／专辑／歌单／歌手浏览已实现；真实手机确认、认证权限及最终界面验收仍待完成。
+详见[当前交付状态](docs/DeliveryStatus.zh-CN.md)。
 
-依赖 Qt6 6.8+ Core/Gui/Qml/Quick/QuickControls2/QuickDialogs2/Concurrent/DBus/Network/Sql、
-在线请求另需 Node.js>=22.19，无需 npm 安装或 Electron。
-Qt5Compat.GraphicalEffects、SVG、GStreamer core/audio/pbutils 开发包、TagLib>=1.12及相应解码插件。
+构建依赖 Git、CMake>=3.21、C++20 编译器、pkg-config、Qt6>=6.8 的
+Core/Gui/Qml/Quick/QuickControls2/QuickDialogs2/Concurrent/DBus/Network/Sql、
+Qt6Keychain、libqrencode、GStreamer core/audio/pbutils 开发包和 TagLib>=1.12。
+运行时需 QtQuick.Effects、Qt5Compat.GraphicalEffects、Qt SVG，以及可工作的
+GStreamer 音频输出和对应解码插件（本机使用 base/good/libav）。
+在线请求另需应用进程 PATH 中可找到 Node.js>=22.19，本轮实际使用 22.23.1；
+无需 npm 安装、Electron 或完整 NextKde 桌面。系统凭据库由 QtKeychain 提供，无明文 Cookie 回退。
+子模块自带配对的已烘焙 shader，普通应用构建无需重新烘焙 GLSL。
 
 ```sh
-git clone --recursive https://github.com/NextKde/KMusic.git
+git clone --branch codex/music-development --recurse-submodules https://github.com/NextKde/KMusic.git
 cd KMusic
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j4
 ./build/kmusic
 ```
+
+已有工作区在配置前运行 `git submodule update --init --recursive`。
+构建会将纯 Node 音源辅助程序复制到 `build/kmusic` 旁。可选用户目录安装：
+
+```sh
+cmake --install build --prefix "$HOME/.local"
+"$HOME/.local/bin/kmusic"
+```
+
+安装规则包含 `share/kmusic/providers`、桌面入口及图标，但尚未在干净机器上验证安装启动；
+当前是开发候选，不是发行包。使用 nvm 时也需确保桌面启动环境能够找到 Node。
 
 通过侧栏或 Ctrl+O 导入本地音乐文件夹。点击歌曲播放，+ 加入队列，··· 加入已建歌单。
 Ctrl+F 搜索本地资料库；底栏提供播放、进度、音量、随机、循环和队列/正在播放入口。
@@ -36,15 +53,17 @@ Ctrl+F 搜索本地资料库；底栏提供播放、进度、音量、随机、�
 
 在线入口为 **Online search**，输入关键词搜索、点击结果播放、+入队、···查看实际获取的详情。
 最近选择区与播放页会显示试听限制；无播放地址、账号和网络错误会明确呈现。临时播放URL不作为持久歌曲身份，
-不从其他播放器读取账号Cookie，尚无登录流程。原LX适配器不是默认来源。
+不从其他播放器读取账号 Cookie；已有二维码登录入口，实际手机扫码仍由用户完成。原LX适配器不是默认来源。
 
 [整体设计校正](docs/DesignReset.zh-CN.md)定义下一轮完整外壳和音乐内容验收。
 透明模糊使用纯QML采样真实应用页面、封面及背景underlay，保留清晰文字和液态光学。
-当前候选使用真实当前封面预模糊underlay及共享LiquidBackdrop/LiquidSurface，均在QML内完成。
-外壳为30px自绘窗饰、236px侧栏与84px播放器，不依赖原生合成器特效。整体视觉验收仍待完成。
+当前候选使用共享 LiquidBackdrop/LiquidSurface：固定覆盖区采样真实内容，52px 悬浮胶囊
+播放器单次采样真实页面，普通内容动作用实色材质分支。外壳为 30px 自绘窗饰和 236px 侧栏。
+侧栏只采样真正延伸到其下方的应用内容，不捕获或模糊外部桌面像素；不依赖原生合成器特效。
+整体视觉验收仍待完成。
 
 在线恢复会区分曲库整曲时长与上次实际解码流的长度。试听会话重启后保留真实流时长与位置，
-明确显示“上次试听，播放前必须重新检查”，不会恢复旧URL或当前播放权限。重启后点击播放
+用简明网易云／试听状态说明；历史可用性不等于当前播放权限，也不会恢复旧 URL。重启后点击播放
 会先重新解析地址再加载引擎。旧会话没有流元数据时显示未知播放时长，避免将整曲长度当作试听长度。
 会话仅保存曲目ID、位置、上次可用性分类、流时长与音质，不保存播放URL、Cookie、请求头或Token。
 本机review状态提供不含敏感信息的解析/加载计数与确认状态，供重启/恢复专项核对。
@@ -61,9 +80,9 @@ Ctrl+F 搜索本地资料库；底栏提供播放、进度、音量、随机、�
 保存失败会明确提示仅本次会话有效。退出会清除本机凭据并请求服务端退出；
 会话过期需要重新扫码。账户变化后旧播放地址失效，下次播放重新解析。
 登录不改变会员和曲目版权限制。专用截图接口在显示二维码或账户身份时拒绝截图。
-构建额外依赖 Qt6Keychain 和 libqrencode。实际扫码登录需用户完成。
+实际扫码、系统凭据恢复与认证失效处理仍需用户验证；匿名浏览无需扫码。
 
-在线搜索支持歌曲、歌单和专辑；点击集合结果进入同一个详情页，不改变播放或队列。
+在线搜索支持歌曲、歌单、专辑和歌手；点击集合结果进入同一个详情页，不改变播放或队列。
 歌单按来源 trackIds 顺序与 ID 去重，逐批补齐曲目元数据，每批最多 200 项。若还有更多内容，页面明确显示
 已载入/总数与部分载入状态，按钮使用“播放/入队已载入曲目”，只操作这一部分，
 不宣称完整歌单可用。每首歌仍通过真实地址解析确认当前播放权限。

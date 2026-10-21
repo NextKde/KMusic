@@ -17,24 +17,46 @@ a settings-style square shell, and a compact persistent player. The existing
 NextKde local library/playback backend is retained. The NetEase page now uses the attributed SPlayer
 Next request/crypto modules through a plain Node helper: search, song details,
 lyrics and playable URL resolution feed the real GStreamer player. Preview-only,
-unavailable, account and network states are explicit. Login and broader catalogue
-flows remain in progress; this is not final feature or UI acceptance.
+unavailable, account and network states are explicit. QR sign-in and song/album/playlist/artist browsing are implemented. Actual phone
+confirmation, authenticated permissions and final UI acceptance remain pending.
+See the [current delivery boundary](docs/DeliveryStatus.md).
 
 ### Build and run
 
-Qt 6.8+ (Core, Gui, Qml, Quick, QuickControls2, QuickDialogs2, Concurrent, DBus,
-Network and Sql), Qt5Compat.GraphicalEffects, Qt SVG support, GStreamer development
-packages (core/audio/pbutils) and TagLib 1.12+ are required. Audio decoding also
-needs the corresponding GStreamer codec plugins and a working audio sink.
-Online NetEase requests require Node.js 22.19+; no npm install or Electron is needed.
+Build dependencies: Git, CMake 3.21+, a C++20 compiler, pkg-config, Qt 6.8+
+(Core, Gui, Qml, Quick, QuickControls2, QuickDialogs2, Concurrent, DBus, Network,
+Sql), Qt6Keychain, libqrencode, GStreamer core/audio/pbutils development libraries,
+and TagLib 1.12+. Runtime QML needs QtQuick.Effects and Qt5Compat.GraphicalEffects;
+SVG images need Qt SVG support. Audio requires a working GStreamer sink and codec
+plugins for your files (the checked host has base/good/libav).
+
+NetEase needs Node.js 22.19+ on the **application process PATH**; the checked
+runtime uses 22.23.1. No npm install, Electron or complete NextKde desktop is needed.
+QtKeychain uses the desktop credential store; there is no plaintext cookie fallback.
+The component submodule includes matching baked shaders; rebuilding their GLSL is
+not a prerequisite for this application build.
 
 ```sh
-git clone --recursive https://github.com/NextKde/KMusic.git
+git clone --branch codex/music-development --recurse-submodules https://github.com/NextKde/KMusic.git
 cd KMusic
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j4
 ./build/kmusic
 ```
+
+For an existing checkout, run `git submodule update --init --recursive` before
+configuring. The build copies the plain Node provider beside `build/kmusic`.
+An optional user-prefix installation is:
+
+```sh
+cmake --install build --prefix "$HOME/.local"
+"$HOME/.local/bin/kmusic"
+```
+
+The install rules place the provider in `share/kmusic/providers`, plus the desktop
+entry/icon in the standard data directories. A clean-machine installed-app smoke
+is still pending; this is a developer candidate, not a packaged release. Ensure
+Node is available in the GUI launch environment too, especially when using nvm.
 
 Import a local folder from the sidebar or Ctrl+O. Select a song to play; + adds it
 to the queue and ··· adds it to an existing playlist. Ctrl+F focuses library search.
@@ -73,17 +95,20 @@ See [design](docs/Design.md), [confirmed plan](docs/ProjectPlan.zh-CN.md),
 The [design reset](docs/DesignReset.zh-CN.md) defines the next complete shell and
 music-page review. Transparency and blur use pure QML sampling of real app page,
 artwork and background underlay, with clear text and retained liquid optics.
-The current candidate uses a preblurred real current-cover underlay and shared
-LiquidBackdrop/LiquidSurface inside QML. It has a 30px square-window chrome,
-236px sidebar and 84px player. There is no native compositor effects dependency.
+The current candidate uses shared LiquidBackdrop/LiquidSurface inside QML:
+cover/content sources for fixed overlays and a single real page source for the
+52px floating capsule player. Ordinary content actions use the plain material
+branch. The shell has 30px square-window chrome and a 236px sidebar. Sidebar
+transparency samples only real app content extending beneath it; external desktop
+pixels are not captured or blurred. There is no native compositor effects dependency.
 Whole-app visual acceptance is pending.
 
 ### Restoring online playback
 
 The library keeps a song's catalogue duration separately from the last decoded
 stream duration. For NetEase, a saved preview restores its actual last stream
-length and position with an explicit “previous preview; playback must be checked
-again” status. It does not restore a loaded URL or current playback permission.
+length and position with a concise NetEase/preview status. Historical availability
+is not current playback permission, and no loaded URL is restored.
 Pressing play after restart resolves a fresh address before loading the engine.
 Older sessions without stream metadata show an unknown playback length until a
 new stream is decoded, rather than displaying the full catalogue length.
@@ -116,9 +141,10 @@ scan. Account changes invalidate previously resolved playback URLs. Subscription
 and track permissions still apply. The review capture hook refuses images while
 a sign-in code or account identity is visible.
 
-Build dependencies additionally include Qt6Keychain and libqrencode.
+Actual QR scanning/confirmation, secure-store restore and authenticated expiry
+remain user validation gates; anonymous browsing does not require a scan.
 
-Online search offers Songs, Playlists and Albums. Collection results open the
+Online search offers Songs, Playlists, Albums and Artists. Collection results open the
 same detail browser without changing playback or the queue. Playlist details
 follow the provider's track-ID order, remove duplicate IDs, and retrieve missing
 song metadata in batches of up to 200 entries with **Load more**. When more songs exist, the loaded/total counts and partial
