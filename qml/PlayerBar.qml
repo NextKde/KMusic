@@ -76,7 +76,7 @@ LiquidCard {
         id: volumePopup
         x: bar.width - width - 12; y: -height - 10
         width: 170; height: 48; padding: 12
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
         background: LiquidCard { radius: 24; shadowEnabled: true; backdrop: bar.backdrop; tintColor: bar.tintColor; tintStrength: .45; readability: .35 }
         contentItem: LiquidSlider {
             id: volumeSlider; objectName: "reviewPlayerVolume"
