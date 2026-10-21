@@ -45,7 +45,7 @@ Previous component checks do not establish whole-app design acceptance.
 2. kos-settings defines the application exterior and client-drawn window decoration, beyond the three window controls. Keep the outer frame square.
 3. Forma defines component shadows, interactions, corner radii, typography and other fine details. Kos.Ui remains the actual implementation.
 4. Liquid rendering is essential: preserve real in-app backdrop sampling, refraction, soft directional reflections, press expansion and motion. Removing harsh outlines must not flatten the controls.
-5. Transparency and blur are implemented entirely in QML against actual application scene content. Retire KWin liquid glass, KF6 native blur requests, KWayland geometry inspection and NativeReview capture tooling from production builds/startup. Do not reproduce desktop wallpaper inside the client.
+5. The sidebar reveals the desktop through actual window alpha; QML provides tint, shadows and soft edges, not external-desktop blur. Internal playback glass still samples actual in-window page content. Retire KWin liquid glass, KF6 native blur requests, KWayland geometry inspection and NativeReview capture tooling from production builds/startup. Do not reproduce desktop wallpaper inside the client.
 
 The next gate is one coherent, running 1280×800 main window, with a 1024×640 layout check: kos-settings exterior, music sidebar/content/player proportions, consistent vector icons and Forma details. Use genuine source-backed music/artwork or honest empty states. Remove repetitive abstract fixture covers and ad hoc text-symbol icons. Preserve the existing source, playback, preview and lyrics work. General visual fixes still belong in the shared library and require Gallery regression.
 
