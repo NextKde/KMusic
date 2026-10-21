@@ -364,6 +364,8 @@ private:
     void schedulePlaybackFailure(const QString &message);
     void finishFailedTrack(const QString &message);
     void advanceAfterFailure();
+    void resetShuffleRound();
+    int nextShuffleIndex(bool afterFailure);
     void cancelRecovery();
     void persistPlaybackPosition();
     QString audioCacheKey(const TrackRecord &track) const;
@@ -433,6 +435,7 @@ private:
     QString m_discoveryError;
     QString m_pendingDiscoveryAlbum;
     QSet<qint64> m_failedTracks;
+    QSet<int> m_shuffleVisited; // Queue occurrences, not track IDs: duplicates are legitimate.
     QSet<QString> m_removedDuringScan;
     int m_attemptGeneration = 0;
     bool m_waitingForSource = false;

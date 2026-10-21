@@ -431,6 +431,7 @@ void MusicController::initialize()
                 m_resumePositionMs = std::min(m_resumePositionMs, m_streamDurationMs);
         }
     }
+    resetShuffleRound();
     // Restore lyrics for the saved identity independently of audio playback.
     // NetEase always requests fresh provider data; no old lyric cache implies success.
     reloadLyrics();
@@ -650,10 +651,11 @@ QString MusicController::playbackMode() const
 QString MusicController::librarySearch() const { return m_librarySearch; }
 bool MusicController::canGoNext() const
 {
-    return !m_queueIds.isEmpty()
-        && ((m_shuffle && m_queueIds.size() > 1)
-            || m_repeatMode == QLatin1String("playlist")
-            || m_queueIndex + 1 < m_queueIds.size());
+    if (m_queueIds.isEmpty()) return false;
+    if (m_shuffle)
+        return m_repeatMode == QLatin1String("playlist")
+            || m_shuffleVisited.size() < m_queueIds.size();
+    return m_repeatMode == QLatin1String("playlist") || m_queueIndex + 1 < m_queueIds.size();
 }
 bool MusicController::canGoPrevious() const
 {
@@ -865,6 +867,7 @@ void MusicController::playQueueRow(int row)
     if (row < 0 || row >= m_queueIds.size())
         return;
     m_queueIndex = row;
+    resetShuffleRound();
     persistQueue();
     emit queueChanged();
     emit currentTrackChanged();
@@ -946,6 +949,7 @@ void MusicController::enqueueTrack(qlonglong trackId)
     m_queueIds.append(trackId);
     if (m_queueIndex < 0)
         m_queueIndex = 0;
+    resetShuffleRound();
     refreshQueueModel();
     persistQueue();
     emit queueChanged();
@@ -965,6 +969,7 @@ void MusicController::playTrackNext(qlonglong trackId)
     m_queueIds.insert(position, trackId);
     if (m_queueIndex < 0)
         m_queueIndex = 0;
+    resetShuffleRound();
     refreshQueueModel();
     persistQueue();
     emit queueChanged();
@@ -983,6 +988,7 @@ void MusicController::moveQueueRowNext(int row)
     const qint64 id = m_queueIds.takeAt(row);
     if (row < m_queueIndex) --m_queueIndex;
     m_queueIds.insert(std::clamp(m_queueIndex + 1, 0, int(m_queueIds.size())), id);
+    resetShuffleRound();
     refreshQueueModel();
     persistQueue();
     emit queueChanged();
@@ -1047,6 +1053,7 @@ bool MusicController::deleteTrack(qlonglong trackId, const QString &expectedPath
     const bool hasSuccessor = nextIndex >= 0 && nextIndex < m_queueIds.size();
     m_queueIndex = m_queueIds.isEmpty() ? -1
         : std::clamp(nextIndex, 0, int(m_queueIds.size()) - 1);
+    resetShuffleRound();
     m_failedTracks.remove(trackId);
     if (m_scanning) m_removedDuringScan.insert(track->path);
     if (!local && m_audioCache) {
@@ -1101,6 +1108,7 @@ void MusicController::removeQueueRow(int row)
         }
         m_engine.stop();
     }
+    resetShuffleRound();
     refreshQueueModel();
     persistQueue();
     emit queueChanged();
@@ -1125,6 +1133,8 @@ void MusicController::play()
     const auto track = findTrack(currentTrackId());
     if (!track)
         return;
+    if (m_engine.state() == QLatin1String("Stopped") || m_preparationFailed)
+        resetShuffleRound();
     m_playWhenReady = true;
     if (m_preparationFailed) {
         startCurrentTrack(positionMs());
@@ -1210,6 +1220,7 @@ void MusicController::previous()
     if (previousIndex < 0)
         return;
     m_queueIndex = previousIndex;
+    resetShuffleRound();
     persistQueue();
     emit queueChanged();
     emit currentTrackChanged();
@@ -1236,6 +1247,7 @@ void MusicController::setShuffle(bool shuffle)
     if (m_shuffle == shuffle)
         return;
     m_shuffle = shuffle;
+    resetShuffleRound();
     m_database.setSetting(QStringLiteral("shuffle"), shuffle ? QStringLiteral("true")
                                                              : QStringLiteral("false"));
     emit shuffleChanged();
@@ -1257,6 +1269,7 @@ void MusicController::setRepeatMode(const QString &mode)
     if (m_repeatMode == normalized)
         return;
     m_repeatMode = normalized;
+    resetShuffleRound();
     m_database.setSetting(QStringLiteral("repeat"), normalized);
     emit repeatModeChanged();
     emit playbackModeChanged();
@@ -1283,6 +1296,7 @@ void MusicController::setPlaybackMode(const QString &mode)
         return;
     m_shuffle = nextShuffle;
     m_repeatMode = nextRepeat;
+    resetShuffleRound();
     m_database.setSetting(QStringLiteral("shuffle"), m_shuffle
                           ? QStringLiteral("true") : QStringLiteral("false"));
     m_database.setSetting(QStringLiteral("repeat"), m_repeatMode);
@@ -1721,6 +1735,7 @@ void MusicController::refreshQueueModel()
         m_queueIndex -= removedBefore;
         if (m_queueIndex >= m_queueIds.size())
             m_queueIndex = m_queueIds.isEmpty() ? -1 : m_queueIds.size() - 1;
+        resetShuffleRound();
         persistQueue();
         emit currentTrackChanged();
     }
@@ -1746,6 +1761,7 @@ void MusicController::setQueue(const QList<qint64> &trackIds, int currentIndex)
     m_queueIndex = nextIndex;
     if (trackIds.isEmpty())
         m_lyricsService->load({});
+    resetShuffleRound();
     refreshQueueModel();
     persistQueue();
     emit queueChanged();
@@ -1810,6 +1826,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     if (!track)
         return;
     cancelRecovery();
+    if (m_shuffle) m_shuffleVisited.insert(m_queueIndex);
     if (!m_automaticAdvance) m_failedTracks.clear();
     m_attemptName.clear();
     m_sourceCandidates.clear();
@@ -1964,14 +1981,51 @@ void MusicController::finishFailedTrack(const QString &message)
     emit playbackStateChanged();
 }
 
+void MusicController::resetShuffleRound()
+{
+    m_shuffleVisited.clear();
+    if (m_queueIndex >= 0 && m_queueIndex < m_queueIds.size())
+        m_shuffleVisited.insert(m_queueIndex);
+}
+
+int MusicController::nextShuffleIndex(bool afterFailure)
+{
+    const auto remaining = [this, afterFailure] {
+        QList<int> result;
+        for (int i = 0; i < m_queueIds.size(); ++i)
+            if (!m_shuffleVisited.contains(i)
+                && (!afterFailure || !m_failedTracks.contains(m_queueIds.at(i))))
+                result.append(i);
+        return result;
+    };
+    QList<int> candidates = remaining();
+    if (candidates.isEmpty() && m_repeatMode == QLatin1String("playlist")) {
+        // All failed IDs stay excluded across this recovery attempt: an entirely
+        // unavailable queue must stop even when repeat-all is enabled.
+        bool playableCandidate = false;
+        for (qint64 id : std::as_const(m_queueIds))
+            if (!afterFailure || !m_failedTracks.contains(id)) { playableCandidate = true; break; }
+        if (!playableCandidate) return -1;
+        m_shuffleVisited.clear();
+        candidates = remaining();
+        // Avoid an immediate same-occurrence repeat at the round boundary when
+        // another candidate exists; leave it unvisited for later in this round.
+        if (candidates.size() > 1) candidates.removeAll(m_queueIndex);
+    }
+    if (candidates.isEmpty()) return -1;
+    const int index = candidates.at(QRandomGenerator::global()->bounded(candidates.size()));
+    m_shuffleVisited.insert(index);
+    return index;
+}
+
 void MusicController::advanceAfterFailure()
 {
     if (!m_playWhenReady || m_queueIds.isEmpty())
         return;
     QList<int> candidates;
     if (m_shuffle) {
-        for (int i = 0; i < m_queueIds.size(); ++i)
-            if (!m_failedTracks.contains(m_queueIds.at(i))) candidates.append(i);
+        const int index = nextShuffleIndex(true);
+        if (index >= 0) candidates.append(index);
     } else {
         for (int step = 1; step <= m_queueIds.size(); ++step) {
             int index = m_queueIndex + step;
@@ -2011,10 +2065,9 @@ void MusicController::advance(bool fromEndOfStream)
         return;
     }
     int nextIndex = m_queueIndex + 1;
-    if (m_shuffle && m_queueIds.size() > 1) {
-        do {
-            nextIndex = QRandomGenerator::global()->bounded(m_queueIds.size());
-        } while (nextIndex == m_queueIndex);
+    if (m_shuffle) {
+        nextIndex = nextShuffleIndex(false);
+        if (nextIndex < 0) { stop(); return; }
     } else if (nextIndex >= m_queueIds.size()) {
         if (m_repeatMode == QLatin1String("playlist"))
             nextIndex = 0;
@@ -2092,7 +2145,9 @@ QVariantMap MusicController::playbackSessionInfo() const
             {"playIntent", m_playWhenReady}, {"engineGeneration", QVariant::fromValue(m_engine.generation())},
             {"activeEngineGeneration", QVariant::fromValue(m_activeEngineGeneration)},
             {"naturalEosCount", m_engine.naturalEosCount()}, {"ignoredEngineEos", m_engine.ignoredEosCount()},
-            {"acceptedEosCount", m_acceptedEos}, {"ignoredControllerEos", m_ignoredEos}};
+            {"acceptedEosCount", m_acceptedEos}, {"ignoredControllerEos", m_ignoredEos},
+            {"shuffleVisitedCount", m_shuffleVisited.size()},
+            {"shuffleRemainingCount", m_queueIds.size() - m_shuffleVisited.size()}};
 }
 
 void MusicController::reloadDiscovery()
@@ -2169,6 +2224,7 @@ void MusicController::enqueueOnlineAlbum()
     const auto ids = storeAlbumTracks();
     if (ids.isEmpty()) return;
     m_queueIds.append(ids); if (m_queueIndex < 0) m_queueIndex = 0;
+    resetShuffleRound();
     refreshQueueModel(); persistQueue(); emit queueChanged();
     m_albumMessage = tr("Added %1 songs to the queue").arg(ids.size()); emit onlineAlbumChanged();
 }
