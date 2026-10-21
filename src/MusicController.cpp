@@ -1208,12 +1208,17 @@ void MusicController::stop()
 void MusicController::next() { advance(false); }
 void MusicController::previous()
 {
-    if (m_engine.positionMs() > 3000) {
-        m_engine.seek(0);
+    if (m_queueIds.isEmpty()) return;
+    const bool keepPlaying = m_playWhenReady
+        && (playbackState() == QLatin1String("Playing")
+            || playbackState() == QLatin1String("Loading"));
+    // Restored and pending playback has a logical position before an engine
+    // source exists. Previous must not mistake that for the start of the track.
+    if (positionMs() > 3000) {
+        if (seekable()) m_engine.seek(0); // seeked persists the actual position.
+        else startCurrentTrack(0, keepPlaying); // Fresh resolve, never a saved URL.
         return;
     }
-    if (m_queueIds.isEmpty())
-        return;
     int previousIndex = m_queueIndex - 1;
     if (previousIndex < 0 && m_repeatMode == QLatin1String("playlist"))
         previousIndex = m_queueIds.size() - 1;
@@ -1224,7 +1229,7 @@ void MusicController::previous()
     persistQueue();
     emit queueChanged();
     emit currentTrackChanged();
-    startCurrentTrack();
+    startCurrentTrack(0, keepPlaying);
 }
 void MusicController::seek(qlonglong positionMs) { m_engine.seek(positionMs); }
 void MusicController::seekFraction(double fraction)
@@ -1819,7 +1824,7 @@ void MusicController::loadPreparedTrack(const QUrl &url)
     emit playbackStateChanged();
 }
 
-void MusicController::startCurrentTrack(qint64 startPositionMs)
+void MusicController::startCurrentTrack(qint64 startPositionMs, bool autoPlay)
 {
     if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     const auto track = findTrack(currentTrackId());
@@ -1835,7 +1840,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs)
     m_sourceService->cancelResolves();
     m_loadedTrackId = -1;
     m_resumePositionMs = std::max<qint64>(0, startPositionMs);
-    m_playWhenReady = true;
+    m_playWhenReady = autoPlay;
     m_resolvingTrackId = track->id;
     m_engine.stop();
     setError({});

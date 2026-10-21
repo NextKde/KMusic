@@ -141,3 +141,5 @@ Pausing while a playback URL is still resolving invalidates that attempt. Late U
 At the repeat-none queue boundary, playback fully stops and cancels pending preparation/recovery. Natural EOS carries its posting-time engine epoch and is accepted only for the current loaded track and active play intent; pause/stop/track replacement invalidates prior EOS.
 
 Shuffle tracks queue occurrences separately, including duplicate songs. Repeat-none consumes each occurrence once, then stops. Explicit selection/restart, queue edits and playback-mode changes start a new pass; pause/resume preserves a running pass. Repeat-all begins a new pass, while repeat-one repeats the current occurrence on natural completion. Failed song IDs remain excluded throughout a recovery chain, including repeat-all.
+
+Previous uses the restored logical position: above 3 seconds it restarts the current track, otherwise it selects the preceding queue occurrence. It preserves paused playback. A restored, unloaded online track resolves again before being prepared at zero; no saved stream URL is reused.

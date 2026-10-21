@@ -357,7 +357,7 @@ private:
     void refreshPlaylistModel();
     void setQueue(const QList<qint64> &trackIds, int currentIndex);
     void persistQueue();
-    void startCurrentTrack(qint64 startPositionMs = 0);
+    void startCurrentTrack(qint64 startPositionMs = 0, bool autoPlay = true);
     void loadPreparedTrack(const QUrl &url);
     void tryNextSource();
     void resolveWithReadySource();
