@@ -18,9 +18,9 @@ Shared fixes belong in Kos.Ui and require Gallery regression. Study source:
 [mkj0kjay/vue-web-liquid-glass](https://github.com/mkj0kjay/vue-web-liquid-glass);
 preserve attribution/licensing for any adapted code.
 
-Keep the 1100×680 default, the 52px player and its supplied internal order. Follow
-the newly attached user AGENTS VM-only preference for runtime tests/screenshots
-this round. Automatic polling stays paused; no catalogue or backend expansion.
+Keep the 1100×680 default, the 52px player and its supplied internal order. The user subsequently explicitly authorized local builds, tests and screenshots
+for clearer native-resolution evidence, overriding VM-only for this bounded task.
+Use dedicated App / Gallery windows. Automatic polling stays paused; no catalogue or backend expansion.
 
 After pausing the long-running work, the user authorized these two corrections
 only. Keep scheduled polling paused; this does not resume the full project or
