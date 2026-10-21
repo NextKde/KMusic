@@ -37,6 +37,8 @@ class MusicController : public QObject {
     Q_PROPERTY(bool albumLoading READ albumLoading NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString albumError READ albumError NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString albumMessage READ albumMessage NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(bool albumLoadingMore READ albumLoadingMore NOTIFY onlineAlbumChanged)
+    Q_PROPERTY(QString albumLoadMoreError READ albumLoadMoreError NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString currentProviderId READ currentProviderId NOTIFY currentTrackChanged)
     Q_PROPERTY(QVariantList onlineCollections READ onlineCollections NOTIFY onlineCollectionsChanged)
     Q_PROPERTY(QString onlineSearchKind READ onlineSearchKind WRITE setOnlineSearchKind NOTIFY onlineCollectionsChanged)
@@ -119,6 +121,9 @@ public:
     QVariantMap onlineAlbum() const { return m_onlineAlbum; }
     bool albumLoading() const { return m_albumLoading; }
     QString albumError() const { return m_albumError; }
+    bool albumLoadingMore() const { return m_albumLoadingMore; }
+    QString albumLoadMoreError() const { return m_albumLoadMoreError; }
+    Q_INVOKABLE void loadMorePlaylistTracks();
     QString albumMessage() const { return m_albumMessage; }
     QString currentProviderId() const;
     Q_INVOKABLE void openDiscoveryAlbum(int row);
@@ -340,6 +345,8 @@ private:
     QVariantList m_onlineCollections;
     QString m_onlineSearchKind = "song";
     bool m_albumLoading = false;
+    bool m_albumLoadingMore = false;
+    QString m_albumLoadMoreError;
     QString m_albumError, m_albumMessage;
     OnlineMusicProvider m_onlineProvider;
     AccountController m_account;

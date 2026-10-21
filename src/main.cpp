@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
                     {"discoveryFirst", "reviewDiscoveryFirst"}, {"discoverySecond", "reviewDiscoverySecond"},
                     {"account", "reviewAccountButton"}, {"signIn", "reviewAccountGenerate"}, {"cancelSignIn", "reviewAccountCancel"},
                     {"immersivePlay", "reviewImmersivePlay"}, {"nextQueued", "reviewNextQueued"},
-                    {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
+                    {"albumMore", "reviewAlbumMore"}, {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
                     {"albumSong", "reviewAlbumFirstSong"}, {"albumEnqueue", "reviewAlbumEnqueueFirst"}, {"albumRetry", "reviewAlbumRetry"}
                 };
                 if (!namedControls.contains(control) ||
@@ -244,7 +244,9 @@ int main(int argc, char *argv[]) {
                     {"onlineAlbumId", music.onlineAlbum().value("providerId").toString()},
                     {"collectionKind", music.onlineAlbum().value("kind").toString()}, {"collectionPartial", music.onlineAlbum().value("partial").toBool()},
                     {"collectionTotal", music.onlineAlbum().value("totalCount").toInt()}, {"collectionResults", music.onlineCollections().size()}, {"searchKind", music.onlineSearchKind()},
-                    {"albumTracksCount", music.albumTracksModel()->count()}, {"albumLoading", music.albumLoading()},
+                    {"albumTracksCount", music.albumTracksModel()->count()}, {"albumLoadedCount", music.onlineAlbum().value("trackCount").toInt()},
+                    {"albumHasMore", music.onlineAlbum().value("hasMore").toBool()}, {"albumNextOffset", music.onlineAlbum().value("nextOffset").toInt()},
+                    {"albumLoadingMore", music.albumLoadingMore()}, {"albumLoadMoreError", music.albumLoadMoreError()}, {"albumLoading", music.albumLoading()},
                     {"albumError", music.albumError()}, {"albumMessage", music.albumMessage()},
                     {"queueCount", music.queueModel()->count()}, {"queueIndex", music.queueIndex()}, {"currentTrackId", music.currentTrackId()},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},

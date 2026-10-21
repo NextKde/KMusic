@@ -19,6 +19,7 @@ import { cookieToJson } from "./netease/core/cookie.ts";
 // Credentials stay in memory here and cross only the private parent/child pipe.
 let session: Record<string, string> = {};
 let authEpoch = 0;
+const playlistSnapshots = new Map<string, any>();
 function mergeCookies(lines: string[]) {
   for (const line of lines) Object.assign(session, cookieToJson(line.split(";")[0]));
 }
@@ -34,11 +35,11 @@ input.on("line", async (line) => {
     id = req.id;
     const params = { ...(req.params ?? {}), cookie: { ...session } };
     if (req.action === "sessionRestore") {
-      ++authEpoch; session = cookieToJson(String(req.params?.cookie || ""));
+      ++authEpoch; playlistSnapshots.clear(); session = cookieToJson(String(req.params?.cookie || ""));
       emit({ id, ok: true }); return;
     }
     if (req.action === "logout") {
-      ++authEpoch; session = {};
+      ++authEpoch; playlistSnapshots.clear(); session = {};
       // Local logout is immediate even when the remote endpoint is unavailable.
       try { await logout(params, createRequest); } catch {}
       emit({ id, ok: true }); return;
@@ -69,15 +70,24 @@ input.on("line", async (line) => {
       emit({ id, ok: true, body: { authenticated: Boolean(account?.id && profile?.userId), nickname: profile?.nickname || "", userId: String(profile?.userId || "") } }); return;
     }
     if (req.action === "playlistTracks") {
-      const response = await playlist(params, createRequest);
-      const body: any = response.body;
-      const list = body.playlist;
-      if (!list) throw new Error("Playlist unavailable");
-      const allIds = (list.trackIds || []).map((x: any) => String(x.id));
-      const total = Math.max(Number(list.trackCount || 0), allIds.length, (list.tracks || []).length);
-      // Bound this first detail batch. Never label a truncated set as complete.
+      const playlistId = String(params.id);
+      const offset = Math.max(0, Number(req.params?.offset || 0));
+      let list = offset > 0 ? playlistSnapshots.get(playlistId) : undefined;
+      if (!list) {
+        const response = await playlist(params, createRequest);
+        list = (response.body as any).playlist;
+        if (!list) throw new Error("Playlist unavailable");
+        if (playlistSnapshots.size >= 5) playlistSnapshots.delete(playlistSnapshots.keys().next().value!);
+        playlistSnapshots.set(playlistId, list);
+      }
+      const rawIds = (list.trackIds || []).map((x: any) => String(x.id));
+      const ids = [...new Set<string>(rawIds.length ? rawIds : (list.tracks || []).map((x: any) => String(x.id)))];
+      // A complete manifest may contain duplicate entries: count/load unique IDs.
+      // If the server withholds IDs, preserve its declared count and disclose gaps.
+      const declaredCount = Number(list.trackCount || 0);
+      const total = rawIds.length >= declaredCount ? ids.length : Math.max(declaredCount, ids.length);
       const limit = 200;
-      const wanted = allIds.length ? allIds.slice(0, limit) : (list.tracks || []).slice(0, limit).map((x: any) => String(x.id));
+      const wanted = ids.slice(offset, offset + limit);
       const known = new Map((list.tracks || []).map((song: any) => [String(song.id), song]));
       const missing = wanted.filter((songId: string) => !known.has(songId));
       for (let offset = 0; offset < missing.length; offset += 100) {
@@ -88,7 +98,9 @@ input.on("line", async (line) => {
       emit({ id, ok: true, body: { code: 200, songs, collection: {
         providerId: String(list.id), kind: "playlist", title: list.name || "", artist: list.creator?.nickname || "",
         artwork: list.coverImgUrl || "", description: list.description || "", trackCount: songs.length,
-        totalCount: total, partial: songs.length < total, requestedCount: wanted.length, loadLimit: limit, source: "NetEase"
+        totalCount: total, partial: true, requestedCount: Math.min(offset + wanted.length, ids.length),
+        nextOffset: Math.min(offset + wanted.length, ids.length), hasMore: offset + wanted.length < ids.length,
+        listedCount: ids.length, loadLimit: limit, source: "NetEase"
       } } }); return;
     }
     if (req.action === "resolve") {

@@ -120,8 +120,10 @@ Build dependencies additionally include Qt6Keychain and libqrencode.
 
 Online search offers Songs, Playlists and Albums. Collection results open the
 same detail browser without changing playback or the queue. Playlist details
-follow the provider's track-ID order and retrieve missing song metadata for the
-first 200 entries. When more songs exist, the loaded/total counts and partial
+follow the provider's track-ID order, remove duplicate IDs, and retrieve missing
+song metadata in batches of up to 200 entries with **Load more**. When more songs exist, the loaded/total counts and partial
 status are explicit, and actions say **Play loaded songs / Queue loaded songs**.
 Only that loaded subset is played or enqueued; the app does not claim the full
 playlist is available. Individual playback still resolves current permissions.
+
+Playlist **Load more** appends unique songs in source order without playback or queue changes. A failed batch keeps the loaded list and offers Retry more; loaded/total counts remain independent of the local filter.

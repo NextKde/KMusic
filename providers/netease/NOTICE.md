@@ -26,3 +26,5 @@ Collection search reuses cloudsearch type1000/type10 and playlist_detail from th
 same fixed revision. KMusic's helper follows trackIds and requests missing song
 metadata for a bounded first200 entries; partial counts are reported explicitly.
 No additional upstream code or web interface was imported for this adapter.
+
+Playlist pagination uses the same attributed playlist_detail and song_detail modules. KMusic keeps a bounded in-memory track-ID snapshot and requests successive 200-ID batches; it does not impose a permanent 200-song cap. Session restore/logout clears snapshots.

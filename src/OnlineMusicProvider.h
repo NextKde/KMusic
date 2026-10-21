@@ -25,7 +25,7 @@ public:
     void search(const QString &query, int limit = 30);
     void resolve(qint64 trackId, const QString &songId, const QString &quality);
     void searchCollections(const QString &query, const QString &kind);
-    void loadPlaylistTracks(const QString &id);
+    void loadPlaylistTracks(const QString &id, int offset = 0);
     void cancelResolve();
     void loadLyrics(qint64 trackId, const QString &songId);
     void loadDetail(const QString &songId);

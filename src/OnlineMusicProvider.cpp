@@ -130,16 +130,15 @@ void OnlineMusicProvider::searchCollections(const QString &query, const QString 
         emit collectionsReady(rows);
     });
 }
-void OnlineMusicProvider::loadPlaylistTracks(const QString &id) {
+void OnlineMusicProvider::loadPlaylistTracks(const QString &id, int offset) {
     const auto generation = ++m_albumGeneration;
-    request("playlistTracks", {{"id", id}}, [this, id, generation](const QJsonObject &response) {
+    request("playlistTracks", {{"id", id}, {"offset", offset}}, [this, id, generation](const QJsonObject &response) {
         if (generation != m_albumGeneration) return;
         if (!response.value("ok").toBool()) { emit albumTracksReady(id, {}, failureText(response), {}); return; }
         const auto body = response.value("body").toObject();
         QString error;
         auto tracks = parseNeteaseSearch(QJsonDocument(QJsonObject{{"code", 200},
             {"result", QJsonObject{{"songs", body.value("songs")}}}}).toJson(), &error);
-        if (tracks.isEmpty() && error.isEmpty() && body.value("collection").toObject().value("totalCount").toInt() > 0) error = tr("Playlist songs are unavailable. Check account and access permissions.");
         emit albumTracksReady(id, tracks, error, body.value("collection").toObject().toVariantMap());
     });
 }

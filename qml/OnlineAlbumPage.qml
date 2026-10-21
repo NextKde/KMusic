@@ -54,7 +54,7 @@ Item {
                 }
                 Label {
                     x: 32; y: 292; width: parent.width - 64; elide: Text.ElideRight; font.pixelSize: 11
-                    text: page.music.albumMessage || (page.partial ? qsTr("Only the first %1 songs were requested; %2 were loaded. Remaining songs are not included.").arg(page.music.onlineAlbum.requestedCount).arg(page.music.onlineAlbum.trackCount) : qsTr("Playback depends on account and track permissions. Previews are labelled when available."))
+                    text: page.music.albumLoadMoreError || page.music.albumMessage || (page.music.albumLoadingMore ? qsTr("Loading more songs…") : page.partial ? (page.music.onlineAlbum.hasMore ? qsTr("More songs are available. Play and queue actions use the loaded songs.") : qsTr("Some song metadata is unavailable from NetEase. Play and queue actions use the loaded songs.")) : qsTr("Playback depends on account and track permissions. Previews are labelled when available."))
                     color: AppTheme.mutedText
                 }
             }
@@ -71,6 +71,13 @@ Item {
             anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 24; spacing: 12
             MusicActionButton { iconOnly: true; iconName: "back"; flat: true; implicitWidth: 30; implicitHeight: 30; onClicked: page.backRequested(); Accessible.name: qsTr("Back") }
             Label { text: page.music.onlineAlbum.title || qsTr("Album"); color: AppTheme.text; font.pixelSize: 13; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+            MusicActionButton {
+                objectName: "reviewAlbumMore"
+                visible: page.playlistView && page.music.onlineAlbum.hasMore === true
+                text: page.music.albumLoadingMore ? qsTr("Loading…") : page.music.albumLoadMoreError.length ? qsTr("Retry more") : qsTr("Load more")
+                enabled: !page.music.albumLoadingMore && !page.music.albumLoading
+                onClicked: page.music.loadMorePlaylistTracks()
+            }
             MusicActionButton { objectName: "reviewAlbumRetry"; visible: page.music.albumError.length > 0; text: qsTr("Retry"); onClicked: page.music.retryOnlineAlbum() }
             LiquidTextField {
                 id: search

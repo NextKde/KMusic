@@ -226,12 +226,27 @@ void MusicController::initialize()
     connect(&m_onlineProvider, &OnlineMusicProvider::albumTracksReady, this,
         [this](const QString &albumId, const QList<TrackRecord> &tracks, const QString &error, const QVariantMap &album) {
             if (albumId != m_onlineAlbum.value("providerId").toString()) return;
-            m_albumLoading = false; m_albumError = error; m_albumTracks = tracks;
+            const bool append = m_albumLoadingMore;
+            m_albumLoading = false; m_albumLoadingMore = false;
+            if (append) m_albumLoadMoreError = error; else m_albumError = error;
+            if (!append) m_albumTracks.clear();
             if (error.isEmpty()) {
+                if (m_onlineAlbum.value("kind").toString() == "playlist") {
+                    QSet<QString> existing;
+                    for (const auto &track : std::as_const(m_albumTracks)) existing.insert(track.providerId);
+                    for (const auto &track : tracks) {
+                        if (!existing.contains(track.providerId)) { m_albumTracks.append(track); existing.insert(track.providerId); }
+                    }
+                } else m_albumTracks = tracks;
                 for (auto it = album.cbegin(); it != album.cend(); ++it)
                     if (it.value().isValid() && !it.value().toString().isEmpty()) m_onlineAlbum.insert(it.key(), it.value());
             }
-            m_albumTracksModel.setTracks(tracks);
+            if (error.isEmpty()) {
+                m_onlineAlbum.insert("trackCount", m_albumTracks.size());
+                if (m_onlineAlbum.value("kind").toString() == "playlist")
+                    m_onlineAlbum.insert("partial", m_albumTracks.size() < m_onlineAlbum.value("totalCount").toInt());
+            }
+            m_albumTracksModel.setTracks(m_albumTracks);
             emit onlineAlbumChanged();
             const bool playRequested = m_pendingDiscoveryAlbum == albumId;
             m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
@@ -1951,14 +1966,14 @@ void MusicController::openDiscoveryAlbum(int row)
     const auto album = m_discoveryAlbums.at(row).toMap();
     if (album.value("providerId").toString().isEmpty()) return;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
-    m_onlineAlbum = album; m_onlineAlbum.insert("kind", "album"); m_albumLoading = false; m_albumTracks.clear(); m_albumTracksModel.setSearch({});
+    m_onlineAlbum = album; m_onlineAlbum.insert("kind", "album"); m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear(); m_albumTracks.clear(); m_albumTracksModel.setSearch({});
     retryOnlineAlbum();
 }
 void MusicController::retryOnlineAlbum()
 {
     const QString id = m_onlineAlbum.value("providerId").toString();
-    if (id.isEmpty() || m_albumLoading) return;
-    m_albumLoading = true; m_albumError.clear(); m_albumMessage.clear();
+    if (id.isEmpty() || m_albumLoading || m_albumLoadingMore) return;
+    m_albumLoading = true; m_albumError.clear(); m_albumLoadMoreError.clear(); m_albumMessage.clear();
     m_albumTracks.clear(); m_albumTracksModel.setTracks({}); emit onlineAlbumChanged();
     if (m_onlineAlbum.value("kind").toString() == "playlist") m_onlineProvider.loadPlaylistTracks(id);
     else m_onlineProvider.loadAlbumTracks(id);
@@ -2040,6 +2055,14 @@ void MusicController::openOnlineCollection(int row)
 {
     if (row < 0 || row >= m_onlineCollections.size()) return;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
-    m_onlineAlbum = m_onlineCollections.at(row).toMap(); m_albumLoading = false;
+    m_onlineAlbum = m_onlineCollections.at(row).toMap(); m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear();
     m_albumTracks.clear(); m_albumTracksModel.setSearch({}); retryOnlineAlbum();
+}
+
+void MusicController::loadMorePlaylistTracks()
+{
+    if (m_onlineAlbum.value("kind").toString() != "playlist" || m_albumLoading || m_albumLoadingMore
+        || !m_onlineAlbum.value("hasMore").toBool()) return;
+    m_albumLoadingMore = true; m_albumLoadMoreError.clear(); m_albumMessage.clear(); emit onlineAlbumChanged();
+    m_onlineProvider.loadPlaylistTracks(m_onlineAlbum.value("providerId").toString(), m_onlineAlbum.value("nextOffset").toInt());
 }
