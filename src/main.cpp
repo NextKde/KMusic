@@ -62,12 +62,12 @@ int main(int argc, char *argv[]) {
                 });
             } else if (action == "homePointer") {
                 // Dedicated-window review only: actual Qt Quick pointer dispatch,
-                // restricted to two product controls; never moves the system cursor.
+                // restricted to named product controls; never moves the system cursor.
                 const QString control = data.value("control").toString();
                 const QString state = data.value("state").toString();
-                if ((control != "hero" && control != "player") ||
-                    (state != "hover" && state != "press" && state != "cancel")) return;
-                auto *item = window->findChild<QQuickItem *>(control == "hero" ? "reviewHeroPlay" : "reviewPlayerPlay");
+                if ((control != "hero" && control != "player" && control != "discoveryFirst") ||
+                    (state != "hover" && state != "press" && state != "cancel" && state != "click")) return;
+                auto *item = window->findChild<QQuickItem *>(control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : "reviewDiscoveryFirst");
                 if (!item || !item->isVisible() || !item->isEnabled()) return;
                 QPointF position = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
                 if (state == "cancel") position = QPointF(window->width() - 120, 40);
@@ -76,7 +76,8 @@ int main(int argc, char *argv[]) {
                     QCoreApplication::sendEvent(window, &event);
                 };
                 send(QEvent::MouseMove, Qt::NoButton, state == "cancel" ? Qt::LeftButton : Qt::NoButton);
-                if (state == "press") send(QEvent::MouseButtonPress, Qt::LeftButton, Qt::LeftButton);
+                if (state == "press" || state == "click") send(QEvent::MouseButtonPress, Qt::LeftButton, Qt::LeftButton);
+                if (state == "click") send(QEvent::MouseButtonRelease, Qt::LeftButton, Qt::NoButton);
                 if (state == "cancel") send(QEvent::MouseButtonRelease, Qt::LeftButton, Qt::NoButton);
                 QFile response(QDir(reviewDir).filePath("response.json"));
                 if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{

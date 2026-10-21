@@ -59,10 +59,11 @@ ScrollView {
         RowLayout {
             Layout.fillWidth: true
             ColumnLayout {
-                Layout.fillWidth: true; spacing: 3
+                spacing: 3
                 Label { text: qsTr("New releases"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
                 Label { text: qsTr("NetEase · public new albums, not personalized"); color: AppTheme.mutedText; font.pixelSize: 11 }
             }
+            Item { Layout.fillWidth: true }
             LiquidActionButton { text: page.music.discoveryLoading ? qsTr("Loading…") : page.music.discoveryError.length ? qsTr("Retry") : qsTr("Refresh"); implicitHeight: 30; enabled: !page.music.discoveryLoading; onClicked: page.music.reloadDiscovery() }
         }
         Label { visible: page.music.discoveryLoading || page.music.discoveryError.length > 0; text: page.music.discoveryLoading ? qsTr("Loading new albums from NetEase…") : page.music.discoveryError; color: page.music.discoveryError.length ? AppTheme.destructive : AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
@@ -80,6 +81,7 @@ ScrollView {
                     delegate: AlbumTile {
                         required property var modelData
                         required property int index
+                        actionObjectName: index === 0 ? "reviewDiscoveryFirst" : ""
                         width: 128; title: modelData.title; subtitle: modelData.artist; artwork: modelData.artwork
                         onClicked: page.music.playDiscoveryAlbum(index)
                     }
