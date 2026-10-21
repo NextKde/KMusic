@@ -26,6 +26,9 @@ establish whole-app acceptance.
   omit a separate Now Playing button, and do not move transport to the middle.
   Use a capsule outline and eliminate discrete blur replicas and repeated
   refraction; inspect actual motion frames.
+- The user requires at least a 30% height reduction: reduce the 76px candidate to
+  52px (about 31.6%), scaling artwork, icons, type and padding together while
+  preserving the supplied internal order and thin middle-region seek track.
 - Review light/dark appearances at 1280×800 and 1024×640, including spacing,
   readability, final-item reachability, playback, seeking and volume. Regress any
   compatible shared-control interfaces in Gallery.
