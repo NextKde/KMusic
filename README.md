@@ -1,23 +1,15 @@
 # KMusic progress
 
-Updated: 2026-10-21T09:13:27.650101+08:00
+Updated: 2026-10-21T21:06:06.489137+08:00
 
-Final checkpoint then PAUSED at explicit user request to adjust direction. No further development or automatic review until user resumes.
+Development resumed at the user's request. Native Qt/QML, local builds and dedicated-window screenshots.
 
-Latest source/builda2925a5/shared9da PID57925, committed clean. Final1280 light/dark captures personally reviewed: interior hard edge softened; light frame still has some loading cover placeholders, dark covers loaded. Narrow improvement only; whole UI and liquid continuous-frame acceptance incomplete. Previous b5da final capture historical, not new candidate. User-requested stop after this round.
+Source: [`c180098`](https://github.com/NextKde/KMusic/tree/codex/music-development)
 
-Source: [`a2925a542b39`](https://github.com/NextKde/KMusic/commit/a2925a542b395436c2cacd20e542b734e2d14582) · Branch: `codex/music-development` · Local changes: False
+- Completed: checkpoint of user-tuned shared materials and music sidebar, red music icons, removal of the unwanted sidebar gradient strip.
+- In progress: QR login, secure session storage and real playback; plain content buttons, fixed glass controls over scrolling content, immersive artwork/queue layout.
+- Screenshot status: New capture request has not produced a PNG. No older image reused.
+- Runtime build: KMusic checkpoint c180098, shared component2516546; new developer source is not this runtime.
+- Visual acceptance: pending user. Build and source publication are not visual acceptance.
 
-Captures and builds document progress; UI acceptance is recorded separately.
-
-![home-a2925a5-light-1280.png](screenshots/round-20261021-091327/home-a2925a5-light-1280.png)
-
-2560 × 1600 original pixels
-
-![home-a2925a5-dark-1280.png](screenshots/round-20261021-091327/home-a2925a5-dark-1280.png)
-
-2560 × 1600 original pixels
-
-[Capture and revision metadata](screenshots/round-20261021-091327/metadata.json)
-
-[All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
+[This round's metadata](screenshots/round-20261021-210606/metadata.json)
