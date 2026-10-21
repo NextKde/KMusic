@@ -34,9 +34,31 @@ ScrollView {
                     id: featureUnderlay
                     anchors.fill: parent
                     Rectangle { anchors.fill: parent; radius: 12; color: AppTheme.dark ? "#34383e" : "#f3f4f5" }
-                    Image { id: featureArtwork; anchors.fill: parent; source: page.music.currentArtworkUrl; sourceSize: Qt.size(1024, 512); fillMode: Image.PreserveAspectCrop; asynchronous: true; visible: false }
-                    Rectangle { id: featureMask; anchors.fill: parent; radius: 12; color: "white"; visible: false; layer.enabled: true }
-                    MultiEffect { anchors.fill: parent; source: featureArtwork; maskEnabled: true; maskSource: featureMask; blurEnabled: true; blurMax: 24; blur: .35; autoPaddingEnabled: false; opacity: AppTheme.dark ? .22 : .14 }
+                    // Bound the artwork scale so embedded cover lettering cannot
+                    // become a second headline. Only real cover colours enter glass.
+                    Image {
+                        id: featureArtwork
+                        width: Math.min(parent.width * .52, 420); height: parent.height
+                        source: page.music.currentArtworkUrl; sourceSize: Qt.size(640, 640)
+                        fillMode: Image.PreserveAspectCrop; asynchronous: true; visible: false
+                    }
+                    Rectangle {
+                        id: featureMask
+                        width: featureArtwork.width; height: parent.height; radius: 12
+                        visible: false; layer.enabled: true
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: "white" }
+                            GradientStop { position: .32; color: "white" }
+                            GradientStop { position: 1; color: "transparent" }
+                        }
+                    }
+                    MultiEffect {
+                        width: featureArtwork.width; height: parent.height
+                        source: featureArtwork; maskEnabled: true; maskSource: featureMask
+                        blurEnabled: true; blurMax: 48; blur: .4; autoPaddingEnabled: false
+                        opacity: AppTheme.dark ? .18 : .12
+                    }
                 }
                 LiquidBackdrop { id: featureBackdrop; sourceItem: featureUnderlay; registerAsDefault: false }
                 RowLayout {
