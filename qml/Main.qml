@@ -13,7 +13,18 @@ ApplicationWindow {
     property string destination: "new"
     property string lastContentDestination: "new"
     property string collectionReturnDestination: "new"
-    onDestinationChanged: if (destination !== "now") lastContentDestination = destination
+    property Item focusBeforeNow: null
+    onDestinationChanged: {
+        if (destination !== "now") lastContentDestination = destination
+        else if (window.activeFocusItem && window.activeFocusItem !== nowPlaying)
+            focusBeforeNow = window.activeFocusItem
+    }
+    function closeNowPlaying() {
+        destination = lastContentDestination
+        if (focusBeforeNow && focusBeforeNow.visible && focusBeforeNow.enabled)
+            focusBeforeNow.forceActiveFocus(Qt.OtherFocusReason)
+        else discoverNav.forceActiveFocus(Qt.OtherFocusReason)
+    }
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
     readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
@@ -266,7 +277,7 @@ ApplicationWindow {
         NowPlaying {
             id: nowPlaying; anchors.fill: parent
             visible: window.destination === "now"; music: window.music
-            onCloseRequested: window.destination = window.lastContentDestination
+            onCloseRequested: window.closeNowPlaying()
         }
         WindowChrome { width: parent.width; targetWindow: window }
     }

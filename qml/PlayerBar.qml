@@ -83,6 +83,7 @@ LiquidCard {
     }
     Popup {
         id: volumePopup
+        focus: true
         x: bar.width - width - 12; y: -height - 10
         width: 170; height: 48; padding: 12
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
