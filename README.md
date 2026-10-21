@@ -1,17 +1,17 @@
 # KMusic progress
 
-Updated: 2026-10-21T08:11:34.448236+08:00
+Updated: 2026-10-21T08:14:48.799489+08:00
 
-设计纠偏进行中：按用户五条要求重建完整主界面，原生KWin材质路线已从源码移除，当前App候选尚未运行。
+08:13轮：完整纯QML主界面已重写并在构建，本轮没有新App运行画面；Gallery继续新图回归。
 
-本轮没有App新截图：旧进程已退出，未重启已退役native版本；runtime running=false。源码e3bb853移除KF/KWayland/NativeReview，正在重写Main/Chrome/Discovery/PlayerBar/AlbumTile形成统一完整界面。内容Apple Music，外观kos-settings自绘装饰，细节Forma，重点保留纯QML液态采样/折射/模糊。后端音源/试听/歌词保留。整体外观未验收，不能用旧图冒充本轮。
+本轮采集时runtime running=false，未运行退役native版本；不附旧App图。Main/Chrome/Discovery/PlayerBar/AlbumTile/Artwork整体改造，236侧栏、30CSD、84播放器、真实内容封面/诚实空态、统一矢量图标、QML内部underlay液态采样正在构建。外观未验收。音源/试听/歌词保留。源码dirty状态见metadata，源码文件已更新不代表二进制已运行。
 
-Source: [`e3bb853c3bbc`](https://github.com/NextKde/KMusic/commit/e3bb853c3bbc571e4a42bb0e2a9aa2f0a2c2ae68) · Branch: `codex/music-development` · Local changes: False
+Source: [`e783a9858319`](https://github.com/NextKde/KMusic/commit/e783a9858319b79f22c86463cf078a4b31192803) · Branch: `codex/music-development` · Local changes: False
 
 Captures and builds document progress; UI acceptance is recorded separately.
 
 No current application image available in this preparation round; see status above.
 
-[Capture and revision metadata](screenshots/round-20261021-081134/metadata.json)
+[Capture and revision metadata](screenshots/round-20261021-081448/metadata.json)
 
 [All rounds](./screenshots) · [Other project](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
