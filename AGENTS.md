@@ -1,5 +1,11 @@
 # Contributor instructions
 
+- Latest design authority: read docs/DesignReset.zh-CN.md (English companion
+  docs/DesignReset.md). The user requires pure QML transparency/blur and retained
+  liquid effects; the previous KWin/KF6/native review route is retired. Whole-app
+  design acceptance must be redone with Apple Music content, kos-settings exterior
+  and self-drawn decoration, and Forma component detail.
+
 This is the independent NextKde Music desktop application. Read docs/Design.md
 and docs/Roadmap.md before changing the UI. The coordinating chat owns design
 and acceptance; one implementation subagent owns application and component work.
