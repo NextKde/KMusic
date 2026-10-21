@@ -17,6 +17,16 @@
 #include <memory>
 #include <QtConcurrentRun>
 #include <QFutureWatcher>
+namespace {
+QQuickItem *findReviewItem(QQuickItem *root, const QString &name) {
+    if (!root) return nullptr;
+    if (root->objectName() == name) return root;
+    for (auto *child : root->childItems()) {
+        if (auto *found = findReviewItem(child, name)) return found;
+    }
+    return nullptr;
+}
+}
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("kmusic"));
@@ -67,8 +77,14 @@ int main(int argc, char *argv[]) {
                 const QString state = data.value("state").toString();
                 if ((control != "hero" && control != "player" && control != "discoveryFirst") ||
                     (state != "hover" && state != "press" && state != "cancel" && state != "click")) return;
-                auto *item = window->findChild<QQuickItem *>(control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : "reviewDiscoveryFirst");
-                if (!item || !item->isVisible() || !item->isEnabled()) return;
+                auto *item = findReviewItem(window->contentItem(), control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : "reviewDiscoveryFirst");
+                if (!item || !item->isVisible() || !item->isEnabled()) {
+                    QFile response(QDir(reviewDir).filePath("response.json"));
+                    if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
+                        {"ok", false}, {"error", "Named control unavailable"}, {"found", item != nullptr}
+                    }).toJson());
+                    return;
+                }
                 QPointF position = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
                 if (state == "cancel") position = QPointF(window->width() - 120, 40);
                 const auto send = [window, position](QEvent::Type type, Qt::MouseButton button, Qt::MouseButtons buttons) {
@@ -104,7 +120,7 @@ int main(int argc, char *argv[]) {
                         QMetaObject::invokeMethod(window, "reviewMaterialAction", Q_ARG(QVariant, state), Q_ARG(QVariant, index));
                         return;
                     }
-                    auto *item = window->findChild<QQuickItem *>("reviewHeroPlay");
+                    auto *item = findReviewItem(window->contentItem(), "reviewHeroPlay");
                     if (!item || !item->isVisible() || !item->isEnabled()) return;
                     const bool release = state.endsWith("Release");
                     const QPointF position = release ? QPointF(window->width() - 120, 40)
