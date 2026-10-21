@@ -150,3 +150,38 @@ void OnlineMusicProvider::loadDetail(const QString &songId) {
             {"source", "NetEase"}});
     });
 }
+
+void OnlineMusicProvider::loadNewAlbums() {
+    const quint64 generation = ++m_discoveryGeneration;
+    request("newAlbums", {{"limit", 8}}, [this, generation](const QJsonObject &response) {
+        if (generation != m_discoveryGeneration) return;
+        if (!response.value("ok").toBool()) { emit newAlbumsReady({}, failureText(response)); return; }
+        QVariantList albums;
+        for (const auto &value : response.value("body").toObject().value("albums").toArray()) {
+            const auto album = value.toObject();
+            const QString id = QString::number(album.value("id").toVariant().toLongLong());
+            const QString title = album.value("name").toString();
+            if (id == "0" || title.isEmpty()) continue;
+            const QString artist = joinedArtists(album.value("artists").toArray());
+            albums.append(QVariantMap{{"providerId", id}, {"title", title}, {"artist", artist},
+                {"artwork", album.value("picUrl").toString()}, {"source", "NetEase"}});
+            if (albums.size() >= 8) break;
+        }
+        emit newAlbumsReady(albums, albums.isEmpty() ? tr("No new albums returned by NetEase. Retry later.") : QString{});
+    });
+}
+void OnlineMusicProvider::loadAlbumTracks(const QString &albumId) {
+    const quint64 generation = ++m_albumGeneration;
+    request("album", {{"id", albumId}}, [this, albumId, generation](const QJsonObject &response) {
+        if (generation != m_albumGeneration) return;
+        if (!response.value("ok").toBool()) { emit albumTracksReady(albumId, {}, failureText(response)); return; }
+        const auto body = response.value("body").toObject();
+        const QJsonObject adapted{{"code", body.value("code")}, {"result", QJsonObject{{"songs", body.value("songs")}}}};
+        QString error;
+        auto tracks = parseNeteaseSearch(QJsonDocument(adapted).toJson(), &error);
+        // A catalogue response is not playback permission; resolution stays fresh.
+        tracks = tracks.mid(0, 100);
+        if (tracks.isEmpty() && error.isEmpty()) error = tr("No playable tracks listed for this album.");
+        emit albumTracksReady(albumId, tracks, error);
+    });
+}

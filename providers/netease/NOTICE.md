@@ -11,3 +11,6 @@ mode explicitly reports unsupported, without silently emulating its browser SDK.
 The original request/crypto/xeapi and selected API modules otherwise remain intact.
 Only the allowlisted desktop API calls exposed by helper.ts can be invoked.
 No account cookie is read from another player or logged. Login is not yet exposed.
+
+Discovery adds modules/album_new.ts from the same fixed revision, adapting only
+the .ts relative import suffixes. The anonymous new-album feed is not personalized.

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import Kos.Ui
 ScrollView {
     id: page
@@ -10,6 +11,12 @@ ScrollView {
     signal nowPlayingRequested()
     signal albumRequested(string filter, string title)
     contentWidth: availableWidth; clip: true
+    function homeOpticalState() {
+        return { hovered: heroPlay.hovered, down: heroPlay.down, contentScale: heroPlay.scale,
+            lensExpansion: heroPlay.opticalExpansion, refraction: heroPlay.opticalRefraction,
+            magnification: heroPlay.opticalMagnification, reflection: heroPlay.opticalReflection,
+            sampling: heroPlay.sampling, backdropAvailable: featureBackdrop.available }
+    }
     ColumnLayout {
         width: page.availableWidth - 56; x: 28; spacing: 18
         RowLayout {
@@ -22,7 +29,16 @@ ScrollView {
             Label { text: page.music.currentTrackId > 0 ? qsTr("CONTINUE LISTENING") : qsTr("YOUR MUSIC"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
             Rectangle {
                 Layout.fillWidth: true; Layout.preferredHeight: 164; radius: 12
-                color: AppTheme.dark ? "#34383e" : "#f3f4f5"
+                color: "transparent"
+                Item {
+                    id: featureUnderlay
+                    anchors.fill: parent
+                    Rectangle { anchors.fill: parent; radius: 12; color: AppTheme.dark ? "#34383e" : "#f3f4f5" }
+                    Image { id: featureArtwork; anchors.fill: parent; source: page.music.currentArtworkUrl; sourceSize: Qt.size(1024, 512); fillMode: Image.PreserveAspectCrop; asynchronous: true; visible: false }
+                    Rectangle { id: featureMask; anchors.fill: parent; radius: 12; color: "white"; visible: false; layer.enabled: true }
+                    MultiEffect { anchors.fill: parent; source: featureArtwork; maskEnabled: true; maskSource: featureMask; blurEnabled: true; blurMax: 24; blur: .35; autoPaddingEnabled: false; opacity: AppTheme.dark ? .22 : .14 }
+                }
+                LiquidBackdrop { id: featureBackdrop; sourceItem: featureUnderlay; registerAsDefault: false }
                 RowLayout {
                     anchors.fill: parent; anchors.margins: 20; spacing: 20
                     Artwork { source: page.music.currentArtworkUrl; title: page.music.currentTitle; Layout.preferredWidth: 124; Layout.preferredHeight: 124; radius: 8 }
@@ -33,13 +49,44 @@ ScrollView {
                         Label { text: page.music.providerStatus || page.music.currentAlbum; color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight; ToolTip.text: text; ToolTip.visible: statusHover.hovered; HoverHandler { id: statusHover } }
                         Item { Layout.fillHeight: true }
                         RowLayout {
-                            LiquidActionButton { id: heroPlay; objectName: "reviewHeroPlay"; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
+                            LiquidActionButton { id: heroPlay; objectName: "reviewHeroPlay"; backdrop: featureBackdrop; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
                             LiquidActionButton { visible: page.music.currentTrackId > 0; iconOnly: true; iconName: "more"; implicitWidth: 30; implicitHeight: 30; flat: true; onClicked: page.nowPlayingRequested(); Accessible.name: qsTr("Now playing details") }
                         }
                     }
                 }
             }
         }
+        RowLayout {
+            Layout.fillWidth: true
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 3
+                Label { text: qsTr("New releases"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
+                Label { text: qsTr("NetEase · public new albums, not personalized"); color: AppTheme.mutedText; font.pixelSize: 11 }
+            }
+            LiquidActionButton { text: page.music.discoveryLoading ? qsTr("Loading…") : page.music.discoveryError.length ? qsTr("Retry") : qsTr("Refresh"); implicitHeight: 30; enabled: !page.music.discoveryLoading; onClicked: page.music.reloadDiscovery() }
+        }
+        Label { visible: page.music.discoveryLoading || page.music.discoveryError.length > 0; text: page.music.discoveryLoading ? qsTr("Loading new albums from NetEase…") : page.music.discoveryError; color: page.music.discoveryError.length ? AppTheme.destructive : AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        Flickable {
+            id: releases
+            Layout.fillWidth: true; Layout.preferredHeight: 178
+            visible: page.music.discoveryAlbums.length > 0
+            clip: true; contentWidth: releaseRow.width; contentHeight: height
+            boundsBehavior: Flickable.StopAtBounds; flickableDirection: Flickable.HorizontalFlick
+            ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+            Row {
+                id: releaseRow; spacing: 18
+                Repeater {
+                    model: page.music.discoveryAlbums
+                    delegate: AlbumTile {
+                        required property var modelData
+                        required property int index
+                        width: 128; title: modelData.title; subtitle: modelData.artist; artwork: modelData.artwork
+                        onClicked: page.music.playDiscoveryAlbum(index)
+                    }
+                }
+            }
+        }
+        Label { visible: page.music.discoveryAlbums.length > 0; text: page.music.discoveryPlaying ? qsTr("Loading album tracks…") : qsTr("Select an album to play. Preview and account restrictions may apply."); color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         RowLayout {
             Layout.fillWidth: true
             Label { text: qsTr("Albums from your library"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold; Layout.fillWidth: true }

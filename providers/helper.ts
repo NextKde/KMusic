@@ -6,10 +6,11 @@ import cloudsearch from "./netease/modules/cloudsearch.ts";
 import songDetail from "./netease/modules/song_detail.ts";
 import songUrl from "./netease/modules/song_url.ts";
 import lyric from "./netease/modules/lyric_new.ts";
+import albumNew from "./netease/modules/album_new.ts";
 import album from "./netease/modules/album.ts";
 import playlist from "./netease/modules/playlist_detail.ts";
 
-const modules = { search: cloudsearch, detail: songDetail, lyric, album, playlist };
+const modules = { search: cloudsearch, detail: songDetail, lyric, album, playlist, newAlbums: albumNew };
 const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
 const emit = (data: unknown) => process.stdout.write(JSON.stringify(data) + "\n");
 input.on("line", async (line) => {

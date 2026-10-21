@@ -21,6 +21,8 @@ public:
     void cancelResolve();
     void loadLyrics(qint64 trackId, const QString &songId);
     void loadDetail(const QString &songId);
+    void loadNewAlbums();
+    void loadAlbumTracks(const QString &albumId);
     static QList<TrackRecord> parseNeteaseSearch(const QByteArray &payload,
         QString *errorMessage = nullptr, const QString &query = {});
 signals:
@@ -31,6 +33,8 @@ signals:
     void resolveFailed(qint64 trackId, const QString &message);
     void lyricsResolved(qint64 trackId, const QString &text, const QString &error);
     void detailReady(const QVariantMap &detail);
+    void newAlbumsReady(const QVariantList &albums, const QString &error);
+    void albumTracksReady(const QString &albumId, const QList<TrackRecord> &tracks, const QString &error);
 private:
     using Callback = std::function<void(const QJsonObject &)>;
     void request(const QString &action, const QJsonObject &params, Callback callback);
@@ -46,5 +50,7 @@ private:
     quint64 m_generation = 0;
     quint64 m_resolveGeneration = 0;
     quint64 m_lyricGeneration = 0;
+    quint64 m_discoveryGeneration = 0;
+    quint64 m_albumGeneration = 0;
     bool m_searching = false;
 };

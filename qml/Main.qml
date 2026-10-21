@@ -20,6 +20,7 @@ ApplicationWindow {
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
     function materialReviewState() {
         const state = JSON.parse(nowPlaying.materialReviewState())
+        state.homeButton = discover.homeOpticalState()
         state.sidebarSampling = sidebarMaterial.sampling
         state.appBackdropAvailable = appBackdrop.available
         state.underlay = "actual current track artwork, pure QML"
@@ -126,6 +127,7 @@ ApplicationWindow {
             Item {
                 anchors.fill: parent; anchors.topMargin: 30
                 DiscoveryPage {
+                    id: discover
                     anchors.fill: parent; visible: window.destination === "new"; music: window.music
                     onImportRequested: folderDialog.open()
                     onOnlineRequested: window.navigate("online", qsTr("Online search"))

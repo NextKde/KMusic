@@ -12,8 +12,9 @@ when distributing the combined application and helper.
   defaults and MPRIS identity, and adapts provider integration.
 - `vendor/nextkdeAppDemo` is a pinned Git submodule, preserving its LICENSE and
   NOTICE. Portable controls are linked from that source, not copied privately.
-- New discovery artwork is original QML geometry. Offline collections contain
-  no commercial album images or audio. Apple Music supplies layout inspiration.
+- Apple Music supplies layout inspiration. Discovery metadata/artwork are fetched
+  from NetEase's anonymous new-album API; they are source-provided catalogue data,
+  not original art, personalized recommendations or a playback entitlement.
 - Forma source-5bdb550 is a visual reference; its source is not copied here.
 - `providers/netease/{core,modules}` is extracted from SPlayer Next revision
   `05a4e5929030df21a8448ddb24c77dbd353f974e` (imsyy and contributors), AGPL-3.0.

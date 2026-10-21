@@ -30,6 +30,10 @@ class MusicController : public QObject {
     Q_PROPERTY(TrackListModel *queueModel READ queueModel CONSTANT)
     Q_PROPERTY(TrackListModel *playlistTracksModel READ playlistTracksModel CONSTANT)
     Q_PROPERTY(TrackListModel *onlineModel READ onlineModel CONSTANT)
+    Q_PROPERTY(QVariantList discoveryAlbums READ discoveryAlbums NOTIFY discoveryChanged)
+    Q_PROPERTY(bool discoveryLoading READ discoveryLoading NOTIFY discoveryChanged)
+    Q_PROPERTY(QString discoveryError READ discoveryError NOTIFY discoveryChanged)
+    Q_PROPERTY(bool discoveryPlaying READ discoveryPlaying NOTIFY discoveryChanged)
     Q_PROPERTY(QVariantList albums READ albums NOTIFY libraryChanged)
     Q_PROPERTY(QVariantList artists READ artists NOTIFY libraryChanged)
     Q_PROPERTY(QVariantList playlists READ playlists NOTIFY playlistsChanged)
@@ -95,6 +99,12 @@ public:
     TrackListModel *queueModel();
     TrackListModel *playlistTracksModel();
     TrackListModel *onlineModel();
+    QVariantList discoveryAlbums() const { return m_discoveryAlbums; }
+    bool discoveryLoading() const { return m_discoveryLoading; }
+    QString discoveryError() const { return m_discoveryError; }
+    bool discoveryPlaying() const { return !m_pendingDiscoveryAlbum.isEmpty(); }
+    Q_INVOKABLE void reloadDiscovery();
+    Q_INVOKABLE void playDiscoveryAlbum(int row);
     QVariantList albums() const;
     QVariantList artists() const;
     QVariantList playlists() const;
@@ -218,6 +228,7 @@ public:
 signals:
     void readyChanged();
     void libraryChanged();
+    void discoveryChanged();
     void playlistsChanged();
     void libraryFoldersChanged();
     void scanningChanged();
@@ -316,6 +327,10 @@ private:
     qint64 m_engineLoadRequests = 0;
     qint64 m_lyricRequestCount = 0;
     QVariantMap m_onlineDetail;
+    QVariantList m_discoveryAlbums;
+    bool m_discoveryLoading = false;
+    QString m_discoveryError;
+    QString m_pendingDiscoveryAlbum;
     QSet<qint64> m_failedTracks;
     QSet<QString> m_removedDuringScan;
     int m_attemptGeneration = 0;

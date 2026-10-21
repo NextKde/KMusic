@@ -205,6 +205,24 @@ void MusicController::initialize()
             this, &MusicController::onlineErrorChanged);
     connect(&m_onlineProvider, &OnlineMusicProvider::resultsReady,
             &m_onlineModel, &TrackListModel::setTracks);
+    connect(&m_onlineProvider, &OnlineMusicProvider::newAlbumsReady, this, [this](const QVariantList &albums, const QString &error) {
+        m_discoveryLoading = false; m_discoveryError = error; m_discoveryAlbums = albums; emit discoveryChanged();
+    });
+    connect(&m_onlineProvider, &OnlineMusicProvider::albumTracksReady, this,
+        [this](const QString &albumId, const QList<TrackRecord> &tracks, const QString &error) {
+            if (albumId != m_pendingDiscoveryAlbum) return;
+            m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
+            if (!error.isEmpty()) { setError(error); return; }
+            QList<qint64> ids;
+            for (const auto &track : tracks) {
+                QString failure;
+                const auto id = m_database.addExternalTrack(track, &failure);
+                if (id < 0) { setError(failure); return; }
+                ids.append(id);
+            }
+            if (ids.isEmpty()) return;
+            refreshLibrary(); setQueue(ids, 0); startCurrentTrack();
+        });
     connect(&m_onlineProvider, &OnlineMusicProvider::detailReady, this, [this](const QVariantMap &detail) {
         m_onlineDetail = detail; emit onlineDetailChanged();
     });
@@ -357,6 +375,7 @@ void MusicController::initialize()
     emit durationChanged();
     emit playbackStateChanged();
     emit readyChanged();
+    reloadDiscovery();
     rescanLibrary();
 }
 
@@ -1028,6 +1047,7 @@ void MusicController::clearQueue()
 
 void MusicController::play()
 {
+    if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     if (m_queueIds.isEmpty())
         return;
     if (m_queueIndex < 0)
@@ -1057,6 +1077,7 @@ void MusicController::play()
 
 void MusicController::pause()
 {
+    if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     m_playWhenReady = false;
     m_skipTimer.stop();
     m_attemptTimeout.stop();
@@ -1077,6 +1098,7 @@ void MusicController::togglePlayPause()
 }
 void MusicController::stop()
 {
+    if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     cancelRecovery();
     m_playWhenReady = false;
     m_failedTracks.clear();
@@ -1621,6 +1643,7 @@ void MusicController::loadPreparedTrack(const QUrl &url)
 
 void MusicController::startCurrentTrack(qint64 startPositionMs)
 {
+    if (!m_pendingDiscoveryAlbum.isEmpty()) { m_pendingDiscoveryAlbum.clear(); emit discoveryChanged(); }
     const auto track = findTrack(currentTrackId());
     if (!track)
         return;
@@ -1899,4 +1922,19 @@ QVariantMap MusicController::playbackSessionInfo() const
             {"engineLoadRequests", m_engineLoadRequests},
             {"engineLoaded", m_loadedTrackId >= 0 && m_loadedTrackId == currentTrackId()},
             {"engineHasSource", !m_engine.source().isEmpty()}};
+}
+
+void MusicController::reloadDiscovery()
+{
+    if (!m_ready || m_discoveryLoading) return;
+    m_discoveryLoading = true; m_discoveryError.clear(); emit discoveryChanged();
+    m_onlineProvider.loadNewAlbums();
+}
+void MusicController::playDiscoveryAlbum(int row)
+{
+    if (row < 0 || row >= m_discoveryAlbums.size()) return;
+    const auto albumId = m_discoveryAlbums.at(row).toMap().value("providerId").toString();
+    if (albumId.isEmpty()) return;
+    m_pendingDiscoveryAlbum = albumId; emit discoveryChanged();
+    m_onlineProvider.loadAlbumTracks(albumId);
 }

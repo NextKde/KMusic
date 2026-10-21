@@ -91,3 +91,12 @@ The saved session contains only track ID, position, last availability category,
 last stream duration and quality. Playback URLs, cookies, headers and tokens are
 not included. Live review status includes non-sensitive resolve/load counters and
 session confirmation facts for targeted restart/resume checks.
+
+### Public discovery feed
+
+Discover loads eight public new albums from the pinned SPlayer NetEase
+`album_new` adapter. Loading, provider failure and Retry are explicit; the list
+is not personalized and never starts audio automatically. Selecting an album
+loads its real tracks and uses fresh playback URL/preview validation through the
+existing player. Selecting another track, pause or stop cancels a pending album
+selection. Account/rights restrictions can still prevent playback.

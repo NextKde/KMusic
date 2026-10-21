@@ -86,18 +86,35 @@ int main(int argc, char *argv[]) {
                 }).toJson());
             } else if (action == "onlineSearch") {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
-            } else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
+            } else if (action == "playDiscovery") music.playDiscoveryAlbum(data.value("row").toInt());
+            else if (action == "reloadDiscovery") music.reloadDiscovery();
+            else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
             else if (action == "selectMenu") QMetaObject::invokeMethod(window, "openReviewSelect", Q_ARG(QVariant, data.value("name").toString()));
             else if (action == "materialSequence") {
                 const QString control = data.value("control").toString();
                 const QString directory = data.value("directory").toString();
-                if ((control != "switch" && control != "segment") || !QDir::isAbsolutePath(directory)) return;
+                if ((control != "switch" && control != "segment" && control != "hero") || !QDir::isAbsolutePath(directory)) return;
                 QDir().mkpath(directory);
                 const int index = data.value("index").toInt(1);
                 auto elapsed = std::make_shared<QElapsedTimer>(); elapsed->start();
                 auto frames = std::make_shared<QJsonArray>();
-                auto stateAction = [window, index](const QString &state) {
-                    QMetaObject::invokeMethod(window, "reviewMaterialAction", Q_ARG(QVariant, state), Q_ARG(QVariant, index));
+                auto stateAction = [window, index, control](const QString &state) {
+                    if (control != "hero") {
+                        QMetaObject::invokeMethod(window, "reviewMaterialAction", Q_ARG(QVariant, state), Q_ARG(QVariant, index));
+                        return;
+                    }
+                    auto *item = window->findChild<QQuickItem *>("reviewHeroPlay");
+                    if (!item || !item->isVisible() || !item->isEnabled()) return;
+                    const bool release = state.endsWith("Release");
+                    const QPointF position = release ? QPointF(window->width() - 120, 40)
+                        : item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
+                    QMouseEvent move(QEvent::MouseMove, position, window->mapToGlobal(position.toPoint()),
+                        Qt::NoButton, release ? Qt::LeftButton : Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &move);
+                    QMouseEvent event(release ? QEvent::MouseButtonRelease : QEvent::MouseButtonPress,
+                        position, window->mapToGlobal(position.toPoint()), Qt::LeftButton,
+                        release ? Qt::NoButton : Qt::LeftButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
                 };
                 stateAction(control + "Press");
                 QTimer::singleShot(200, window, [stateAction, control] { stateAction(control + "Release"); });
@@ -107,18 +124,20 @@ int main(int argc, char *argv[]) {
                     QMetaObject::invokeMethod(window, "materialReviewState", Q_RETURN_ARG(QVariant, state));
                     const qint64 requestedAt = elapsed->elapsed();
                     auto result = window->contentItem()->grabToImage();
+                    window->update();
                     if (!result) return;
                     const QString path = QDir(directory).filePath(control + QStringLiteral("-%1.png").arg(delay, 3, 10, QLatin1Char('0')));
-                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, window, path, directory, delay, requestedAt, state, frames] {
+                    QObject::connect(result.data(), &QQuickItemGrabResult::ready, window, [result, window, path, directory, control, delay, requestedAt, elapsed, state, frames] {
+                        const qint64 readyAt = elapsed->elapsed();
                         // PNG compression must not stall the animation/event loop.
                         const QImage image = result->image();
                         auto *writer = new QFutureWatcher<bool>(window);
-                        QObject::connect(writer, &QFutureWatcher<bool>::finished, window, [writer, path, directory, delay, requestedAt, state, frames] {
-                            frames->append(QJsonObject{{"scheduledMs", delay}, {"requestedAtMs", requestedAt}, {"saved", writer->result()}, {"path", path},
+                        QObject::connect(writer, &QFutureWatcher<bool>::finished, window, [writer, path, directory, control, delay, requestedAt, readyAt, state, frames] {
+                            frames->append(QJsonObject{{"scheduledMs", delay}, {"requestedAtMs", requestedAt}, {"grabReadyAtMs", readyAt}, {"saved", writer->result()}, {"path", path},
                                 {"stateAtRequest", QJsonDocument::fromJson(state.toString().toUtf8()).object()}});
                             QFile metadata(QDir(directory).filePath("frames.json"));
                             if (metadata.open(QIODevice::WriteOnly)) metadata.write(QJsonDocument(QJsonObject{
-                                {"trigger", "shared control state entry; no synthetic pointer or keyboard events"},
+                                {"trigger", control == "hero" ? "actual QtQuick QMouseEvent delivery; release outside button; no system pointer movement" : "shared control state entry; no synthetic pointer or keyboard events"},
                                 {"pressAtMs", 0}, {"releaseScheduledMs", 200}, {"frames", *frames}}).toJson());
                             writer->deleteLater();
                         });
@@ -153,6 +172,8 @@ int main(int argc, char *argv[]) {
                     {"lyricsEnabled", music.lyricsEnabled()}, {"lyricsLoading", music.lyricsLoading()}, {"lyricsCount", music.lyrics().size()},
                     {"lyricsError", music.lyricsError()}, {"lyricRequestCount", music.lyricRequestCount()},
                     {"playbackSession", QJsonObject::fromVariantMap(music.playbackSessionInfo())},
+                    {"discoveryCount", music.discoveryAlbums().size()}, {"discoveryLoading", music.discoveryLoading()},
+                    {"discoveryError", music.discoveryError()}, {"discoveryPlaying", music.discoveryPlaying()},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
                     {"onlineError", music.onlineError()}, {"error", music.errorMessage()},
                     {"windowWidth", window->width()}, {"windowHeight", window->height()}, {"dpr", window->devicePixelRatio()}
