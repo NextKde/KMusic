@@ -12,6 +12,7 @@ class AccountController final : public QObject {
     Q_PROPERTY(QString nickname READ nickname NOTIFY changed)
     Q_PROPERTY(QString qrImage READ qrImage NOTIFY changed)
     Q_PROPERTY(bool authenticated READ authenticated NOTIFY changed)
+    Q_PROPERTY(bool cleanupRequired READ cleanupRequired NOTIFY changed)
     Q_PROPERTY(QString storageMessage READ storageMessage NOTIFY changed)
 public:
     AccountController(OnlineMusicProvider *provider, QObject *parent = nullptr);
@@ -20,6 +21,7 @@ public:
     QString nickname() const { return m_nickname; }
     QString qrImage() const { return m_image; }
     QString storageMessage() const { return m_storageMessage; }
+    bool cleanupRequired() const { return m_cleanupRequired; }
     bool authenticated() const { return m_state == "signedIn"; }
     Q_INVOKABLE void beginLogin();
     Q_INVOKABLE void cancelLogin();
@@ -39,5 +41,6 @@ private:
     QTimer m_poll;
     QElapsedTimer m_expiry;
     quint64 m_generation = 0;
+    bool m_cleanupRequired = false;
     QString m_state = "restoring", m_message, m_nickname, m_image, m_key, m_storageMessage;
 };

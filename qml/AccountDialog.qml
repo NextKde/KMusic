@@ -46,7 +46,7 @@ LiquidDialog {
             text: qsTr("Retry saved session"); onClicked: dialog.account.retrySession()
         }
         MusicActionButton {
-            Layout.fillWidth: true; visible: dialog.account.authenticated; text: qsTr("Sign out on this device")
+            Layout.fillWidth: true; visible: dialog.account.authenticated || dialog.account.cleanupRequired; text: dialog.account.authenticated ? qsTr("Sign out on this device") : qsTr("Retry removing saved session")
             onClicked: dialog.account.logout()
         }
         Label {

@@ -4,6 +4,7 @@
 #include <qrencode.h>
 #include <QImage>
 #include <QBuffer>
+#include <QSettings>
 
 namespace {
 constexpr auto service = "NextKde.KMusic";
@@ -37,6 +38,7 @@ AccountController::AccountController(OnlineMusicProvider *provider, QObject *par
 void AccountController::setState(const QString &state, const QString &message) { m_state = state; m_message = message; emit changed(); }
 void AccountController::restore() {
     const auto generation = ++m_generation;
+    if (!QSettings().value("netease/restoreAllowed", false).toBool()) { setState("signedOut"); return; }
     setState("restoring", tr("Checking saved session…"));
     auto *job = new QKeychain::ReadPasswordJob(service, this);
     job->setKey(key); job->setInsecureFallback(false);
@@ -98,7 +100,14 @@ void AccountController::poll() {
 void AccountController::checkSession(quint64 generation, const QString &cookie) {
     m_provider->accountRequest("accountStatus", {}, [this, generation, cookie](const QJsonObject &response) {
         if (generation != m_generation) return;
-        if (!response.value("ok").toBool()) { setState("error", tr("Unable to verify your session. Check the connection and retry.")); return; }
+        if (!response.value("ok").toBool()) {
+            if (response.value("sessionExpired").toBool() || response.value("category").toString() == "auth") {
+                m_nickname.clear(); clearStored();
+                m_provider->accountRequest("sessionRestore", {{"cookie", ""}}, [](const QJsonObject &) {});
+                setState("expired", tr("Your NetEase session expired. Sign in again.")); emit sessionChanged();
+            } else setState("error", tr("Unable to verify your session. Check the connection and retry."));
+            return;
+        }
         const auto body = response.value("body").toObject();
         if (!body.value("authenticated").toBool()) {
             m_nickname.clear(); clearStored();
@@ -114,15 +123,24 @@ void AccountController::save(const QString &cookie) {
     auto *job = new QKeychain::WritePasswordJob(service, this); job->setKey(key); job->setTextData(cookie); job->setInsecureFallback(false);
     connect(job, &QKeychain::Job::finished, this, [this, job, generation] {
         if (generation != m_generation) return;
+        if (job->error() == QKeychain::NoError) {
+            QSettings settings; settings.setValue("netease/restoreAllowed", true); settings.sync();
+            m_cleanupRequired = false;
+        }
         m_storageMessage = job->error() == QKeychain::NoError ? tr("Session saved in the system credential store.") : tr("Could not save securely. Signed in for this session only."); emit changed();
     });job->start();
 }
 void AccountController::clearStored() {
+    // A non-secret tombstone prevents restoring a logged-out session even when
+    // the wallet is locked/unavailable and cannot delete its entry right now.
+    QSettings settings; settings.setValue("netease/restoreAllowed", false); settings.sync();
     auto *job = new QKeychain::DeletePasswordJob(service, this); job->setKey(key); job->setInsecureFallback(false);
     connect(job, &QKeychain::Job::finished, this, [this, job] {
-        if (job->error() != QKeychain::NoError && job->error() != QKeychain::EntryNotFound) {
-            m_storageMessage = tr("Could not remove the saved session from the system credential store. Unlock it and retry sign-out."); emit changed();
-        }
+        m_cleanupRequired = job->error() != QKeychain::NoError && job->error() != QKeychain::EntryNotFound;
+        if (m_cleanupRequired) {
+            m_storageMessage = tr("Could not remove the saved session from the system credential store. Unlock it and retry sign-out.");
+        } else m_storageMessage.clear();
+        emit changed();
     });job->start();
 }
 void AccountController::logout() {
