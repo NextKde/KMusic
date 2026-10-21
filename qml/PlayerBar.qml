@@ -41,7 +41,7 @@ LiquidCard {
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2
                     Label { text: bar.music.currentTitle || qsTr("Nothing playing"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 12; font.weight: Font.DemiBold }
-                    Label { text: bar.music.currentArtist ? bar.music.currentArtist + (bar.music.currentAlbum ? " — " + bar.music.currentAlbum : "") : qsTr("Choose a song to begin"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 10.5 }
+                    Label { text: bar.music.currentArtist ? bar.music.currentArtist + (bar.music.currentAlbum ? " — " + bar.music.currentAlbum : "") : qsTr("Choose a song to begin"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 11 }
                 }
             }
             LiquidSlider {
