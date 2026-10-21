@@ -22,11 +22,3 @@ when distributing the combined application and helper.
   modules are retained. See its NOTICE for exact paths and modifications.
 - `providers/helper.ts` and the Qt QProcess protocol are KMusic glue. No Electron
   UI, account cookie from another player, or third-party source fallback is used.
-
-The optional native review adapter and striped test background are original KMusic
-code. They use the public KF6WindowSystem/KWaylandClient APIs and KWin 6.8
-ScreenShot2 CaptureArea contract; no compositor implementation was copied into
-the application. The portable Kos.Ui module gains no platform dependency.
-
-可选原生审阅适配器和条纹测试背景为KMusic原创代码，使用公开KF6WindowSystem、
-KWaylandClient及KWin6.8 CaptureArea接口；未复制合成器实现，共享Kos.Ui不增加平台依赖。

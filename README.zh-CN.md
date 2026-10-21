@@ -37,27 +37,12 @@ Ctrl+F 搜索本地资料库；底栏提供播放、进度、音量、随机、�
 状态栏会显示试听限制；无播放地址、账号和网络错误会明确呈现。临时播放URL不作为持久歌曲身份，
 不从其他播放器读取账号Cookie，尚无登录流程。原LX适配器不是默认来源。
 
-侧栏可选材质：构建时有KF6WindowSystem且运行合成器提供BlurBehind时，仅侧栏区域使用
-半透明材质并请求现有模糊协议，文字保持不透明；运行能力不可用时回退实心侧栏。
-不会安装/修改KWin效果。客户端截图保留侧栏alpha，不包含桌面合成模糊；
-review状态分别记录effectAvailable、blurRequested、逻辑区域与fallback原因。
+[整体设计校正](docs/DesignReset.zh-CN.md)定义下一轮完整外壳和音乐内容验收。
+透明模糊使用纯QML采样真实应用页面、封面及背景underlay，保留清晰文字和液态光学。
+当前依赖清理检查点先使用实心侧栏，等待新underlay实现。
 
 在线恢复会区分曲库整曲时长与上次实际解码流的长度。试听会话重启后保留真实流时长与位置，
 明确显示“上次试听，播放前必须重新检查”，不会恢复旧URL或当前播放权限。重启后点击播放
 会先重新解析地址再加载引擎。旧会话没有流元数据时显示未知播放时长，避免将整曲长度当作试听长度。
 会话仅保存曲目ID、位置、上次可用性分类、流时长与音质，不保存播放URL、Cookie、请求头或Token。
 本机review状态提供不含敏感信息的解析/加载计数与确认状态，供重启/恢复专项核对。
-
-### 原生侧栏对照（Linux/KDE，可选开启）
-
-生产侧栏模糊可选依赖KF6WindowSystem。KWaylandClient仅供review适配器按本进程PID
-读取真实窗口UUID/几何；缺少时原生捕获守卫拒绝实验。普通启动不创建测试窗口，也不
-订阅窗口管理信息。WindowMaterial修改模糊请求后安排窗口帧，保证空闲Wayland表面
-也提交协议状态。
-开启KMUSIC_REVIEW_DIR后，nativeBackground（visible=true/false）创建原创条纹的
-独立原生背景窗口，尺寸仅为App加16px边界；nativeBlur（enabled=true/false）仅切换
-本App请求。nativeSidebar（path=绝对PNG路径）调用现有KWin CaptureArea，只抓侧栏内部，
-包含调用者窗口。前后验证runtime PID、真实合成器几何、UUID/PID、激活窗口、背景覆盖
-与父子关系；失败则丢弃像素，sidecar记录原始格式/stride/DPR及身份。不修改合成器配置
-或服务权限。实验后关闭测试背景并恢复nativeBlur.enabled=true。普通客户端capture
-仍不能证明桌面模糊，真实原生RGB on/off结果仍需独立看图验收。

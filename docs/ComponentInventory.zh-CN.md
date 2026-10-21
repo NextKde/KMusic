@@ -25,8 +25,7 @@
 输入语义色、焦点和选择文字一起修复，GLSL/QSB配对提交。待实际视觉回归。
 Select、GlassSwitch、NavBar、Segmented独立旧渐变/边缘仍pending，Material分支保持。
 
-App独立可选KF6适配器仅向半透明侧栏区域请求原生BlurBehind；effectAvailable与blurRequested
-分开报告，不可用回退不透明侧栏。客户端alpha截图只能表明App表面，不能证明桌面合成模糊。
+侧栏材质按DesignReset使用真实应用underlay的纯QML采样；旧平台适配器已移除。
 
 选择器视觉轮：闭合场/弹层共享LiquidSurface，去亮暗浮雕，Material与activated/宿主确认保持，键盘焦点独立。待运行验收；Gallery条纹源已裁切。GlassSwitch/NavBar/Segmented仍pending。
 
@@ -46,3 +45,7 @@ RGB/白色闭合边、固定高光斑和深度渐变。保留原可变currentInd
 导航契约及点击/弹簧/超时行为。Gallery作为直接消费方提供真实纹理、禁用/Material
 对照。KMusic当前不使用NavBar，仅固定共享版本并回归现有页面，不额外塞入新导航。
 动态/焦点/无障碍验收需独立完成，未宣称所有材质均已验收。
+
+整体外观按DesignReset.zh-CN.md重新验收：已移除生产构建的原生窗口模糊适配器及
+捕获实验。下一轮使用真实应用underlay的纯QML采样，液态效果必须保留；当前清理
+检查点不是整体新设计完成。

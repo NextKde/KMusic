@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(GNUInstallDirs)
 find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 QuickDialogs2 Concurrent DBus Network Sql)
 find_package(PkgConfig REQUIRED)
-find_package(KF6WindowSystem QUIET)
-find_package(KWayland QUIET)
 pkg_check_modules(MUSIC_GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-audio-1.0 gstreamer-pbutils-1.0)
 pkg_check_modules(MUSIC_TAGLIB REQUIRED IMPORTED_TARGET taglib>=1.12)
 qt_standard_project_setup(REQUIRES 6.8)
@@ -14,7 +12,7 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nextkdeAppDemo/shared/qml/CMak
     message(FATAL_ERROR "Run git submodule update --init --recursive")
 endif()
 add_subdirectory(vendor/nextkdeAppDemo/shared/qml kos-ui)
-qt_add_executable(kmusic src/main.cpp src/WindowMaterial.cpp src/WindowMaterial.h src/NativeReview.cpp src/NativeReview.h
+qt_add_executable(kmusic src/main.cpp
     src/AudioCache.cpp src/AudioCache.h src/MetadataScanner.cpp src/MetadataScanner.h
     src/MusicDatabase.cpp src/MusicDatabase.h src/MusicTypes.h src/MprisService.cpp src/MprisService.h
     src/PlaybackEngine.cpp src/PlaybackEngine.h src/Transcoder.cpp src/Transcoder.h
@@ -22,17 +20,9 @@ qt_add_executable(kmusic src/main.cpp src/WindowMaterial.cpp src/WindowMaterial.
     src/OnlineMusicProvider.cpp src/OnlineMusicProvider.h)
 qt_add_qml_module(kmusic URI NextKde.Music VERSION 1.0 RESOURCE_PREFIX /qt/qml
     SOURCES src/MusicController.cpp src/MusicController.h src/TrackListModel.cpp src/TrackListModel.h
-    QML_FILES qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml qml/ReviewBackdrop.qml)
+    QML_FILES qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
 target_include_directories(kmusic PRIVATE src)
 target_link_libraries(kmusic PRIVATE Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickDialogs2 Qt6::Concurrent Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
-if(TARGET KF6::WindowSystem)
-    target_link_libraries(kmusic PRIVATE KF6::WindowSystem)
-    target_compile_definitions(kmusic PRIVATE KMUSIC_HAVE_KWINDOWSYSTEM)
-endif()
-if(TARGET Plasma::KWaylandClient)
-    target_link_libraries(kmusic PRIVATE Plasma::KWaylandClient)
-    target_compile_definitions(kmusic PRIVATE KMUSIC_HAVE_KWAYLAND_REVIEW)
-endif()
 target_compile_definitions(kmusic PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
 install(TARGETS kmusic RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES data/kmusic.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)

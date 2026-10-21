@@ -29,10 +29,9 @@ fix included. Exact shader sources and baked assets are committed together.
 Runtime review pending. Independent Select, GlassSwitch, NavBar and Segmented
 gradient/edge paths remain pending; Material branches are preserved.
 
-The app-only optional KF6WindowSystem adapter requests native BlurBehind only for
-the translucent sidebar region. `effectAvailable` and `blurRequested` are reported
-separately. Without runtime support it uses an opaque sidebar. A client alpha
-capture shows the app surface, not the compositor's desktop blur result.
+The new design contract requires pure QML sampling of real application underlay.
+The native platform blur adapter and capture experiment have been removed from
+production. Complete shell/content/material review is pending under DesignReset.
 
 Select visual round: closed field/popup now share LiquidSurface; bright/dark bevel removed; Material and activated/acknowledgement unchanged. Keyboard focus is separate. Runtime review pending. Gallery source stripes now clip at source bounds. GlassSwitch/NavBar/Segmented remain pending.
 

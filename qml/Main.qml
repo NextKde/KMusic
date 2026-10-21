@@ -7,7 +7,6 @@ import Kos.Ui
 ApplicationWindow {
     id: window
     required property var music
-    required property var windowMaterial
     width: 1280; height: 800; minimumWidth: 1024; minimumHeight: 640
     visible: true; title: "KMusic"; color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
@@ -23,11 +22,7 @@ ApplicationWindow {
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
     function navigate(key, title) { destination = key; pageTitle = title || qsTr("Songs"); music.setSearch(""); music.setLibraryView("songs") }
-    function updateSidebarBlur() {
-        const p = sidebar.mapToItem(window.contentItem, 0, 0)
-        windowMaterial.setSidebarRect(Qt.rect(p.x, p.y, sidebar.width, sidebar.height))
-    }
-    Component.onCompleted: { AppTheme.appearanceMode = "light"; AppTheme.accentName = "purple"; Qt.callLater(updateSidebarBlur) }
+    Component.onCompleted: { AppTheme.appearanceMode = "light"; AppTheme.accentName = "purple" }
     Shortcut { sequence: "Ctrl+O"; onActivated: folderDialog.open() }
     Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
     Shortcut { sequence: "Ctrl+F"; onActivated: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
@@ -40,12 +35,8 @@ ApplicationWindow {
             Rectangle {
                 id: sidebar
                 Layout.preferredWidth: 240; Layout.fillHeight: true
-                color: window.windowMaterial.effectAvailable
-                    ? Qt.rgba(AppTheme.sidebar.r, AppTheme.sidebar.g, AppTheme.sidebar.b, .80) : AppTheme.sidebar
-                onXChanged: Qt.callLater(window.updateSidebarBlur)
-                onYChanged: Qt.callLater(window.updateSidebarBlur)
-                onWidthChanged: Qt.callLater(window.updateSidebarBlur)
-                onHeightChanged: Qt.callLater(window.updateSidebarBlur)
+                // Interim cleanup surface; the DesignReset QML underlay follows.
+                color: AppTheme.sidebar
                 ScrollView {
                     anchors.fill: parent; anchors.margins: 18; contentWidth: availableWidth; clip: true
                     ColumnLayout {
