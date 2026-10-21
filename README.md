@@ -1,8 +1,8 @@
 # KMusic progress
 
-Updated: 2026-10-21T23:57:01.488144+08:00
+Updated: 2026-10-22T00:01:52.679857+08:00
 
-Runtime `32cbef40` · shared `96ff101` · native Qt/QML, local rendering
+Runtime `46f3286f` · shared `96ff101` · native Qt/QML, local rendering
 
 - Available: QR login UI/session lifecycle, real search/play/pause/next/seek and lyrics; human phone scan and authenticated persistence still require user acceptance.
 - Current player fix: local metadata readability plate; optical background kept at panel sides. No second scene capture added.
@@ -10,9 +10,9 @@ Runtime `32cbef40` · shared `96ff101` · native Qt/QML, local rendering
 - New candidate: real album detail browsing with independent track model and explicit play/queue actions. Browsing did not alter queue or start playback; real helper interruption showed an error, Retry restored 20 tracks; actual album/single enqueue kept playback paused; Play album and track-row playback advanced real audio. Search filtering and error Retry checked. Fixed toolbar samples the opaque real page scene.
 - Design: immersive left playback/right real queue, plain content buttons, fixed liquid overlays. Final visual acceptance belongs to user.
 
-![Current capture](screenshots/round-20261021-2354/current.png)
+![Current capture](screenshots/round-20261021-2359/current.png)
 
-[Exact capture metadata](screenshots/round-20261021-2354/metadata.json)
+[Exact capture metadata](screenshots/round-20261021-2359/metadata.json)
 
 ![Current-track readability, light](screenshots/round-20261021-212941/panel-light.png)
 
@@ -36,4 +36,8 @@ Runtime `32cbef40` · shared `96ff101` · native Qt/QML, local rendering
 
 - Previous now uses restored logical progress: above 3 seconds returns the current song to zero; near the beginning goes to the previous entry. Paused intent survives both actions. Real preview restart required fresh resolution and stayed Paused at zero. Remaining acceptance: human sign-in/authenticated wallet and rights, current-version theme/size/keyboard checks and user visual review; no release issued.
 
-- Integration candidate: real Ctrl+F, typing Space without playback, and Tab routing checked. Immersive Escape added; volume popup Escape/focus-return issue reproduced and is under narrow repair. This screenshot shows the pre-fix volume popup. Theme/size matrix in progress; visual acceptance remains with the user.
+- Keyboard candidate fixed: actual Ctrl+F, typing Space without playback, Tab routing, immersive Escape with visible focus return and volume-popup Escape checked. Current theme/size evidence is for user visual review, not visual signoff. Player-side underlying text remains visible through refraction and needs user review.
+
+![Review album-detail-dark-1024x640](screenshots/round-20261021-2359/album-detail-dark-1024x640.png)
+
+![Review immersive-light-1024x640](screenshots/round-20261021-2359/immersive-light-1024x640.png)
