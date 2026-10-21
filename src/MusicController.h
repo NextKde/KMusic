@@ -28,6 +28,9 @@ class MusicController : public QObject {
     QML_ELEMENT
 
     Q_PROPERTY(AccountController *account READ account CONSTANT)
+    Q_PROPERTY(TrackListModel *favoritesModel READ favoritesModel CONSTANT)
+    Q_PROPERTY(int favoritesRevision READ favoritesRevision NOTIFY favoritesChanged)
+    Q_PROPERTY(bool currentFavorite READ currentFavorite NOTIFY favoritesChanged)
     Q_PROPERTY(TrackListModel *libraryModel READ libraryModel CONSTANT)
     Q_PROPERTY(TrackListModel *queueModel READ queueModel CONSTANT)
     Q_PROPERTY(TrackListModel *playlistTracksModel READ playlistTracksModel CONSTANT)
@@ -117,6 +120,12 @@ public:
     explicit MusicController(QObject *parent = nullptr);
     ~MusicController() override;
 
+    TrackListModel *favoritesModel() { return &m_favoritesModel; }
+    int favoritesRevision() const { return m_favoritesRevision; }
+    bool currentFavorite() const { return isTrackFavorite("current", 0); }
+    Q_INVOKABLE bool isTrackFavorite(const QString &source, qlonglong rowOrId) const;
+    Q_INVOKABLE void toggleTrackFavorite(const QString &source, qlonglong rowOrId);
+    Q_INVOKABLE void playFavoriteRow(int row);
     TrackListModel *libraryModel();
     TrackListModel *queueModel();
     TrackListModel *playlistTracksModel();
@@ -285,6 +294,7 @@ public:
 signals:
     void readyChanged();
     void libraryChanged();
+    void favoritesChanged();
     void onlineCollectionsChanged();
     void onlineAlbumChanged();
     void discoveryChanged();
@@ -337,6 +347,8 @@ private:
     void refreshGroups();
     void applyGroupSearch();
     void refreshPlaylists();
+    void refreshFavorites();
+    std::optional<TrackRecord> favoriteCandidate(const QString &source, qlonglong rowOrId) const;
     void refreshQueueModel();
     void refreshPlaylistModel();
     void setQueue(const QList<qint64> &trackIds, int currentIndex);
@@ -362,6 +374,9 @@ private:
     PlaybackEngine m_engine;
     Transcoder m_transcoder;
     TrackListModel m_libraryModel;
+    TrackListModel m_favoritesModel;
+    QSet<QString> m_favoritePaths;
+    int m_favoritesRevision = 0;
     TrackListModel m_queueModel;
     TrackListModel m_playlistTracksModel;
     TrackListModel m_onlineModel;

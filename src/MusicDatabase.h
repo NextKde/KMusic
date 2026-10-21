@@ -35,6 +35,9 @@ public:
     bool removeTrack(qint64 trackId, QString *errorMessage = nullptr);
     bool recordPlayed(qint64 trackId, QString *errorMessage = nullptr);
 
+    QList<qint64> favoriteTrackIds(QString *errorMessage = nullptr) const;
+    qint64 setTrackFavorite(const TrackRecord &track, bool favorite, QString *errorMessage = nullptr);
+
     QVariantList playlists(QString *errorMessage = nullptr) const;
     qint64 createPlaylist(const QString &name, QString *errorMessage = nullptr);
     bool renamePlaylist(qint64 playlistId, const QString &name,

@@ -11,7 +11,7 @@
 
 namespace {
 
-constexpr int schemaVersion = 2;
+constexpr int schemaVersion = 3;
 
 void setError(QString *target, const QString &message)
 {
@@ -142,6 +142,12 @@ bool MusicDatabase::migrate(QString *errorMessage)
             QStringLiteral("CREATE INDEX IF NOT EXISTS tracks_provider_idx "
                            "ON tracks(source, provider_id)"),
             QStringLiteral("PRAGMA user_version = 2"),
+        });
+    }
+    if (currentVersion < 3) {
+        statements.append({
+            QStringLiteral("CREATE TABLE IF NOT EXISTS favorites (track_id INTEGER PRIMARY KEY REFERENCES tracks(id) ON DELETE CASCADE, added_at INTEGER NOT NULL)"),
+            QStringLiteral("PRAGMA user_version = 3"),
         });
     }
     QSqlQuery query(m_database);
@@ -421,6 +427,30 @@ bool MusicDatabase::recordPlayed(qint64 trackId, QString *errorMessage)
     query.addBindValue(QDateTime::currentMSecsSinceEpoch());
     query.addBindValue(trackId);
     return query.exec() ? true : fail(query, errorMessage);
+}
+
+QList<qint64> MusicDatabase::favoriteTrackIds(QString *errorMessage) const
+{
+    QList<qint64> ids;
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral("SELECT track_id FROM favorites ORDER BY added_at DESC, track_id DESC"))) { fail(query, errorMessage); return {}; }
+    while (query.next()) ids.append(query.value(0).toLongLong());
+    return ids;
+}
+qint64 MusicDatabase::setTrackFavorite(const TrackRecord &track, bool favorite, QString *errorMessage)
+{
+    if (!m_database.transaction()) { setError(errorMessage, m_database.lastError().text()); return -1; }
+    const auto existing = trackForPath(track.path, errorMessage);
+    const qint64 id = existing ? existing->id : favorite ? addExternalTrack(track, errorMessage) : -1;
+    if (id < 0) { m_database.rollback(); return -1; }
+    QSqlQuery query(m_database);
+    query.prepare(favorite ? QStringLiteral("INSERT OR IGNORE INTO favorites(track_id, added_at) VALUES(?, ?)")
+                           : QStringLiteral("DELETE FROM favorites WHERE track_id = ?"));
+    query.addBindValue(id);
+    if (favorite) query.addBindValue(QDateTime::currentMSecsSinceEpoch());
+    if (!query.exec()) { fail(query, errorMessage); m_database.rollback(); return -1; }
+    if (!m_database.commit()) { setError(errorMessage, m_database.lastError().text()); m_database.rollback(); return -1; }
+    return id;
 }
 
 QVariantList MusicDatabase::playlists(QString *errorMessage) const

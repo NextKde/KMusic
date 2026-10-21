@@ -63,6 +63,7 @@ MusicController::MusicController(QObject *parent)
     , m_engine(this)
     , m_transcoder(this)
     , m_libraryModel(this)
+    , m_favoritesModel(this)
     , m_queueModel(this)
     , m_playlistTracksModel(this)
     , m_onlineModel(this)
@@ -71,6 +72,8 @@ MusicController::MusicController(QObject *parent)
     , m_account(&m_onlineProvider, this)
     , m_scanWatcher(this)
 {
+    m_favoritesModel.setMode(QStringLiteral("queue"));
+    connect(this, &MusicController::currentTrackChanged, this, &MusicController::favoritesChanged);
     m_queueModel.setMode(QStringLiteral("queue"));
     m_playlistTracksModel.setMode(QStringLiteral("queue"));
     m_onlineModel.setMode(QStringLiteral("queue"));
@@ -1300,6 +1303,44 @@ void MusicController::clearPreparedPlaylistTrack()
     m_preparedPlaylistTrack.reset(); emit preparedPlaylistTrackChanged();
 }
 
+std::optional<TrackRecord> MusicController::favoriteCandidate(const QString &source, qlonglong rowOrId) const
+{
+    if (source == "current") return findTrack(currentTrackId());
+    if (source == "online") return m_onlineModel.trackAt(int(rowOrId));
+    if (source == "album") return m_albumTracksModel.trackAt(int(rowOrId));
+    if (source == "library") return findTrack(rowOrId);
+    return {};
+}
+bool MusicController::isTrackFavorite(const QString &source, qlonglong rowOrId) const
+{
+    const auto track = favoriteCandidate(source, rowOrId);
+    return track && m_favoritePaths.contains(track->path);
+}
+void MusicController::toggleTrackFavorite(const QString &source, qlonglong rowOrId)
+{
+    const auto track = favoriteCandidate(source, rowOrId);
+    if (!track) return;
+    QString error;
+    if (m_database.setTrackFavorite(*track, !m_favoritePaths.contains(track->path), &error) < 0) { setError(error); return; }
+    refreshLibrary();
+}
+void MusicController::refreshFavorites()
+{
+    QString error;
+    const auto ids = m_database.favoriteTrackIds(&error);
+    if (!error.isEmpty()) setError(error);
+    m_favoritePaths.clear();
+    const auto tracks = tracksForIds(ids);
+    for (const auto &track : tracks) m_favoritePaths.insert(track.path);
+    m_favoritesModel.setTracks(tracks); ++m_favoritesRevision; emit favoritesChanged();
+}
+void MusicController::playFavoriteRow(int row)
+{
+    const auto ids = m_favoritesModel.visibleIds();
+    if (row < 0 || row >= ids.size()) return;
+    setQueue(ids, row); startCurrentTrack();
+}
+
 void MusicController::createPlaylist(const QString &name)
 {
     if (!m_ready)
@@ -1516,6 +1557,7 @@ void MusicController::refreshLibrary()
     refreshPlaylists();
     refreshQueueModel();
     refreshPlaylistModel();
+    refreshFavorites();
     emit libraryFoldersChanged();
     emit libraryChanged();
 }

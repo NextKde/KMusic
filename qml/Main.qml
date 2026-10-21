@@ -114,10 +114,11 @@ ApplicationWindow {
                 SongsPage {
                     id: songsPage
                     anchors.fill: parent
-                    visible: ["songs", "search", "detail", "queue", "playlist"].indexOf(window.destination) >= 0
+                    visible: ["songs", "search", "detail", "queue", "playlist", "favorites"].indexOf(window.destination) >= 0
                     music: window.music; bottomContentInset: window.playerContentInset; heading: window.pageTitle
-                    queueView: window.destination === "queue"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
-                    trackModel: queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
+                    emptyMessage: favoritesView ? qsTr("Your local favorites are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
+                    queueView: window.destination === "queue"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
+                    trackModel: favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
                     onImportRequested: folderDialog.open()
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
@@ -216,11 +217,12 @@ ApplicationWindow {
                 MusicNavigationButton { Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2; iconName: "search"; text: qsTr("Online search"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
                 Label { text: qsTr("Library"); color: AppTheme.mutedText; font.pixelSize: 11; font.weight: Font.DemiBold; Layout.topMargin: 18; Layout.bottomMargin: 4; Layout.leftMargin: 10 }
                 Repeater {
-                    model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}, {key:"queue", label:qsTr("Play queue"), icon:"queue"}]
+                    model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"favorites", label:qsTr("Local favorites"), icon:"heart"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}, {key:"queue", label:qsTr("Play queue"), icon:"queue"}]
                     delegate: MusicNavigationButton {
                         required property var modelData
                         Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2
-                        text: modelData.label; iconName: modelData.icon; checked: window.destination === modelData.key
+                        objectName: modelData.key === "favorites" ? "reviewFavoritesNav" : ""
+                        text: modelData.label; iconName: modelData.icon; iconSource: modelData.key === "favorites" ? "" : MusicColors.sidebarIconSource(modelData.icon); checked: window.destination === modelData.key
                         onClicked: window.navigate(modelData.key, modelData.label)
                     }
                 }

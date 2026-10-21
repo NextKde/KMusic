@@ -18,6 +18,7 @@ ColumnLayout {
     signal detailsRequested(int row)
     signal saveToPlaylistRequested(int row)
     property bool queueView: false
+    property bool favoritesView: false
     property bool playlistView: false
     property double playlistId: -1
     signal importRequested()
@@ -27,7 +28,7 @@ ColumnLayout {
         visible: page.showHeading
         Layout.fillWidth: true; Layout.topMargin: 24; Layout.leftMargin: 32; Layout.rightMargin: 32
         Label { text: page.heading; color: AppTheme.text; font.pixelSize: 32; font.weight: Font.Bold; Layout.fillWidth: true }
-        MusicActionButton { visible: !page.queueView && !page.onlineView; text: qsTr("Import"); onClicked: page.importRequested() }
+        MusicActionButton { visible: !page.queueView && !page.onlineView && !page.favoritesView; text: qsTr("Import"); onClicked: page.importRequested() }
         MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
     Label { visible: page.showHeading; Layout.leftMargin: 32; text: page.trackModel.count === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.trackModel.count); color: AppTheme.mutedText }
@@ -54,6 +55,7 @@ ColumnLayout {
             required property string durationText
             required property string artworkUrl
             required property string providerId
+            readonly property bool localFavorite: { const revision = page.music.favoritesRevision; return page.music.isTrackFavorite(page.onlineView ? "online" : page.albumView ? "album" : "library", page.onlineView || page.albumView ? index : trackId) }
             objectName: index === 0 ? (page.albumView ? "reviewAlbumFirstSong" : page.playlistView ? "reviewLocalPlaylistFirstSong" : "") : ""
             width: list.width - 48; x: 24; height: 62
             hoverEnabled: true
@@ -61,6 +63,7 @@ ColumnLayout {
                 if (page.albumView) page.music.playOnlineAlbumRow(index)
                 else if (page.onlineView) page.music.playOnlineRow(index)
                 else if (page.queueView) page.music.playQueueRow(index)
+                else if (page.favoritesView) page.music.playFavoriteRow(index)
                 else if (page.playlistView) page.music.playPlaylistRow(index)
                 else page.music.playTrack(trackId)
             }
@@ -76,6 +79,15 @@ ColumnLayout {
                 }
                 Label { text: row.album; color: AppTheme.mutedText; Layout.preferredWidth: Math.max(60, list.width * .17); elide: Text.ElideRight }
                 Label { text: row.durationText; color: AppTheme.mutedText; Layout.preferredWidth: 45 }
+                MusicActionButton {
+                    iconOnly: true; iconName: "heart"; iconFilled: row.localFavorite
+                    iconColor: row.localFavorite ? MusicColors.sidebarAccent : AppTheme.mutedText
+                    implicitWidth: 30; implicitHeight: 30
+                    objectName: row.index === 0 ? (page.onlineView ? "reviewFavoriteOnlineFirst" : page.albumView ? "reviewFavoriteAlbumFirst" : "reviewFavoriteLocalFirst") : ""
+                    Accessible.name: row.localFavorite ? qsTr("Remove local favorite") : qsTr("Add local favorite")
+                    ToolTip.text: Accessible.name; ToolTip.visible: hovered
+                    onClicked: page.music.toggleTrackFavorite(page.onlineView ? "online" : page.albumView ? "album" : "library", page.onlineView || page.albumView ? row.index : row.trackId)
+                }
                 MusicActionButton { iconOnly: true;
                     objectName: page.albumView && row.index === 0 ? "reviewAlbumEnqueueFirst" : ""
                     text: page.queueView ? "−" : "+"; implicitWidth: 34; implicitHeight: 30

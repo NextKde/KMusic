@@ -94,7 +94,18 @@ Item {
                 source: page.music.currentArtworkUrl; title: page.music.currentTitle; radius: 9
             }
             Item { Layout.fillHeight: true; Layout.maximumHeight: 16 }
-            Label { text: page.music.currentTitle || qsTr("Nothing playing"); color: page.foreground; font.pixelSize: 22; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { text: page.music.currentTitle || qsTr("Nothing playing"); color: page.foreground; font.pixelSize: 22; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+                MusicActionButton {
+                    objectName: "reviewCurrentFavorite"; flat: true; iconOnly: true; iconName: "heart"; iconFilled: page.music.currentFavorite
+                    iconColor: page.music.currentFavorite ? MusicColors.sidebarAccent : page.foreground
+                    implicitWidth: 30; implicitHeight: 30; enabled: page.music.currentTrackId > 0
+                    Accessible.name: page.music.currentFavorite ? qsTr("Remove local favorite") : qsTr("Add local favorite")
+                    ToolTip.text: Accessible.name; ToolTip.visible: hovered
+                    onClicked: page.music.toggleTrackFavorite("current", 0)
+                }
+            }
             Label { text: page.music.currentArtist + (page.music.currentAlbum ? " — " + page.music.currentAlbum : ""); color: page.secondary; font.pixelSize: 13; Layout.fillWidth: true; elide: Text.ElideRight }
             ColumnLayout {
                 Layout.fillWidth: true; spacing: 0
