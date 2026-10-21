@@ -206,7 +206,7 @@ ApplicationWindow {
                     Label { text: "KMusic"; color: AppTheme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
                 }
                 LiquidTextField {
-                    id: search
+                    id: search; objectName: "reviewLibrarySearch"
                     backdrop: sidebarBackdrop; unfilteredBackdrop: true
                     mutedTextColor: AppTheme.mutedText; shadowEnabled: false
                     Layout.fillWidth: true; Layout.bottomMargin: 10; implicitHeight: 30

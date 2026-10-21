@@ -12,6 +12,7 @@
 #include <QJsonObject>
 #include <QTimer>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QElapsedTimer>
 #include <QJsonArray>
 #include <memory>
@@ -208,6 +209,27 @@ int main(int argc, char *argv[]) {
                 if (name == "reviewPlayerPlay" || name == "reviewDiscoverNav") {
                     if (auto *item = findReviewItem(window->contentItem(), name)) item->forceActiveFocus(Qt::TabFocusReason);
                 }
+            } else if (action == "key") {
+                // Existing opt-in dedicated-window review: a fixed keyboard
+                // whitelist only; never sends input to another window/process.
+                if (window->property("sensitiveContentVisible").toBool()) return;
+                const QString name = data.value("key").toString();
+                const QHash<QString, int> keys{{"Space", Qt::Key_Space}, {"Ctrl+F", Qt::Key_F},
+                    {"Escape", Qt::Key_Escape}, {"Tab", Qt::Key_Tab}};
+                if (!keys.contains(name)) return;
+                const auto modifiers = name == "Ctrl+F" ? Qt::ControlModifier : Qt::NoModifier;
+                const QString text = name == "Space" ? QStringLiteral(" ") : QString{};
+                for (auto type : {QEvent::KeyPress, QEvent::KeyRelease}) {
+                    QKeyEvent event(type, keys.value(name), modifiers, text);
+                    QCoreApplication::sendEvent(window, &event);
+                }
+                auto *focus = window->activeFocusItem();
+                QFile response(QDir(reviewDir).filePath("response.json"));
+                if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
+                    {"ok", true}, {"key", name}, {"focusName", focus ? focus->objectName() : QString{}},
+                    {"focusClass", focus ? QString::fromLatin1(focus->metaObject()->className()) : QString{}},
+                    {"focusEnabled", focus && focus->isEnabled()}, {"focusVisible", focus && focus->isVisible()}
+                }).toJson());
             } else if (action == "slider") {
                 const QString name = data.value("control").toString();
                 if (name != "reviewPlayerSeek" && name != "reviewPlayerVolume" && name != "reviewImmersiveSeek") return;

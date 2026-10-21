@@ -7,6 +7,8 @@ Item {
     id: page
     required property var music
     signal closeRequested()
+    onVisibleChanged: if (visible) forceActiveFocus(Qt.OtherFocusReason)
+    Keys.onEscapePressed: event => { page.closeRequested(); event.accepted = true }
     property int presentationMode: 0
     readonly property color foreground: "#f5f7fa"
     readonly property color secondary: "#b9c5d2"
