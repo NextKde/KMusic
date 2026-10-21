@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
             }
             else if (action == "scroll") {
                 QVariant state;
-                QMetaObject::invokeMethod(window, "reviewScroll", Q_RETURN_ARG(QVariant, state), Q_ARG(QVariant, data.value("fraction").toDouble()));
+                QMetaObject::invokeMethod(window, data.value("axis").toString() == "horizontal" ? "reviewReleaseScroll" : "reviewScroll", Q_RETURN_ARG(QVariant, state), Q_ARG(QVariant, data.value("fraction").toDouble()));
                 QFile response(QDir(reviewDir).filePath("response.json"));
                 if (response.open(QIODevice::WriteOnly)) response.write(state.toString().toUtf8());
             } else if (action == "focus") {

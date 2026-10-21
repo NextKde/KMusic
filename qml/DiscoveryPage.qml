@@ -7,11 +7,17 @@ ScrollView {
     id: page
     required property var music
     property real bottomContentInset: 0
+    property real sidebarUnderlap: 0
     signal importRequested()
     signal onlineRequested()
     signal nowPlayingRequested()
     signal albumRequested(string filter, string title)
     contentWidth: availableWidth; clip: true
+    function scrollReleaseReview(fraction) {
+        releases.contentX = Math.max(0, releases.contentWidth - releases.width) * Math.max(0, Math.min(1, fraction))
+        return JSON.stringify({ contentX: releases.contentX, contentWidth: releases.contentWidth,
+            viewportWidth: releases.width, originalModel: "music.discoveryAlbums" })
+    }
     function homeOpticalState() {
         return { hovered: heroPlay.hovered, down: heroPlay.down, contentScale: heroPlay.scale,
             lensExpansion: heroPlay.opticalExpansion, refraction: heroPlay.opticalRefraction,
@@ -19,7 +25,7 @@ ScrollView {
             sampling: heroPlay.sampling, backdropAvailable: featureBackdrop.available }
     }
     ColumnLayout {
-        width: page.availableWidth - 56; x: 28; spacing: 18
+        width: page.availableWidth - page.sidebarUnderlap - 56; x: page.sidebarUnderlap + 28; spacing: 18
         RowLayout {
             Layout.fillWidth: true; Layout.topMargin: 14
             Label { text: qsTr("Discover"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true }
@@ -97,7 +103,9 @@ ScrollView {
             id: releases
             Layout.fillWidth: true; Layout.preferredHeight: 178
             visible: page.music.discoveryAlbums.length > 0
-            clip: true; contentWidth: releaseRow.width; contentHeight: height
+            // The outer full-window viewport is the clip. Real tiles can pass
+            // beneath the sidebar, without a duplicated model or fake background.
+            clip: false; contentWidth: releaseRow.width; contentHeight: height
             boundsBehavior: Flickable.StopAtBounds; flickableDirection: Flickable.HorizontalFlick
             ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
             Row {

@@ -23,3 +23,8 @@ when distributing the combined application and helper.
   modules are retained. See its NOTICE for exact paths and modifications.
 - `providers/helper.ts` and the Qt QProcess protocol are KMusic glue. No Electron
   UI, account cookie from another player, or third-party source fallback is used.
+
+- Convex button/input material is implemented by the pinned Kos.Ui submodule.
+  Its native QML/GLSL derivation references mkj0kjay/vue-web-liquid-glass revision
+  `934404c05167417945e73a36388c20cc201b5a55`; see the component NOTICE. No Vue UI,
+  displacement-map code, website image or external desktop pixels are imported.
