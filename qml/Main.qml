@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
-import QtQuick.Effects
 import Kos.Ui
 ApplicationWindow {
     id: window
@@ -28,7 +27,7 @@ ApplicationWindow {
             radius: player.radius, bottomInset: window.playerContentInset }
         state.sidebarSampling = sidebarMaterial.sampling
         state.appBackdropAvailable = appBackdrop.available
-        state.underlay = "actual app artwork confined to right content; sidebar is native alpha, unsampled"
+        state.underlay = "independent right-content colour source; sidebar is native alpha, unsampled"
         return JSON.stringify(state)
     }
     function reviewScroll(fraction) {
@@ -57,24 +56,14 @@ ApplicationWindow {
             id: pageScene
             objectName: "musicPageScene"
             anchors.fill: parent
-        // This is real current-track artwork inside the app scene, never desktop imagery.
-        Item {
-            id: artworkUnderlay
+        // A legal independent colour source for ordinary controls. It does not
+        // contain consumers and never supplies desktop or clamped cover imagery.
+        Rectangle {
+            id: controlUnderlay
             x: 236; y: 0; width: parent.width - x; height: parent.height
-            Rectangle { anchors.fill: parent; color: window.contentColor }
-            Image {
-                id: currentCoverUnderlay
-                anchors.fill: parent
-                source: music.currentArtworkUrl; sourceSize: Qt.size(1024, 1024)
-                fillMode: Image.PreserveAspectCrop; visible: false; asynchronous: true
-            }
-            MultiEffect {
-                anchors.fill: parent; source: currentCoverUnderlay
-                blurEnabled: true; blurMax: 48; blur: .7; autoPaddingEnabled: false
-                opacity: AppTheme.dark ? .32 : .22
-            }
+            color: window.contentColor
         }
-        LiquidBackdrop { id: appBackdrop; sourceItem: artworkUnderlay; maximumTextureSize: 2048 }
+        LiquidBackdrop { id: appBackdrop; sourceItem: controlUnderlay; maximumTextureSize: 2048 }
         LiquidSurface {
             id: sidebarMaterial
             width: 236; height: parent.height; radius: 0
