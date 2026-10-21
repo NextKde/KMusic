@@ -1,6 +1,6 @@
 # KMusic progress
 
-Updated: 2026-10-21T21:06:06.489137+08:00
+Updated: 2026-10-21T21:10:16.169253+08:00
 
 Development resumed at the user's request. Native Qt/QML, local builds and dedicated-window screenshots.
 
@@ -13,3 +13,7 @@ Source: [`c180098`](https://github.com/NextKde/KMusic/tree/codex/music-developme
 - Visual acceptance: pending user. Build and source publication are not visual acceptance.
 
 [This round's metadata](screenshots/round-20261021-210606/metadata.json)
+
+Latest poll: 20261021-210950. Capture callback has not produced a PNG in this poll; no historical image reused.
+
+[Latest metadata](screenshots/round-20261021-210950/metadata.json)
