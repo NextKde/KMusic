@@ -2,6 +2,27 @@
 
 [简体中文](DesignReset.zh-CN.md)
 
+## Current bounded correction: color and floating playback
+
+After pausing the long-running work, the user authorized these two corrections
+only. Keep scheduled polling paused; this does not resume the full project or
+establish whole-app acceptance.
+
+- Remove the forced purple accent. Use neutral ordinary controls and media
+  tracks; distinguish hover, pressed, selected and keyboard-focus states. Reserve
+  system accent for meaningful emphasis and keyboard focus, rather than replacing
+  every purple surface with another accent color.
+- Present playback as a width-limited floating glass panel centered above the
+  content area, with side/bottom clearance, internal rounded geometry and a subtle
+  shadow. Sample actual page content for the whole panel's blur/refraction. A
+  full-width solid footer or glass buttons alone do not meet this requirement.
+- Extend content behind the panel and add enough scroll-end space to bring the
+  final item fully above it. The square outer window does not prohibit rounded
+  floating playback controls.
+- Review light/dark appearances at 1280×800 and 1024×640, including spacing,
+  readability, final-item reachability, playback, seeking and volume. Regress any
+  compatible shared-control interfaces in Gallery.
+
 The user's latest instructions supersede the earlier native-blur approach.
 Previous component checks do not establish whole-app design acceptance.
 
