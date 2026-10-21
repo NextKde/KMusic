@@ -67,9 +67,9 @@ ApplicationWindow {
         LiquidSurface {
             id: sidebarMaterial
             width: 236; height: parent.height; radius: 0
-            backdrop: null; tintColor: AppTheme.dark ? "#202326" : "#ffffff"
-            tintStrength: .95; readability: 0; blurStrength: 0
-            reflectionStrength: .12; refractionStrength: 0; magnification: 1
+            backdrop: null; tintColor: AppTheme.dark ? "#24282b" : "#eceef0"
+            tintStrength: .95; diffuseStrength: .85; readability: 0; blurStrength: 0
+            reflectionStrength: 0; refractionStrength: 0; magnification: 1
         }
         ScrollView {
             id: sidebar
