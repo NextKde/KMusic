@@ -2,6 +2,7 @@
 
 #include "MusicDatabase.h"
 #include "OnlineMusicProvider.h"
+#include "AccountController.h"
 #include "PlaybackEngine.h"
 #include "TrackListModel.h"
 #include "Transcoder.h"
@@ -26,6 +27,7 @@ class MusicController : public QObject {
     Q_OBJECT
     QML_ELEMENT
 
+    Q_PROPERTY(AccountController *account READ account CONSTANT)
     Q_PROPERTY(TrackListModel *libraryModel READ libraryModel CONSTANT)
     Q_PROPERTY(TrackListModel *queueModel READ queueModel CONSTANT)
     Q_PROPERTY(TrackListModel *playlistTracksModel READ playlistTracksModel CONSTANT)
@@ -93,6 +95,7 @@ class MusicController : public QObject {
     Q_PROPERTY(QString transcodeError READ transcodeError NOTIFY transcodeChanged)
 
 public:
+    AccountController *account() { return &m_account; }
     explicit MusicController(QObject *parent = nullptr);
     ~MusicController() override;
 
@@ -305,6 +308,7 @@ private:
     TrackListModel m_playlistTracksModel;
     TrackListModel m_onlineModel;
     OnlineMusicProvider m_onlineProvider;
+    AccountController m_account;
     QString m_onlineQuality = QStringLiteral("128k");
     std::unique_ptr<LxSourceService> m_sourceService;
     std::unique_ptr<LyricsService> m_lyricsService;

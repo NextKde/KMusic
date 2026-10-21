@@ -67,6 +67,7 @@ MusicController::MusicController(QObject *parent)
     , m_playlistTracksModel(this)
     , m_onlineModel(this)
     , m_onlineProvider(this)
+    , m_account(&m_onlineProvider, this)
     , m_scanWatcher(this)
 {
     m_queueModel.setMode(QStringLiteral("queue"));
@@ -199,6 +200,15 @@ void MusicController::initialize()
     m_audioCache = std::make_unique<AudioCache>(
         QDir(cachePath).filePath(QStringLiteral("audio")));
     m_engine.setDownloadDirectory(m_audioCache->downloadDirectory());
+    connect(&m_account, &AccountController::sessionChanged, this, [this] {
+        // An account change never reuses a URL resolved with old credentials.
+        const auto track = findTrack(currentTrackId());
+        if (!track || track->source != QLatin1String("netease")) return;
+        cancelRecovery(); m_engine.stop(); m_loadedTrackId = -1; m_resolvingTrackId = -1;
+        m_playWhenReady = false; m_streamAvailabilityConfirmed = false;
+        m_providerStatus = tr("Account changed · press play to recheck availability");
+        emit playbackStateChanged(); emit playbackStatusChanged(); emit seekableChanged();
+    });
     connect(&m_onlineProvider, &OnlineMusicProvider::searchingChanged,
             this, &MusicController::onlineSearchingChanged);
     connect(&m_onlineProvider, &OnlineMusicProvider::errorMessageChanged,

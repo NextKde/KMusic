@@ -12,6 +12,8 @@
 class OnlineMusicProvider final : public QObject {
     Q_OBJECT
 public:
+    using Callback = std::function<void(const QJsonObject &)>;
+    void accountRequest(const QString &action, const QJsonObject &params, Callback callback) { request(action, params, std::move(callback)); }
     explicit OnlineMusicProvider(QObject *parent = nullptr);
     ~OnlineMusicProvider() override;
     bool searching() const;
@@ -26,6 +28,7 @@ public:
     static QList<TrackRecord> parseNeteaseSearch(const QByteArray &payload,
         QString *errorMessage = nullptr, const QString &query = {});
 signals:
+    void sessionExpired();
     void searchingChanged();
     void resultsReady(const QList<TrackRecord> &tracks);
     void errorMessageChanged();
@@ -36,7 +39,6 @@ signals:
     void newAlbumsReady(const QVariantList &albums, const QString &error);
     void albumTracksReady(const QString &albumId, const QList<TrackRecord> &tracks, const QString &error);
 private:
-    using Callback = std::function<void(const QJsonObject &)>;
     void request(const QString &action, const QJsonObject &params, Callback callback);
     void readOutput();
     void failPending(const QString &message);

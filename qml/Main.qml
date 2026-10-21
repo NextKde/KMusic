@@ -14,6 +14,8 @@ ApplicationWindow {
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
     property double pendingTrack: -1
+    readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
+    function openAccount() { accountDialog.open() }
     function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
@@ -215,6 +217,12 @@ ApplicationWindow {
                     }
                 }
                 Item { implicitHeight: 18 }
+                MusicActionButton {
+                    Layout.fillWidth: true; implicitHeight: 30
+                    objectName: "reviewAccountButton"
+                    text: music.account.authenticated ? qsTr("NetEase account") : qsTr("Sign in to NetEase")
+                    onClicked: accountDialog.open()
+                }
                 MusicActionButton { Layout.fillWidth: true; implicitHeight: 30; text: music.scanning ? qsTr("Scanning…") : qsTr("Import music folder"); enabled: !music.scanning; onClicked: folderDialog.open() }
                 MusicSelect {
                     id: appearanceSelect
@@ -233,6 +241,7 @@ ApplicationWindow {
             backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", qsTr("Play queue")); onNowPlayingRequested: window.destination = "now" }
         WindowChrome { width: parent.width; targetWindow: window }
     }
+    AccountDialog { id: accountDialog; account: music.account }
     KosWindowResizeHandles { targetWindow: window }
     FolderDialog { id: folderDialog; title: qsTr("Import music folder"); onAccepted: music.addLibraryFolder(selectedFolder.toString()) }
     LiquidDialog {

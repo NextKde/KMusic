@@ -87,3 +87,9 @@ metadata/seek center, genuine preview badge/queue/volume popup right.
 采页面，外投影不在玻璃内部垫黑底。实心媒体图标和可选隐藏滑块头均归共享库。
 内部按用户图固定为左侧控制、中间封面/信息及细进度线、右侧真实试听标记/队列/
 音量弹层。源码/正常构建完成不等于视觉或真实seek已通过；结果见developer检查点。
+
+Ordinary MusicActionButton actions now opt into Kos.Ui LiquidActionButton.materialForm
+(non-sampling), including discovery hero actions. Online's fixed search header
+samples its sibling SongsPage, including the real scrolling result list; its
+controls do not refract the same content again. The floating player remains the
+existing 52px sampled panel. Shared defaults/optics remain unchanged.

@@ -81,7 +81,7 @@ ScrollView {
                         Label { text: page.music.providerStatus || page.music.currentAlbum; color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight; ToolTip.text: text; ToolTip.visible: statusHover.hovered; HoverHandler { id: statusHover } }
                         Item { Layout.fillHeight: true }
                         RowLayout {
-                            MusicActionButton { id: heroPlay; objectName: "reviewHeroPlay"; backdrop: featureBackdrop; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
+                            MusicActionButton { id: heroPlay; objectName: "reviewHeroPlay"; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
                             MusicActionButton { visible: page.music.currentTrackId > 0; iconOnly: true; iconName: "more"; implicitWidth: 30; implicitHeight: 30; flat: true; onClicked: page.nowPlayingRequested(); Accessible.name: qsTr("Now playing details") }
                         }
                     }

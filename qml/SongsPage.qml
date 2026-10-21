@@ -6,6 +6,8 @@ ColumnLayout {
     id: page
     required property var music
     property real bottomContentInset: 0
+    property real topContentInset: 0
+    property bool showHeading: true
     readonly property alias reviewList: list
     property var trackModel: music.libraryModel
     property string heading: qsTr("Songs")
@@ -18,16 +20,18 @@ ColumnLayout {
     signal addToPlaylistRequested(double trackId)
     spacing: 14
     RowLayout {
+        visible: page.showHeading
         Layout.fillWidth: true; Layout.topMargin: 24; Layout.leftMargin: 32; Layout.rightMargin: 32
         Label { text: page.heading; color: AppTheme.text; font.pixelSize: 32; font.weight: Font.Bold; Layout.fillWidth: true }
         MusicActionButton { visible: !page.queueView && !page.onlineView; text: qsTr("Import"); onClicked: page.importRequested() }
         MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
-    Label { Layout.leftMargin: 32; text: page.trackModel.count + qsTr(" songs"); color: AppTheme.mutedText }
-    Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
+    Label { visible: page.showHeading; Layout.leftMargin: 32; text: page.trackModel.count + qsTr(" songs"); color: AppTheme.mutedText }
+    Rectangle { visible: page.showHeading; Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
     ListView {
         id: list
         Layout.fillWidth: true; Layout.fillHeight: true; clip: true
+        header: Item { width: list.width; height: page.topContentInset }
         model: page.trackModel
         leftMargin: 24; rightMargin: 24
         footer: Item { width: list.width; height: page.bottomContentInset }

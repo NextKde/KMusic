@@ -62,6 +62,12 @@ int main(int argc, char *argv[]) {
             if (!window) return;
             const QString action = data.value("action").toString();
             if (action == "capture") {
+                // Dedicated review must never capture sign-in codes or account identity.
+                if (window->property("sensitiveContentVisible").toBool()) {
+                    QFile response(QDir(reviewDir).filePath("response.json"));
+                    if (response.open(QIODevice::WriteOnly)) response.write("{\"ok\":false,\"error\":\"Sensitive account content is visible\"}");
+                    return;
+                }
                 const QString path = data.value("path").toString();
                 auto result = window->contentItem()->grabToImage();
                 window->update();
@@ -75,9 +81,9 @@ int main(int argc, char *argv[]) {
                 // restricted to named product controls; never moves the system cursor.
                 const QString control = data.value("control").toString();
                 const QString state = data.value("state").toString();
-                if ((control != "hero" && control != "player" && control != "discoveryFirst" && control != "volume") ||
+                if ((control != "hero" && control != "player" && control != "discoveryFirst" && control != "volume" && control != "account" && control != "signIn" && control != "cancelSignIn") ||
                     (state != "hover" && state != "press" && state != "cancel" && state != "click")) return;
-                auto *item = findReviewItem(window->contentItem(), control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : control == "volume" ? "reviewPlayerVolumeButton" : "reviewDiscoveryFirst");
+                auto *item = findReviewItem(window->contentItem(), control == "account" ? "reviewAccountButton" : control == "signIn" ? "reviewAccountGenerate" : control == "cancelSignIn" ? "reviewAccountCancel" : control == "hero" ? "reviewHeroPlay" : control == "player" ? "reviewPlayerPlay" : control == "volume" ? "reviewPlayerVolumeButton" : "reviewDiscoveryFirst");
                 if (!item || !item->isVisible() || !item->isEnabled()) {
                     QFile response(QDir(reviewDir).filePath("response.json"));
                     if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
@@ -219,6 +225,7 @@ int main(int argc, char *argv[]) {
                     {"playbackSession", QJsonObject::fromVariantMap(music.playbackSessionInfo())},
                     {"discoveryCount", music.discoveryAlbums().size()}, {"discoveryLoading", music.discoveryLoading()},
                     {"discoveryError", music.discoveryError()}, {"discoveryPlaying", music.discoveryPlaying()},
+                    {"accountState", music.account()->state()}, {"accountQrVisible", !music.account()->qrImage().isEmpty()}, {"accountAuthenticated", music.account()->authenticated()},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
                     {"onlineError", music.onlineError()}, {"error", music.errorMessage()},
                     {"windowWidth", window->width()}, {"windowHeight", window->height()}, {"dpr", window->devicePixelRatio()}

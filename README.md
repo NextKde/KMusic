@@ -100,3 +100,16 @@ is not personalized and never starts audio automatically. Selecting an album
 loads its real tracks and uses fresh playback URL/preview validation through the
 existing player. Selecting another track, pause or stop cancels a pending album
 selection. Account/rights restrictions can still prevent playback.
+
+### NetEase sign-in
+
+Open **Sign in to NetEase** in the sidebar and generate a code, then scan and
+confirm with the official mobile app. Codes are generated locally. Sessions are
+stored via QtKeychain in the system credential store; plaintext fallback is
+disabled. If storage fails, the app reports a session-only sign-in. Sign-out
+clears the local session and requests remote logout; expired sessions need a new
+scan. Account changes invalidate previously resolved playback URLs. Subscription
+and track permissions still apply. The review capture hook refuses images while
+a sign-in code or account identity is visible.
+
+Build dependencies additionally include Qt6Keychain and libqrencode.

@@ -74,6 +74,7 @@ void OnlineMusicProvider::readOutput() {
         const auto data = QJsonDocument::fromJson(line).object();
         const auto id = data.value("id").toVariant().toLongLong();
         if (!m_pending.contains(id)) continue;
+        if (data.value("sessionExpired").toBool()) emit sessionExpired();
         const auto done = m_pending.take(id); done(data);
     }
 }

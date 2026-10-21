@@ -56,3 +56,7 @@ VectorIcon新增API（482f7ce），导航行32px、圆角8px。播放器使用�
 当前封面，由Qt Quick MultiEffect预模糊后交LiquidSurface采样、方向性反光及折射。
 不复制桌面图片，不依赖平台模糊。方角外框、30px自绘窗饰、右侧14px窗控及低对比
 壳/内容平面参考kos-settings。整体浅深色、窄窗与指针状态待独立验收。
+
+普通 MusicActionButton（包括发现页 hero 操作）使用共享 materialForm 非采样形态。
+在线搜索固定顶栏采样兄弟 SongsPage 中真实滚动结果，内部控件不重复折射。
+既有 52px 悬浮播放器继续采样页面。共享默认液态形态与光学公式不变。
