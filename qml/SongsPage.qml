@@ -84,7 +84,7 @@ ColumnLayout {
                 }
                 MusicActionButton {
                     iconOnly: true; iconName: "playlist"; implicitWidth: 30; implicitHeight: 30
-                    objectName: row.index === 0 ? (page.albumView ? "reviewSaveAlbumFirst" : "reviewSaveOnlineFirst") : ""
+                    objectName: (page.albumView || page.onlineView) && row.index === 0 ? (page.albumView ? "reviewSaveAlbumFirst" : "reviewSaveOnlineFirst") : ""
                     visible: page.onlineView || page.albumView
                     Accessible.name: qsTr("Save to local playlist")
                     onClicked: page.saveToPlaylistRequested(row.index)
