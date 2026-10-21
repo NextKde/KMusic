@@ -43,10 +43,11 @@ Item {
             maskSource: roundedMask
         }
 
+        VectorIcon { anchors.centerIn: parent; name: "music"; color: AppTheme.mutedText; size: Math.min(parent.width, parent.height) * .4; visible: image.status !== Image.Ready && !root.title.trim().length }
         Label {
             anchors.centerIn: parent
             text: root.title.trim().length > 0
-                ? root.title.trim().charAt(0).toUpperCase() : "♫"
+                ? root.title.trim().charAt(0).toUpperCase() : ""
             color: AppTheme.withAlpha(AppTheme.accent, 0.9)
             font.pixelSize: Math.max(18, Math.min(parent.width, parent.height) * 0.36)
             font.weight: Font.DemiBold

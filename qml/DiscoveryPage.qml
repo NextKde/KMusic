@@ -6,78 +6,86 @@ ScrollView {
     id: page
     required property var music
     signal importRequested()
+    signal onlineRequested()
+    signal nowPlayingRequested()
     signal albumRequested(string filter, string title)
-    signal fixtureRequested(string title)
-    clip: true
-    contentWidth: availableWidth
+    contentWidth: availableWidth; clip: true
     ColumnLayout {
-        width: page.availableWidth - 64; x: 32; spacing: 20
-        Item { height: 10 }
-        Label { text: qsTr("New"); color: AppTheme.text; font.pixelSize: 34; font.weight: Font.Bold }
-        Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.border }
+        width: page.availableWidth - 56; x: 28; spacing: 20
+        Label { text: qsTr("Discover"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 14 }
         RowLayout {
-            Layout.fillWidth: true; spacing: 24
-            Repeater {
-                model: [
-                    { label: "EDITOR’S SELECTION · OFFLINE PREVIEW", title: "A little closer", subtitle: "Space to slow down. Sounds to stay with.", first: "#cb7866", second: "#503b56" },
-                    { label: "FRESH PERSPECTIVES · OFFLINE PREVIEW", title: "After the blue hour", subtitle: "A new view of your evening.", first: "#507ba1", second: "#1c294b" }
-                ]
-                delegate: ColumnLayout {
-                    required property var modelData
-                    Layout.fillWidth: true; Layout.preferredWidth: 1; spacing: 5
-                    Label { text: modelData.label; color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
-                    Label { text: modelData.title; color: AppTheme.text; font.pixelSize: 21; font.weight: Font.DemiBold }
-                    Label { Layout.fillWidth: true; text: modelData.subtitle; color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
-                    AlbumTile {
-                        Layout.fillWidth: true; Layout.topMargin: 8
-                        title: modelData.title; subtitle: qsTr("Original visual collection · no audio"); wide: true
-                        first: modelData.first; second: modelData.second
-                        onClicked: page.fixtureRequested(title)
+            Layout.fillWidth: true; spacing: 20
+            ColumnLayout {
+                Layout.fillWidth: true; Layout.preferredWidth: 3; spacing: 6
+                Label { text: qsTr("CONTINUE LISTENING"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
+                Rectangle {
+                    Layout.fillWidth: true; Layout.preferredHeight: 222; radius: 12
+                    color: AppTheme.dark ? "#34383e" : "#f3f4f5"
+                    RowLayout {
+                        anchors.fill: parent; anchors.margins: 20; spacing: 20
+                        Artwork { source: page.music.currentArtworkUrl; title: page.music.currentTitle; Layout.preferredWidth: Math.min(174, page.width * .18); Layout.preferredHeight: Math.min(174, page.width * .18); radius: 8 }
+                        ColumnLayout {
+                            Layout.fillWidth: true; spacing: 9
+                            Label { text: page.music.currentTitle || qsTr("Your next favourite"); color: AppTheme.text; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
+                            Label { text: page.music.currentArtist || qsTr("Find a song, or bring your collection."); color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                            Label { text: page.music.currentAlbum; visible: text.length > 0; color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
+                            Item { Layout.fillHeight: true }
+                            LiquidActionButton { id: heroPlay; objectName: "reviewHeroPlay"; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 32; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
+                        }
+                    }
+                }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true; Layout.preferredWidth: 2; spacing: 6
+                Label { text: qsTr("EXPLORE MUSIC"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
+                Rectangle {
+                    Layout.fillWidth: true; Layout.preferredHeight: 222; radius: 12
+                    color: AppTheme.dark ? "#34383e" : "#f3f4f5"
+                    ColumnLayout {
+                        anchors.fill: parent; anchors.margins: 22; spacing: 10
+                        VectorIcon { name: "search"; size: 26; color: AppTheme.accent }
+                        Label { text: qsTr("Find your sound"); font.pixelSize: 22; font.weight: Font.Bold; color: AppTheme.text; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                        Label { text: qsTr("Search NetEase Music for songs and artists. Availability and previews depend on the source."); font.pixelSize: 12; color: AppTheme.mutedText; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                        Item { Layout.fillHeight: true }
+                        LiquidActionButton { text: qsTr("Search music"); implicitHeight: 32; onClicked: page.onlineRequested() }
                     }
                 }
             }
         }
+        ColumnLayout {
+            visible: page.music.currentTrackId > 0; Layout.fillWidth: true; spacing: 10
+            Label { text: qsTr("Recently selected"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
+            RowLayout {
+                Layout.fillWidth: true; spacing: 12
+                Artwork { source: page.music.currentArtworkUrl; title: page.music.currentTitle; Layout.preferredWidth: 44; Layout.preferredHeight: 44; radius: 6 }
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 4
+                    Label { text: page.music.currentTitle; color: AppTheme.text; font.pixelSize: 13 }
+                    Label { text: page.music.providerStatus || page.music.currentArtist; color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
+                }
+                LiquidActionButton { iconOnly: true; iconName: "more"; implicitWidth: 32; implicitHeight: 32; flat: true; onClicked: page.nowPlayingRequested(); Accessible.name: qsTr("Now playing details") }
+            }
+        }
+        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: AppTheme.border }
         RowLayout {
             Layout.fillWidth: true
-            Label { text: qsTr("Made for a moment"); color: AppTheme.text; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
-            Label { text: qsTr("Offline visual preview"); color: AppTheme.mutedText; font.pixelSize: 11 }
+            Label { text: qsTr("Albums from your library"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold; Layout.fillWidth: true }
+            LiquidActionButton { text: qsTr("Import music"); implicitHeight: 30; onClicked: page.importRequested() }
         }
         RowLayout {
-            Layout.fillWidth: true; spacing: 20
+            Layout.fillWidth: true; spacing: 18
             Repeater {
-                model: [
-                    {title:"Soft focus", subtitle:"Quiet / Ambient", a:"#86aca6", b:"#3b6269"},
-                    {title:"City currents", subtitle:"Electronic / After dark", a:"#af6f8d", b:"#423960"},
-                    {title:"Open horizons", subtitle:"Alternative / Discovery", a:"#d5ac70", b:"#856048"},
-                    {title:"Morning light", subtitle:"Acoustic / Slow start", a:"#b5a4bb", b:"#7e758f"}
-                ]
+                model: page.music.albums.slice(0, 4)
                 delegate: AlbumTile {
                     required property var modelData
-                    Layout.fillWidth: true; Layout.preferredWidth: 1
-                    title: modelData.title; subtitle: modelData.subtitle; first: modelData.a; second: modelData.b
-                    onClicked: page.fixtureRequested(title)
+                    Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.maximumWidth: 184
+                    title: modelData.name; subtitle: modelData.subtitle; artwork: modelData.artworkUrl
+                    onClicked: page.albumRequested(modelData.filterValue, modelData.name)
                 }
             }
+            Item { Layout.fillWidth: true; visible: page.music.albums.length < 4 }
         }
-        RowLayout {
-            Layout.fillWidth: true
-            Label { text: qsTr("From your library"); color: AppTheme.text; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
-            LiquidActionButton { text: qsTr("Import music"); onClicked: page.importRequested() }
-        }
-        Label {
-            visible: page.music.albums.length === 0
-            text: qsTr("Bring your own collection. Import a folder to see albums and start listening.")
-            color: AppTheme.mutedText; wrapMode: Text.WordWrap; Layout.fillWidth: true; Layout.bottomMargin: 24
-        }
-        Repeater {
-            model: page.music.albums.slice(0, 6)
-            delegate: LiquidNavigationButton {
-                required property var modelData
-                Layout.fillWidth: true
-                text: modelData.name + "  ·  " + modelData.subtitle + "  ·  " + modelData.count + " tracks"
-                onClicked: page.albumRequested(modelData.filterValue, modelData.name)
-            }
-        }
-        Item { height: 24 }
+        Label { visible: page.music.albums.length === 0; text: qsTr("No imported albums yet. Add a music folder to build your library."); color: AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        Item { implicitHeight: 20 }
     }
 }
