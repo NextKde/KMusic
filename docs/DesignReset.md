@@ -4,6 +4,13 @@
 
 ## Current bounded correction: color and floating playback
 
+Latest sidebar adjustment: default to 1100×680 (approximately the golden ratio),
+with 95% sidebar opacity in both appearances. The user chose pure QML and deferred
+actual desktop blur. Cover the entire sidebar with a continuous matte tint, soft
+face light and fine static grain, rather than edge shadow alone. This is material
+pigmentation, not external-pixel blur. Keep the 52px player and supplied internal
+order, and leave automatic polling paused.
+
 After pausing the long-running work, the user authorized these two corrections
 only. Keep scheduled polling paused; this does not resume the full project or
 establish whole-app acceptance.
