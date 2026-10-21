@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import QtQuick.Effects
 import Kos.Ui
 ApplicationWindow {
     id: window
@@ -17,7 +18,13 @@ ApplicationWindow {
     function reviewOnlineSearch(text) { destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
-    function materialReviewState() { return nowPlaying.materialReviewState() }
+    function materialReviewState() {
+        const state = JSON.parse(nowPlaying.materialReviewState())
+        state.sidebarSampling = sidebarMaterial.sampling
+        state.appBackdropAvailable = appBackdrop.available
+        state.underlay = "actual current track artwork, pure QML"
+        return JSON.stringify(state)
+    }
     function setReviewTheme(theme) { AppTheme.appearanceMode = theme }
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
@@ -39,9 +46,15 @@ ApplicationWindow {
             anchors.fill: parent
             Rectangle { anchors.fill: parent; color: window.shellColor }
             Image {
-                x: -110; y: 30; width: 650; height: parent.height - 114
-                source: music.currentArtworkUrl; fillMode: Image.PreserveAspectCrop
-                opacity: AppTheme.dark ? .32 : .22; asynchronous: true
+                id: currentCoverUnderlay
+                anchors.fill: parent
+                source: music.currentArtworkUrl; sourceSize: Qt.size(1024, 1024)
+                fillMode: Image.PreserveAspectCrop; visible: false; asynchronous: true
+            }
+            MultiEffect {
+                anchors.fill: parent; source: currentCoverUnderlay
+                blurEnabled: true; blurMax: 48; blur: .7; autoPaddingEnabled: false
+                opacity: AppTheme.dark ? .32 : .22
             }
         }
         LiquidBackdrop { id: appBackdrop; sourceItem: artworkUnderlay; maximumTextureSize: 2048 }

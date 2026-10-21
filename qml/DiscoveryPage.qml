@@ -19,7 +19,7 @@ ScrollView {
                 Layout.fillWidth: true; Layout.preferredWidth: 3; spacing: 6
                 Label { text: qsTr("CONTINUE LISTENING"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
                 Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: 222; radius: 12
+                    Layout.fillWidth: true; Layout.preferredHeight: 210; radius: 12
                     color: AppTheme.dark ? "#34383e" : "#f3f4f5"
                     RowLayout {
                         anchors.fill: parent; anchors.margins: 20; spacing: 20
@@ -39,7 +39,7 @@ ScrollView {
                 Layout.fillWidth: true; Layout.preferredWidth: 2; spacing: 6
                 Label { text: qsTr("EXPLORE MUSIC"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
                 Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: 222; radius: 12
+                    Layout.fillWidth: true; Layout.preferredHeight: 210; radius: 12
                     color: AppTheme.dark ? "#34383e" : "#f3f4f5"
                     ColumnLayout {
                         anchors.fill: parent; anchors.margins: 22; spacing: 10
@@ -78,7 +78,7 @@ ScrollView {
                 model: page.music.albums.slice(0, 4)
                 delegate: AlbumTile {
                     required property var modelData
-                    Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.maximumWidth: 184
+                    Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.maximumWidth: 144
                     title: modelData.name; subtitle: modelData.subtitle; artwork: modelData.artworkUrl
                     onClicked: page.albumRequested(modelData.filterValue, modelData.name)
                 }

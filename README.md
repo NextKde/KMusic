@@ -71,7 +71,10 @@ See [design](docs/Design.md), [confirmed plan](docs/ProjectPlan.zh-CN.md),
 The [design reset](docs/DesignReset.zh-CN.md) defines the next complete shell and
 music-page review. Transparency and blur use pure QML sampling of real app page,
 artwork and background underlay, with clear text and retained liquid optics.
-The cleanup checkpoint keeps a solid sidebar until that new underlay is ready.
+The current candidate uses a preblurred real current-cover underlay and shared
+LiquidBackdrop/LiquidSurface inside QML. It has a 30px square-window chrome,
+236px sidebar and 84px player. There is no native compositor effects dependency.
+Whole-app visual acceptance is pending.
 
 ### Restoring online playback
 

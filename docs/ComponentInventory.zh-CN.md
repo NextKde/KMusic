@@ -49,3 +49,10 @@ RGB/白色闭合边、固定高光斑和深度渐变。保留原可变currentInd
 整体外观按DesignReset.zh-CN.md重新验收：已移除生产构建的原生窗口模糊适配器及
 捕获实验。下一轮使用真实应用underlay的纯QML采样，液态效果必须保留；当前清理
 检查点不是整体新设计完成。
+
+整体首页候选：Inter正文13px/大标题26px对照Forma字体层级；236px侧栏使用共享
+VectorIcon新增API（482f7ce），导航行32px、圆角8px。播放器使用共享iconOnly按钮，
+滑块以应用显式参数采用4px轨道/22×16px拇指，不修改组件默认值。underlay来自真实
+当前封面，由Qt Quick MultiEffect预模糊后交LiquidSurface采样、方向性反光及折射。
+不复制桌面图片，不依赖平台模糊。方角外框、30px自绘窗饰、右侧14px窗控及低对比
+壳/内容平面参考kos-settings。整体浅深色、窄窗与指针状态待独立验收。

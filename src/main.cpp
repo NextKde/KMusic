@@ -11,6 +11,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTimer>
+#include <QMouseEvent>
 #include <QElapsedTimer>
 #include <QJsonArray>
 #include <memory>
@@ -58,6 +59,30 @@ int main(int argc, char *argv[]) {
                     QFile response(QDir(reviewDir).filePath("response.json"));
                     if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{{"ok", ok}, {"path", path}}).toJson());
                 });
+            } else if (action == "homePointer") {
+                // Dedicated-window review only: actual Qt Quick pointer dispatch,
+                // restricted to two product controls; never moves the system cursor.
+                const QString control = data.value("control").toString();
+                const QString state = data.value("state").toString();
+                if ((control != "hero" && control != "player") ||
+                    (state != "hover" && state != "press" && state != "cancel")) return;
+                auto *item = window->findChild<QQuickItem *>(control == "hero" ? "reviewHeroPlay" : "reviewPlayerPlay");
+                if (!item || !item->isVisible() || !item->isEnabled()) return;
+                QPointF position = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
+                if (state == "cancel") position = QPointF(window->width() - 120, 40);
+                const auto send = [window, position](QEvent::Type type, Qt::MouseButton button, Qt::MouseButtons buttons) {
+                    QMouseEvent event(type, position, window->mapToGlobal(position.toPoint()), button, buttons, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &event);
+                };
+                send(QEvent::MouseMove, Qt::NoButton, state == "cancel" ? Qt::LeftButton : Qt::NoButton);
+                if (state == "press") send(QEvent::MouseButtonPress, Qt::LeftButton, Qt::LeftButton);
+                if (state == "cancel") send(QEvent::MouseButtonRelease, Qt::LeftButton, Qt::NoButton);
+                QFile response(QDir(reviewDir).filePath("response.json"));
+                if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
+                    {"ok", true}, {"control", control}, {"state", state},
+                    {"hovered", item->property("hovered").toBool()}, {"down", item->property("down").toBool()},
+                    {"scale", item->scale()}, {"windowLocalX", position.x()}, {"windowLocalY", position.y()}
+                }).toJson());
             } else if (action == "onlineSearch") {
                 QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());

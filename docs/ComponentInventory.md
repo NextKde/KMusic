@@ -59,3 +59,13 @@ real textured/disabled/Material comparisons. KMusic does not currently consume
 NavBar, so it receives the pinned shared update and existing-page regression
 without introducing an artificial new navigation UI. Dynamic/focus/accessibility
 acceptance remains independent; this does not complete all material review.
+
+Whole-home reset candidate: Inter 13px body/26px title follows Forma's type scale;
+236px navigation uses the shared additive VectorIcon API (482f7ce) and compact
+32px rows with 8px corners. Transport uses shared icon-only buttons, with
+4px slider tracks/22×16px thumbs as explicit app settings, preserving library
+defaults. Artwork underlay is the actual current cover, preblurred by Qt Quick
+MultiEffect then sampled by LiquidSurface with directional reflections and
+refraction. No desktop image or platform blur dependency. The square outer
+window, 30px CSD, 14px right controls and low-contrast shell/content planes follow
+kos-settings. Overall light/dark, narrow-window and pointer-state review pending.
