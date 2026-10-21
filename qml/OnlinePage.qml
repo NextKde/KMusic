@@ -9,6 +9,10 @@ Item {
     readonly property alias reviewList: songContent.reviewList
     property alias queryText: query.text
     function openQualityMenu() { qualitySelect.openMenu() }
+    Item {
+        id: searchScrollScene
+        anchors.fill: parent
+        Rectangle { anchors.fill: parent; color: AppTheme.dark ? "#1c1c1e" : "#ffffff" }
     SongsPage {
         id: songContent
         anchors.fill: parent
@@ -16,8 +20,9 @@ Item {
         music: page.music; bottomContentInset: page.bottomContentInset; trackModel: page.music.onlineModel; onlineView: true
         onDetailsRequested: row => { page.music.requestOnlineDetail(row); details.open() }
     }
+    }
     // Independent sibling source: no header controls, no recursive sampling.
-    LiquidBackdrop { id: headerBackdrop; sourceItem: songContent; registerAsDefault: false; blur: .18 }
+    LiquidBackdrop { id: headerBackdrop; sourceItem: searchScrollScene; registerAsDefault: false; blur: .18 }
     Item {
         id: fixedHeader
         width: parent.width; height: 140

@@ -18,6 +18,10 @@ Item {
         }
     }
     readonly property bool albumReady: !music.albumLoading && !music.albumError.length && (music.onlineAlbum.trackCount || 0) > 0
+    Item {
+        id: albumScrollScene
+        anchors.fill: parent
+        Rectangle { anchors.fill: parent; color: AppTheme.dark ? "#1c1c1e" : "#ffffff" }
     SongsPage {
         id: songs
         anchors.fill: parent
@@ -54,9 +58,10 @@ Item {
             }
         }
     }
+    }
     // The fixed toolbar is the only page overlay glass; its source is the real
     // scrolling list/header sibling, never a second catalogue or the toolbar.
-    LiquidBackdrop { id: toolbarBackdrop; sourceItem: songs; registerAsDefault: false; blur: .15 }
+    LiquidBackdrop { id: toolbarBackdrop; sourceItem: albumScrollScene; registerAsDefault: false; blur: .15 }
     Item {
         width: parent.width; height: 48
         LiquidSurface { anchors.fill: parent; radius: 0; backdrop: toolbarBackdrop; tintColor: AppTheme.dark ? "#1c1c1e" : "#ffffff"; tintStrength: .84; readability: 0; blurStrength: 0; refractionStrength: 2; reflectionStrength: .2 }
