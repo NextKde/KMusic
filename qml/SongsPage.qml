@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Kos.Ui
+import "UiLanguage.mjs" as Language
 ColumnLayout {
     id: page
     required property var music
@@ -104,6 +105,13 @@ ColumnLayout {
                     visible: page.onlineView || page.albumView
                     Accessible.name: qsTr("Save to local playlist")
                     onClicked: page.saveToPlaylistRequested(row.index)
+                }
+                MusicActionButton {
+                    visible: page.playlistView
+                    iconOnly: true; text: "−"; implicitWidth: 30; implicitHeight: 30
+                    Accessible.name: Language.text("Remove from playlist", "从歌单移除")
+                    ToolTip.text: Accessible.name; ToolTip.visible: hovered
+                    onClicked: page.music.removeTrackFromPlaylist(page.playlistId, row.trackId)
                 }
                 MusicActionButton {
                     iconOnly: true

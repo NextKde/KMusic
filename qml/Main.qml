@@ -21,7 +21,7 @@ ApplicationWindow {
             navigationArea = area
             if (area === "personal") destination = "personalHome"
         } else if (area === "local") {
-            selectSource("local"); navigationArea = area; destination = "localHome"
+            selectSource("local"); navigationArea = area; localPage.openSection("songs"); destination = "localHome"
         } else { navigationArea = area; destination = area === "media" ? "mediaHome" : "settingsHome" }
     }
     property string selectedSource: "netease"
@@ -180,14 +180,11 @@ ApplicationWindow {
                 anchors.fill: parent; anchors.topMargin: window.contentDestination === "new" ? 0 : floatingHeader.visible ? 68 : 30
                 NavigationHomePage {
                     anchors.fill: parent
-                    visible: ["localHome", "mediaHome", "settingsHome"].indexOf(window.contentDestination) >= 0
+                    visible: ["mediaHome", "settingsHome"].indexOf(window.contentDestination) >= 0
                     showHeading: false
                     title: window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐") : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
                     bottomContentInset: window.playerContentInset
-                    groups: window.contentDestination === "localHome" ? [
-                            {title: Language.text("Music Library", "音乐库"), entries: SourceCatalog.sections("local")[0].entries.concat([{id:"folders", zh:Language.text("Music folders", "音乐文件夹"), en:"Music folders", route:"folders", status:"connected"}])},
-                            {title: Language.text("On This Device", "本机收藏"), entries: [{id:"favorites", zh:Language.text("Favorites", "喜欢的音乐")}, {id:"recent", zh:Language.text("Recently Played", "最近播放")}, {id:"newPlaylist", zh:Language.text("New Playlist", "新建歌单")}].concat(music.playlists.map(p => ({id:"playlist", playlistId:p.id, zh:p.name}))) }]
-                        : window.contentDestination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
+                    groups: window.contentDestination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
                         : [{title:Language.text("Appearance", "外观"), entries:[{id:"system", zh:Language.text("System", "跟随系统")}, {id:"light", zh:Language.text("Light", "浅色")}, {id:"dark", zh:Language.text("Dark", "深色")}]}]
                     onEntryRequested: entry => {
                         if (window.contentDestination === "mediaHome") window.selectSource(entry.id)
@@ -197,6 +194,14 @@ ApplicationWindow {
                         else if (entry.route) window.openSourceEntry(entry)
                         else window.navigate(entry.id, entry.zh)
                     }
+                }
+                LocalMusicPage {
+                    id: localPage
+                    anchors.fill: parent; visible: window.contentDestination === "localHome"
+                    music: window.music; bottomContentInset: window.playerContentInset
+                    onImportRequested: folderDialog.open()
+                    onClearSearchRequested: { window.rememberSourceSearch("local", ""); music.setSearch("") }
+                    onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
                 PersonalPage {
                     anchors.fill: parent
@@ -473,8 +478,8 @@ ApplicationWindow {
                     onTextEdited: {
                         window.rememberSourceSearch(window.selectedSource, text)
                         if (window.selectedSource === "local") {
-                            music.setSearch(text); music.setLibraryView("songs")
-                            window.pageTitle = Language.text("Songs", "歌曲"); window.destination = "search"
+                            music.setSearch(text); localPage.searchLibrary()
+                            window.destination = "localHome"
                         }
                     }
                     onAccepted: {
@@ -590,7 +595,7 @@ ApplicationWindow {
     }
     AccountDialog { id: accountDialog; account: music.account }
     KosWindowResizeHandles { targetWindow: window }
-    FolderDialog { id: folderDialog; title: Language.text("Import music folder", "导入音乐文件夹"); onAccepted: music.addLibraryFolder(selectedFolder.toString()) }
+    FolderDialog { id: folderDialog; title: Language.text("Import music folder", "导入音乐文件夹"); onAccepted: { window.openPrimary("local"); music.addLibraryFolder(selectedFolder.toString()) } }
     LiquidDialog {
         id: playlistDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("New Playlist", "新建歌单"); standardButtons: Dialog.Ok | Dialog.Cancel
         contentItem: LiquidTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); materialForm: false; liquidFinish: true }
