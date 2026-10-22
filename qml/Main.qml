@@ -414,19 +414,21 @@ ApplicationWindow {
                             id: platformButton
                             Layout.preferredWidth: 35; Layout.minimumWidth: 0; Layout.fillHeight: true
                             padding: 0
-                            visible: window.navigationArea === "discover" || window.navigationArea === "personal"
-                            Accessible.name: Language.text("Switch platform", "切换平台")
-                            // Reserved icon only; platform behavior will be defined later.
+                            visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
+                            enabled: window.navigationArea !== "local" || music.ready
+                            Accessible.name: window.navigationArea === "local" ? Language.text("Import music", "导入音乐") : Language.text("Switch platform", "切换平台")
+                            onClicked: { if (window.navigationArea === "local") folderDialog.open() }
+                            // Online platform switching remains reserved.
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
                             contentItem: Item {
                                 implicitWidth: 14; implicitHeight: 14
-                                VectorIcon { anchors.centerIn: parent; width: 14; height: 14; name: "repeat"; size: 14; color: AppTheme.text }
+                                VectorIcon { anchors.centerIn: parent; width: 14; height: 14; name: window.navigationArea === "local" ? "folder" : "repeat"; size: 14; color: AppTheme.text }
                             }
 
                         }
                     }
                 }
-                Label { visible: window.contentDestination !== "new"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
+                Label { visible: window.contentDestination !== "new" && window.navigationArea !== "local"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
                 Item { Layout.fillWidth: true }
                 Button {
                     id: headerAvatar

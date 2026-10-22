@@ -33,8 +33,12 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true; Layout.leftMargin: 32; Layout.rightMargin: 32
-        Label { text: Language.text("On this computer", "此电脑上的音乐"); font.pixelSize: 16; font.weight: Font.DemiBold; color: AppTheme.text; Layout.fillWidth: true }
-        MusicActionButton { text: Language.text("Import folder", "导入文件夹"); enabled: page.music.ready; onClicked: page.importRequested() }
+        Item { Layout.fillWidth: true }
+        MusicActionButton {
+            text: Language.text("Import music", "导入音乐")
+            materialForm: true; surfaceColor: AppTheme.dark ? "#3a3a3c" : "#e8e8ed"
+            enabled: page.music.ready; onClicked: page.importRequested()
+        }
     }
     RowLayout {
         Layout.fillWidth: true; Layout.leftMargin: 32; Layout.rightMargin: 32; spacing: 6
