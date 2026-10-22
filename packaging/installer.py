@@ -75,8 +75,11 @@ def dependencies(work):
               'set(CMAKE_CXX_STANDARD 20)', 'set(CMAKE_CXX_STANDARD_REQUIRED ON)',
               'file(WRITE "${CMAKE_BINARY_DIR}/missing.txt" "")']
         for mod in modules:
-            cm += [f'find_package(Qt6{mod} 6.8 QUIET)', f'if(NOT Qt6{mod}_FOUND)', f'file(APPEND "${{CMAKE_BINARY_DIR}}/missing.txt" "Qt6{mod} >=6.8\\n")', 'endif()']
-        cm += ['find_package(Qt6Keychain QUIET)', 'if(NOT Qt6Keychain_FOUND)', 'file(APPEND "${CMAKE_BINARY_DIR}/missing.txt" "Qt6Keychain\\n")', 'endif()',
+            cm += [f'find_package(Qt6{mod} QUIET)', f'if(NOT Qt6{mod}_FOUND)',
+                   f'file(APPEND "${{CMAKE_BINARY_DIR}}/missing.txt" "Qt6{mod}|>=6.8|\\n")',
+                   f'elseif(Qt6{mod}_VERSION VERSION_LESS "6.8")',
+                   f'file(APPEND "${{CMAKE_BINARY_DIR}}/missing.txt" "Qt6{mod}|>=6.8|${{Qt6{mod}_VERSION}}\\n")', 'endif()']
+        cm += ['find_package(Qt6Keychain QUIET)', 'if(NOT Qt6Keychain_FOUND)', 'file(APPEND "${CMAKE_BINARY_DIR}/missing.txt" "Qt6Keychain|present|\\n")', 'endif()',
                'if(TARGET Qt6::qmake)', 'get_target_property(QMAKE_PATH Qt6::qmake IMPORTED_LOCATION)',
                'file(WRITE "${CMAKE_BINARY_DIR}/qmake.txt" "${QMAKE_PATH}")', 'endif()',
                'add_executable(cxx20 main.cpp)']
@@ -89,7 +92,9 @@ def dependencies(work):
             add('C++20/CMake toolchain', 'working configure and compile', 'probe failed')
         mf = probe/'build/missing.txt'
         if mf.exists():
-            for line in mf.read_text().splitlines(): add(line, 'present and compatible')
+            for line in mf.read_text().splitlines():
+                name, required, installed = line.split('|', 2)
+                add(name, required, installed or None)
         qf = probe/'build/qmake.txt'
         if qf.exists():
             qmake = qf.read_text()
