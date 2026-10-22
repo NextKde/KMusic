@@ -398,7 +398,8 @@ ApplicationWindow {
                     id: headerAvatar
                     padding: 0
                     Layout.preferredWidth: 24; Layout.preferredHeight: 24
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: 5.5
                     topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
                     visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
                     readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
@@ -540,7 +541,7 @@ ApplicationWindow {
             visible: window.destination === "now"; music: window.music
             onCloseRequested: window.closeNowPlaying()
         }
-        WindowChrome { width: parent.width; y: floatingHeader.visible ? floatingHeader.height / 2 - 17.5 : 0; targetWindow: window }
+        WindowChrome { width: parent.width; targetWindow: window }
 
     }
     SourceConnectionDialog {
