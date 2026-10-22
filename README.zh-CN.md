@@ -12,6 +12,8 @@
 
 <p align="center"><code>Linux</code> &nbsp; <code>Qt 6.8+</code> &nbsp; <code>GStreamer</code></p>
 
+![KMusic 发现页：歌单精选、新歌速递与悬浮播放器](docs/images/kmusic-discover.png)
+
 开发预览版，尚未发布正式版本。功能测试与安装测试不代表视觉验收。
 
 ## 音乐与资料库
