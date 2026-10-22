@@ -347,13 +347,15 @@ ApplicationWindow {
                 parent: appCanvas
                 z: 10
                 x: floatingHeader.x + 32; y: 0
-                width: floatingHeader.width - 180; height: floatingHeader.height
+                width: appCanvas.width - x - 106; height: floatingHeader.height
                 visible: floatingHeader.visible
                 spacing: 24
                 LiquidActionButton {
                     id: headerActions
                     Layout.preferredWidth: platformButton.visible ? 72 : 36
                     implicitHeight: 32; materialForm: false
+                    Layout.preferredHeight: 32; Layout.alignment: Qt.AlignVCenter
+                    topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
                     backdrop: sidebarBackdrop; liquidIntensity: "strong"
                     scale: 1; hoverEnabled: false
                     leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0
@@ -392,7 +394,32 @@ ApplicationWindow {
                 }
                 Label { visible: window.destination !== "new"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
                 Item { Layout.fillWidth: true }
-
+                Button {
+                    id: headerAvatar
+                    padding: 0
+                    Layout.preferredWidth: 24; Layout.preferredHeight: 24
+                    Layout.alignment: Qt.AlignVCenter
+                    topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
+                    visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
+                    readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
+                    Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
+                    onClicked: {
+                        if (window.onlineProvider === "netease") accountDialog.open()
+                        else window.openSourceEntry(SourceCatalog.sections("bilibili")[1].entries[0])
+                    }
+                    background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
+                    contentItem: Item {
+                        Image { anchors.centerIn: parent; width: 16; height: 16; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
+                        Image {
+                            id: avatarImage
+                            anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
+                            visible: headerAvatar.signedIn && source.toString().length > 0
+                            fillMode: Image.PreserveAspectCrop; asynchronous: true
+                            layer.enabled: true
+                            layer.effect: OpacityMask { maskSource: Rectangle { width: avatarImage.width; height: avatarImage.height; radius: width / 2 } }
+                        }
+                    }
+                }
             }
             Popup {
                 id: searchPopup
@@ -514,32 +541,7 @@ ApplicationWindow {
             onCloseRequested: window.closeNowPlaying()
         }
         WindowChrome { width: parent.width; targetWindow: window }
-                Button {
-                    id: headerAvatar
-                    padding: 0
-                    width: 24; height: 24
-                    anchors.right: parent.right; anchors.rightMargin: 106
-                    y: headerActionRow.y + headerActions.y + (headerActions.height - height) / 2
-                    visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
-                    readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
-                    Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
-                    onClicked: {
-                        if (window.onlineProvider === "netease") accountDialog.open()
-                        else window.openSourceEntry(SourceCatalog.sections("bilibili")[1].entries[0])
-                    }
-                    background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
-                    contentItem: Item {
-                        Image { anchors.centerIn: parent; width: 16; height: 16; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
-                        Image {
-                            id: avatarImage
-                            anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
-                            visible: headerAvatar.signedIn && source.toString().length > 0
-                            fillMode: Image.PreserveAspectCrop; asynchronous: true
-                            layer.enabled: true
-                            layer.effect: OpacityMask { maskSource: Rectangle { width: avatarImage.width; height: avatarImage.height; radius: width / 2 } }
-                        }
-                    }
-                }
+
     }
     SourceConnectionDialog {
         id: sourceConnectionDialog
