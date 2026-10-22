@@ -342,6 +342,20 @@ ApplicationWindow {
                     rimColor: "transparent"
                 }
             }
+            LiquidOuterShadow {
+                parent: appCanvas
+                z: 9
+                visible: floatingHeader.visible && headerActions.visible
+                x: headerActionRow.x + headerActions.x
+                y: headerActionRow.y + headerActions.y
+                width: headerActions.width; height: headerActions.height
+                radius: height / 2
+                // Mask against the exact button silhouette, independent of the glass.
+                outwardOffset: 0
+                shadowOpacity: .12
+                softness: 6; spread: 18
+                offset: Qt.vector2d(0, 3)
+            }
             RowLayout {
                 id: headerActionRow
                 parent: appCanvas
@@ -352,8 +366,7 @@ ApplicationWindow {
                 spacing: 24
                 LiquidActionButton {
                     id: headerActions
-                    shadowEnabled: true
-                    shadowLevel: 1
+                    shadowEnabled: false
                     Layout.preferredWidth: platformButton.visible ? 72 : 36
                     implicitHeight: 32; materialForm: false
                     Layout.preferredHeight: 32; Layout.alignment: Qt.AlignVCenter
