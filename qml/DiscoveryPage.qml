@@ -174,7 +174,9 @@ ScrollView {
                 Layout.fillWidth: true; Layout.preferredHeight: cardHeight
                 visible: page.feed("playlists").items.length > 0
                 contentWidth: featuredRow.width; contentHeight: height
-                clip: true; boundsBehavior: Flickable.StopAtBounds
+                // Keep scrolled covers in the real scene for sidebar backdrop sampling.
+                // The page clips at the window edge; the sidebar paints above this shelf.
+                clip: false; boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.HorizontalFlick
                 ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
                 Row {
