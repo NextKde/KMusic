@@ -160,7 +160,20 @@ ApplicationWindow {
         userPreferences.sync()
     }
     Shortcut { sequence: "Ctrl+O"; onActivated: { window.selectSource("local"); folderDialog.open() } }
-    Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
+    // Controls own Space for activation/editing; the playback shortcut must not
+    // steal it from a focused child (for example a dialog button or select).
+    function focusConsumesSpace(item) {
+        for (let node = item; node; node = node.parent) {
+            if (node instanceof TextInput || node instanceof TextEdit
+                    || node instanceof AbstractButton || node instanceof ComboBox
+                    || node instanceof SpinBox || node instanceof Slider
+                    || node instanceof RangeSlider || node instanceof LiquidSelect
+                    || node instanceof LiquidSlider)
+                return true
+        }
+        return nowPlaying.ownsControlFocus(item)
+    }
+    Shortcut { sequence: "Space"; enabled: !window.focusConsumesSpace(window.activeFocusItem); onActivated: music.togglePlayPause() }
     Connections {
         target: music
         function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
