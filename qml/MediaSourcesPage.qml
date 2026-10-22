@@ -24,7 +24,7 @@ ScrollView {
         RowLayout {
             visible: page.server.connected; Layout.fillWidth: true
             MusicActionButton { text: Language.text("Albums", "专辑"); checked: page.view === "albums"; enabled: !page.server.busy; onClicked: { page.view = "albums"; page.server.browseAlbums() } }
-            LiquidTextField { id: query; Layout.fillWidth: true; materialForm: true; placeholderText: Language.text("Search this server", "搜索当前服务器"); onAccepted: searchButton.clicked() }
+            MusicTextField { searchField: true; id: query; Layout.fillWidth: true; materialForm: true; placeholderText: Language.text("Search this server", "搜索当前服务器"); onAccepted: searchButton.clicked() }
             MusicActionButton { id: searchButton; text: Language.text("Search", "搜索"); enabled: !page.server.busy; onClicked: { page.view = "search"; page.server.search(query.text) } }
         }
         Flow {
@@ -80,7 +80,7 @@ ScrollView {
         }
         onOpened: { address.text = page.server.server; username.text = page.server.username; password.text = "" }
         onClosed: password.text = ""
-        component Field: LiquidTextField {
+        component Field: MusicTextField {
             Layout.fillWidth: true
             implicitHeight: 36; font.pixelSize: 13
             materialForm: true; cornerRadius: 8

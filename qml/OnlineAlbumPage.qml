@@ -108,7 +108,8 @@ Item {
                 onClicked: page.music.loadMorePlaylistTracks()
             }
             MusicActionButton { objectName: "reviewAlbumRetry"; visible: page.music.albumError.length > 0; text: qsTr("Retry"); onClicked: page.music.retryOnlineAlbum() }
-            LiquidTextField {
+            MusicTextField {
+                searchField: true
                 id: search
                 visible: !page.music.artistAlbumsVisible
                 Layout.preferredWidth: Math.min(210, page.width * .28); implicitHeight: 30

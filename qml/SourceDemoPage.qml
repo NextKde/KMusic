@@ -103,7 +103,8 @@ ScrollView {
                     }
                 }
             }
-            LiquidTextField {
+            MusicTextField {
+                searchField: true
                 Layout.fillWidth: true
                 materialForm: true
                 text: page.prototypeQuery

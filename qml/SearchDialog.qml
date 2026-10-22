@@ -48,7 +48,8 @@ LiquidDialog {
         spacing: 14
         RowLayout {
             Layout.fillWidth: true; spacing: 10
-            LiquidTextField {
+            MusicTextField {
+                searchField: true
                 id: query
                 Layout.fillWidth: true; implicitHeight: 36
                 materialForm: false; liquidFinish: true; liquidIntensity: "strong"

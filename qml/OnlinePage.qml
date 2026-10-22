@@ -56,7 +56,8 @@ Item {
             }
             RowLayout {
                 Layout.fillWidth: true; spacing: 8
-                LiquidTextField {
+                MusicTextField {
+                    searchField: true
                     id: query; objectName: "reviewOnlineQuery"
                     Layout.fillWidth: true; materialForm: true
                     placeholderText: qsTr("Search NetEase")

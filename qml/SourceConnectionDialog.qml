@@ -24,9 +24,9 @@ LiquidDialog {
             color: AppTheme.mutedText
         }
         Label { text: Language.text("Display name for this example", "示例显示名称"); color: AppTheme.text }
-        LiquidTextField { id: aliasField; Layout.fillWidth: true; materialForm: true; maximumLength: 60 }
+        MusicTextField { id: aliasField; Layout.fillWidth: true; materialForm: true; maximumLength: 60 }
         Label { text: Language.text("Example address · read only", "示例地址（只读）"); color: AppTheme.text }
-        LiquidTextField {
+        MusicTextField {
             Layout.fillWidth: true; materialForm: true; readOnly: true
             text: dialog.sourceId === "webdav" ? "https://files.example.invalid/music/" : "https://music.example.invalid/"
         }

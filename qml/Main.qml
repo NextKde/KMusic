@@ -607,7 +607,7 @@ ApplicationWindow {
     FolderDialog { id: folderDialog; title: Language.text("Import music folder", "导入音乐文件夹"); onAccepted: { window.openPrimary("local"); music.addLibraryFolder(selectedFolder.toString()) } }
     LiquidDialog {
         id: playlistDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("New Playlist", "新建歌单"); standardButtons: Dialog.Ok | Dialog.Cancel
-        contentItem: LiquidTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); materialForm: false; liquidFinish: true }
+        contentItem: MusicTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); materialForm: false; liquidFinish: true }
         onAccepted: { if (playlistName.text.trim()) music.createPlaylist(playlistName.text.trim()); playlistName.text = "" }
     }
     LiquidDialog {
@@ -617,7 +617,7 @@ ApplicationWindow {
             Label { text: music.preparedPlaylistTitle; color: AppTheme.text; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
             RowLayout {
                 Layout.fillWidth: true
-                LiquidTextField { id: newPlaylistName; materialForm: true; placeholderText: Language.text("New playlist name", "新歌单名称"); Layout.fillWidth: true }
+                MusicTextField { id: newPlaylistName; materialForm: true; placeholderText: Language.text("New playlist name", "新歌单名称"); Layout.fillWidth: true }
                 MusicActionButton { objectName: "reviewCreateLocalPlaylist"; text: Language.text("Create", "创建"); enabled: newPlaylistName.text.trim().length > 0; onClicked: { music.createPlaylist(newPlaylistName.text.trim()); newPlaylistName.text = "" } }
             }
             Label { visible: music.playlists.length === 0; text: Language.text("Create a playlist above, then choose it to save this song.", "先创建歌单，再选择歌单保存歌曲。"); color: AppTheme.text; wrapMode: Text.WordWrap }

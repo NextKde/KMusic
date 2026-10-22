@@ -161,7 +161,7 @@ ColumnLayout {
         parent: Overlay.overlay; anchors.centerIn: parent; width: 360; modal: true
         title: editId < 0 ? Language.text("New playlist", "新建歌单") : Language.text("Rename playlist", "重命名歌单")
         standardButtons: Dialog.Ok | Dialog.Cancel
-        contentItem: LiquidTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); maximumLength: 128 }
+        contentItem: MusicTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); maximumLength: 128 }
         onOpened: { standardButton(Dialog.Ok).enabled = Qt.binding(() => playlistName.text.trim().length > 0); playlistName.forceActiveFocus() }
         onAccepted: { if (editId < 0) page.music.createPlaylist(playlistName.text); else page.music.renamePlaylist(editId, playlistName.text) }
     }
