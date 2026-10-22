@@ -24,18 +24,31 @@ ScrollView {
     function homeOpticalState() { return { content: "real NetEase discovery", personalized: signedIn } }
     function scrollReleaseReview(fraction) { return "{}" }
 
-    component SectionTitle: RowLayout {
+    component SectionTitle: Item {
+        id: sectionTitle
         property string title: ""
         property string subtitle: ""
         property string actionText: ""
         signal actionRequested()
         Layout.fillWidth: true
+        implicitHeight: Math.max(titleCopy.implicitHeight, titleAction.visible ? titleAction.height : 0)
         ColumnLayout {
-            spacing: 4; Layout.fillWidth: true
-            Label { text: parent.parent.title; color: AppTheme.text; font.pixelSize: 21; font.weight: Font.Bold }
-            Label { visible: text.length > 0; text: parent.parent.subtitle; color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+            id: titleCopy
+            anchors.left: parent.left
+            anchors.right: titleAction.visible ? titleAction.left : parent.right
+            anchors.rightMargin: titleAction.visible ? 16 : 0
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+            Label { text: sectionTitle.title; color: AppTheme.text; font.pixelSize: 21; font.weight: Font.Bold }
+            Label { visible: text.length > 0; text: sectionTitle.subtitle; color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         }
-        MusicActionButton { visible: parent.actionText.length > 0; text: parent.actionText; implicitHeight: 28; onClicked: parent.actionRequested() }
+        MusicActionButton {
+            id: titleAction
+            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+            visible: sectionTitle.actionText.length > 0
+            text: sectionTitle.actionText; implicitHeight: 28
+            onClicked: sectionTitle.actionRequested()
+        }
     }
     component FeedState: RowLayout {
         property var state: ({})
