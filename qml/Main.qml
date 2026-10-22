@@ -33,18 +33,6 @@ ApplicationWindow {
         sourceSearchDrafts = next
     }
     function savedSourceSearch(provider) { return sourceSearchDrafts[provider] || "" }
-    function submitSourceSearch() {
-        if (selectedSource === "netease" && search.text.trim().length) {
-            selectedSourceEntry = "search"
-            onlinePage.queryText = search.text
-            destination = "online"
-            music.searchOnline(search.text)
-        } else if (selectedSource === "local") {
-            selectedSourceEntry = "songs"
-            destination = "search"; pageTitle = qsTr("Search local music")
-            music.setSearch(search.text)
-        }
-    }
     property var sourcePrototypeEntry: ({})
     property var demoMediaAliases: ({})
     readonly property bool chineseNavigation: Qt.locale().name.startsWith("zh")
@@ -57,15 +45,13 @@ ApplicationWindow {
     }
     function selectSource(id) {
         restoringSourceSearch = true
-        if (selectedSource === "netease" || selectedSource === "local") rememberSourceSearch(selectedSource, search.text)
         selectedSource = id
         if (id === "netease" || id === "bilibili") { onlineProvider = id; navigationArea = "discover" }
         else navigationArea = id === "local" ? "local" : "media"
         const sections = SourceCatalog.sections(id)
         if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
-        search.text = savedSourceSearch(id)
-        if (id === "netease") onlinePage.queryText = search.text
-        music.setSearch(id === "local" ? search.text : "")
+        if (id === "netease") onlinePage.queryText = savedSourceSearch(id)
+        music.setSearch(id === "local" ? savedSourceSearch(id) : "")
         restoringSourceSearch = false
     }
     property string destination: "new"
@@ -137,7 +123,6 @@ ApplicationWindow {
     Component.onCompleted: { AppTheme.appearanceMode = "light" }
     Shortcut { sequence: "Ctrl+O"; onActivated: { window.selectSource("local"); folderDialog.open() } }
     Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
-    Shortcut { sequence: "Ctrl+F"; onActivated: { if (search.enabled) { search.forceActiveFocus(); search.selectAll() } } }
     Connections {
         target: music
         function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
@@ -151,7 +136,6 @@ ApplicationWindow {
             window.restoringSourceSearch = true
             window.rememberSourceSearch("netease", "")
             onlinePage.queryText = ""
-            if (window.selectedSource === "netease") search.clear()
             window.restoringSourceSearch = false
         }
     }
@@ -292,7 +276,6 @@ ApplicationWindow {
                     onQueryTextChanged: {
                         if (window.selectedSource === "netease" && !window.restoringSourceSearch) {
                             window.rememberSourceSearch("netease", queryText)
-                            if (!search.activeFocus) search.text = queryText
                         }
                     }
                 }
@@ -364,37 +347,6 @@ ApplicationWindow {
                         Layout.bottomMargin: MusicColors.sidebarGroupGap; spacing: 8
                         Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
                         Label { text: "KMusic"; color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarTitleSize; font.weight: Font.DemiBold }
-                    }
-                    LiquidTextField {
-                        id: search; objectName: "reviewLibrarySearch"
-                        readonly property bool onlineScope: window.selectedSource === "netease"
-                        enabled: window.selectedSource === "netease" || window.selectedSource === "local"
-                        backdrop: sidebarBackdrop; unfilteredBackdrop: true
-                        textColor: MusicColors.sidebarLabelPrimary
-                        mutedTextColor: MusicColors.sidebarLabelTertiary; shadowEnabled: false
-                        Layout.fillWidth: true; Layout.bottomMargin: 12
-                        implicitHeight: MusicColors.sidebarSearchHeight
-                        materialForm: false; liquidFinish: true; liquidIntensity: "strong"
-                        cornerRadius: height / 2
-                        placeholderText: !enabled ? qsTr("Search unavailable · demo") : onlineScope ? qsTr("Search NetEase") : qsTr("Search local music")
-                        font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.Normal
-                        leftPadding: MusicColors.sidebarControlInset + MusicColors.sidebarSearchIconSize + MusicColors.sidebarIconGap
-                        rightPadding: MusicColors.sidebarControlInset
-                        onTextChanged: {
-                            if (window.restoringSourceSearch || !enabled) return
-                            window.rememberSourceSearch(window.selectedSource, text)
-                            if (window.selectedSource === "local") {
-                                window.selectedSourceEntry = "songs"
-                                if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search local music") }
-                                music.setSearch(text)
-                            }
-                        }
-                        onAccepted: window.submitSourceSearch()
-                        VectorIcon {
-                            x: MusicColors.sidebarControlInset; anchors.verticalCenter: parent.verticalCenter
-                            name: "search"; size: MusicColors.sidebarSearchIconSize
-                            color: MusicColors.sidebarLabelSecondary
-                        }
                     }
                     Label { text: "Online Music"; color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
                     MusicNavigationButton { id: discoverNav; Layout.fillWidth: true; text: "Discover"; iconName: "music"; checked: window.navigationArea === "discover"; onClicked: window.openPrimary("discover") }
