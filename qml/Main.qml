@@ -169,7 +169,7 @@ ApplicationWindow {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
             Item {
-                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 0 : floatingHeader.visible ? 51 : 30
+                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 0 : floatingHeader.visible ? 68 : 30
                 NavigationHomePage {
                     anchors.fill: parent
                     visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
@@ -194,7 +194,7 @@ ApplicationWindow {
                 }
                 DiscoveryPage {
                     id: discover
-                    showHeading: false; topContentInset: 51
+                    showHeading: false; topContentInset: 68
                     bottomContentInset: window.playerContentInset
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
@@ -315,7 +315,7 @@ ApplicationWindow {
         }
         Item {
             id: floatingHeader
-            x: 236; y: 0; width: parent.width - x; height: 35
+            x: 236; y: 0; width: parent.width - x; height: 52
             visible: window.destination !== "now" && window.destination !== "onlineAlbum" && window.destination !== "online"
             readonly property string heading: window.destination === "new" ? Language.text("Discover", "发现")
                 : window.destination === "personalHome" ? Language.text("Personal", "个人")
@@ -512,13 +512,13 @@ ApplicationWindow {
             visible: window.destination === "now"; music: window.music
             onCloseRequested: window.closeNowPlaying()
         }
-        WindowChrome { width: parent.width; targetWindow: window }
+        WindowChrome { width: parent.width; y: floatingHeader.visible ? 8.5 : 0; targetWindow: window }
                 Button {
                     id: headerAvatar
                     padding: 0
                     width: 24; height: 24
                     anchors.right: parent.right; anchors.rightMargin: 106
-                    y: 5.5
+                    y: 14
                     visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
                     readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
                     Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
