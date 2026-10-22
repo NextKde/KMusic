@@ -13,18 +13,18 @@ ScrollView {
     ColumnLayout {
         width: page.availableWidth - 64; x: 32; spacing: 16
         Item { implicitHeight: 24 }
-        Label { text: qsTr("Local Music"); color: AppTheme.mutedText; font.pixelSize: 13 }
-        Label { text: qsTr("Music folders"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
+        Label { text: qsTr("本地音乐"); color: AppTheme.mutedText; font.pixelSize: 13 }
+        Label { text: qsTr("音乐文件夹"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText
-            text: qsTr("Folders registered on this computer. Importing indexes your audio files; it does not upload them to an online account.")
+            text: qsTr("管理此电脑上的音乐文件夹。导入仅建立文件索引，不会上传到在线账号。")
         }
         RowLayout {
             spacing: 12
-            MusicActionButton { text: qsTr("Add music folder"); onClicked: page.importRequested() }
-            MusicActionButton { text: page.music.scanning ? qsTr("Scanning…") : qsTr("Rescan"); enabled: !page.music.scanning && page.music.libraryFolders.length > 0; onClicked: page.music.rescanLibrary() }
+            MusicActionButton { text: qsTr("添加音乐文件夹"); onClicked: page.importRequested() }
+            MusicActionButton { text: page.music.scanning ? qsTr("正在扫描…") : qsTr("重新扫描"); enabled: !page.music.scanning && page.music.libraryFolders.length > 0; onClicked: page.music.rescanLibrary() }
         }
-        Label { visible: page.music.libraryFolders.length === 0; text: qsTr("No music folders added yet."); color: AppTheme.mutedText }
+        Label { visible: page.music.libraryFolders.length === 0; text: qsTr("尚未添加音乐文件夹。"); color: AppTheme.mutedText }
         Repeater {
             model: page.music.libraryFolders
             delegate: ColumnLayout {
@@ -36,7 +36,7 @@ ScrollView {
         }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText; font.pixelSize: 13
-            text: qsTr("Songs, albums and artists use imported file tags. Missing artwork uses the existing placeholder. This page lists registered roots, rather than browsing subfolders.")
+            text: qsTr("歌曲、专辑和艺术家信息来自文件标签，缺失封面时显示占位图。此处列出已添加的根文件夹。")
         }
         Item { Layout.preferredHeight: page.bottomContentInset; Layout.fillWidth: true }
     }
