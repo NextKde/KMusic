@@ -1,5 +1,22 @@
 # Whole-app design correction — 2026-10-21
 
+
+## 2026-10-22 Gallery sync and sidebar specification
+
+User requested source-only changes; automation remains paused. Pin shared Gallery
+26d8aca. No build, launch, screenshot or runtime verification was performed; the
+running binary retains the revisions in .task/runtime.json.
+
+Keep sidebar width236, .95 background, capture source and seam treatment.
+Use padding16, plain rows30/radius8, selected.13, press.96 and keyboard focus.
+Retain red music icons with 1.5px strokes. Group labels11/600, group gaps16,
+app title17/600. Search uses height34, text13, placeholder.40 and icon14 with
+strong shared liquid optics. Login/import retain handlers as plain action rows;
+appearance selection retains its preference binding in the non-liquid form.
+Current shared fill: #e2e2e6 centre, white top/bottom2px, vertical gradient.35,
+continuous rim tapered around opposing diagonals, button/input shadows off.
+Player host material settings were not retuned.
+
 [简体中文](DesignReset.zh-CN.md)
 
 ## Current bounded correction: color and floating playback

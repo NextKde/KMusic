@@ -2,6 +2,20 @@ pragma Singleton
 import QtQuick
 import Kos.Ui
 QtObject {
+    readonly property int sidebarPadding: 16
+    readonly property int sidebarRowHeight: 30
+    readonly property int sidebarRowGap: 4
+    readonly property int sidebarGroupGap: 16
+    readonly property int sidebarTitleSize: 17
+    readonly property int sidebarCaptionSize: 11
+    readonly property int sidebarSearchSize: 13
+    readonly property int sidebarSearchHeight: 34
+    readonly property int sidebarSearchIconSize: 14
+    readonly property int sidebarControlInset: 12
+    readonly property int sidebarIconGap: 6
+    readonly property color sidebarLabelPrimary: AppTheme.dark ? Qt.rgba(1, 1, 1, .92) : Qt.rgba(0, 0, 0, .92)
+    readonly property color sidebarLabelSecondary: AppTheme.dark ? Qt.rgba(1, 1, 1, .62) : Qt.rgba(0, 0, 0, .62)
+    readonly property color sidebarLabelTertiary: AppTheme.dark ? Qt.rgba(1, 1, 1, .40) : Qt.rgba(0, 0, 0, .40)
     readonly property color text: AppTheme.text
     readonly property color icon: AppTheme.dark ? "#cdd1d7" : "#555b63"
     readonly property color controlSurface: AppTheme.dark ? "#20252f" : "#ffffff"
@@ -16,6 +30,8 @@ QtObject {
     // Original music-navigation artwork: compact, rounded, consistent strokes.
     function sidebarIconSource(name) {
         const glyphs = {
+            account: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="3"/><path d="M5.5 18a7 7 0 0 1 13 0"/>',
+            folder: '<path d="M3 7V4h7l2 3h9v14H3z"/>',
             sparkle: '<rect x="3" y="3" width="6.5" height="6.5" rx="1.4"/><rect x="14.5" y="3" width="6.5" height="6.5" rx="1.4"/><rect x="3" y="14.5" width="6.5" height="6.5" rx="1.4"/><rect x="14.5" y="14.5" width="6.5" height="6.5" rx="1.4"/>',
             search: '<circle cx="10.5" cy="10.5" r="6.7"/><path d="m15.5 15.5 5 5"/>',
             music: '<path d="M15 16.8V3.5l5 1.3v4l-5-1.3"/><ellipse cx="11.6" cy="17.9" rx="3.4" ry="2.5" fill="currentColor" stroke="none"/>',
@@ -25,7 +41,7 @@ QtObject {
             playlist: '<path d="M3 5h13M3 10h13M3 15h7M18 18V10l3 1"/><ellipse cx="15.6" cy="19" rx="2.5" ry="1.8" fill="currentColor" stroke="none"/>'
         }
         const ink = sidebarAccent.toString()
-        return "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" color="' + ink + '" fill="none" stroke="' + ink + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + (glyphs[name] || glyphs.music) + '</svg>')
+        return "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" color="' + ink + '" fill="none" stroke="' + ink + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + (glyphs[name] || glyphs.music) + '</svg>')
     }
 
 }

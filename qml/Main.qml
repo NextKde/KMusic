@@ -210,63 +210,81 @@ ApplicationWindow {
             x: 0; y: 35; width: 236; height: parent.height - y
             contentWidth: availableWidth; clip: true
             ColumnLayout {
-                width: 212; x: 12; spacing: 4
+                width: sidebar.width - 2 * MusicColors.sidebarPadding
+                x: MusicColors.sidebarPadding; spacing: MusicColors.sidebarRowGap
                 RowLayout {
-                    Layout.leftMargin: 10; Layout.topMargin: 8; Layout.bottomMargin: 14; spacing: 9
+                    Layout.leftMargin: MusicColors.sidebarControlInset; Layout.topMargin: 8
+                    Layout.bottomMargin: MusicColors.sidebarGroupGap; spacing: 8
                     Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
-                    Label { text: "KMusic"; color: AppTheme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
+                    Label { text: "KMusic"; color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarTitleSize; font.weight: Font.DemiBold }
                 }
                 LiquidTextField {
                     id: search; objectName: "reviewLibrarySearch"
                     backdrop: sidebarBackdrop; unfilteredBackdrop: true
-                    mutedTextColor: AppTheme.mutedText; shadowEnabled: false
-                    Layout.fillWidth: true; Layout.bottomMargin: 10; implicitHeight: 30
-                    materialForm: false; liquidFinish: true; placeholderText: qsTr("Search library"); font.pixelSize: 12
+                    textColor: MusicColors.sidebarLabelPrimary
+                    mutedTextColor: MusicColors.sidebarLabelTertiary; shadowEnabled: false
+                    Layout.fillWidth: true; Layout.bottomMargin: 12
+                    implicitHeight: MusicColors.sidebarSearchHeight
+                    materialForm: false; liquidFinish: true; liquidIntensity: "strong"
+                    cornerRadius: height / 2
+                    placeholderText: qsTr("Search library"); font.pixelSize: MusicColors.sidebarSearchSize
+                    font.weight: Font.Normal
+                    leftPadding: MusicColors.sidebarControlInset + MusicColors.sidebarSearchIconSize + MusicColors.sidebarIconGap
+                    rightPadding: MusicColors.sidebarControlInset
                     onTextChanged: { if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search") }; music.setSearch(text) }
+                    VectorIcon {
+                        x: MusicColors.sidebarControlInset; anchors.verticalCenter: parent.verticalCenter
+                        name: "search"; size: MusicColors.sidebarSearchIconSize
+                        color: MusicColors.sidebarLabelSecondary
+                    }
                 }
-                MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
-                MusicNavigationButton { Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2; iconName: "search"; text: qsTr("Online search"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
-                Label { text: qsTr("Library"); color: AppTheme.mutedText; font.pixelSize: 11; font.weight: Font.DemiBold; Layout.topMargin: 18; Layout.bottomMargin: 4; Layout.leftMargin: 10 }
+                MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
+                MusicNavigationButton { Layout.fillWidth: true; iconName: "search"; text: qsTr("Online search"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
+                Label { text: qsTr("Library"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
                 Repeater {
                     model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"favorites", label:qsTr("Local favorites"), icon:"heart"}, {key:"recent", label:qsTr("Recently played"), icon:"repeat"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}, {key:"queue", label:qsTr("Play queue"), icon:"queue"}]
                     delegate: MusicNavigationButton {
                         required property var modelData
-                        Layout.fillWidth: true; implicitHeight: 32; cornerRadius: height / 2
+                        Layout.fillWidth: true
                         objectName: modelData.key === "favorites" ? "reviewFavoritesNav" : modelData.key === "recent" ? "reviewRecentNav" : ""
                         text: modelData.label; iconName: modelData.icon; iconSource: modelData.key === "favorites" || modelData.key === "recent" ? "" : MusicColors.sidebarIconSource(modelData.icon); checked: window.destination === modelData.key
                         onClicked: window.navigate(modelData.key, modelData.label)
                     }
                 }
                 RowLayout {
-                    Layout.fillWidth: true; Layout.topMargin: 18; Layout.leftMargin: 10
-                    Label { text: qsTr("Playlists"); color: AppTheme.mutedText; font.pixelSize: 11; font.weight: Font.DemiBold; Layout.fillWidth: true }
-                    MusicActionButton { iconOnly: true; iconName: "plus"; iconColor: MusicColors.sidebarAccent; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
+                    Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset
+                    Label { text: qsTr("Playlists"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.fillWidth: true }
+                    MusicActionButton { iconOnly: true; iconName: "plus"; iconColor: MusicColors.sidebarAccent; implicitWidth: 28; implicitHeight: 28; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
                 }
                 Repeater {
                     model: music.playlists
                     delegate: MusicNavigationButton {
                         required property var modelData
-                        Layout.fillWidth: true; implicitHeight: 30; cornerRadius: height / 2; text: modelData.name; iconName: "playlist"
+                        Layout.fillWidth: true; text: modelData.name; iconName: "playlist"
                         checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
                         onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
                     }
                 }
-                Item { implicitHeight: 18 }
-                MusicActionButton {
-                    Layout.fillWidth: true; implicitHeight: 30
+                Label { text: qsTr("Settings"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
+                MusicNavigationButton {
+                    Layout.fillWidth: true; checkable: false; iconName: "account"
                     objectName: "reviewAccountButton"
                     text: music.account.authenticated ? qsTr("NetEase account") : qsTr("Sign in to NetEase")
                     onClicked: accountDialog.open()
                 }
-                MusicActionButton { Layout.fillWidth: true; implicitHeight: 30; text: music.scanning ? qsTr("Scanning…") : qsTr("Import music folder"); enabled: !music.scanning; onClicked: folderDialog.open() }
+                MusicNavigationButton { Layout.fillWidth: true; checkable: false; iconName: "folder"; text: music.scanning ? qsTr("Scanning…") : qsTr("Import music folder"); enabled: !music.scanning; onClicked: folderDialog.open() }
                 MusicSelect {
                     id: appearanceSelect
-                    implicitHeight: 30
-                    Layout.fillWidth: true; model: [qsTr("System appearance"), qsTr("Light appearance"), qsTr("Dark appearance")]; materialForm: false
+                    implicitHeight: 28
+                    Layout.topMargin: 8
+                    textColor: MusicColors.sidebarLabelPrimary
+                    mutedTextColor: MusicColors.sidebarLabelSecondary
+                    focusRingColor: MusicColors.sidebarAccent
+                    Layout.fillWidth: true; model: [qsTr("System appearance"), qsTr("Light appearance"), qsTr("Dark appearance")]; materialForm: true
                     appearanceMode: AppTheme.appearanceMode; currentIndex: AppTheme.appearanceMode === "system" ? 0 : AppTheme.dark ? 2 : 1
                     onActivated: index => AppTheme.appearanceMode = ["system", "light", "dark"][index]
                 }
-                Item { implicitHeight: 14 }
+                Item { implicitHeight: MusicColors.sidebarGroupGap }
             }
         }
         }
