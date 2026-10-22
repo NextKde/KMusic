@@ -352,8 +352,8 @@ ApplicationWindow {
                 radius: height / 2
                 // Mask against the exact button silhouette, independent of the glass.
                 outwardOffset: 0
-                shadowOpacity: .12
-                softness: 6; spread: 18
+                shadowOpacity: .08
+                softness: 9; spread: 24
                 offset: Qt.vector2d(0, 3)
             }
             RowLayout {
