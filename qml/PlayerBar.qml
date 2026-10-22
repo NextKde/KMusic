@@ -36,6 +36,7 @@ LiquidCard {
             Layout.fillWidth: true; Layout.minimumWidth: 180; Layout.fillHeight: true
             RowLayout {
                 anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+                anchors.topMargin: -2
                 height: 30; spacing: 8
                 TapHandler { onTapped: bar.nowPlayingRequested() }
                 Artwork { source: bar.music.currentArtworkUrl; title: bar.music.currentTitle; Layout.preferredWidth: 30; Layout.preferredHeight: 30; radius: 4 }
@@ -47,7 +48,7 @@ LiquidCard {
             }
             LiquidSlider {
                 id: seekSlider; objectName: "reviewPlayerSeek"
-                anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.bottomMargin: -3
+                anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.bottomMargin: -5
                 height: 10; trackHeight: 1.5; thumbWidth: 8; thumbHeight: 8; showThumb: _hovered || _pressed; materialForm: false
                 enabled: bar.music.seekable
                 property real previewValue: -1
