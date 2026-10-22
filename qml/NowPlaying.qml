@@ -47,7 +47,7 @@ Item {
     }
     LiquidBackdrop { id: ambientBackdrop; sourceItem: ambientScene; registerAsDefault: false }
     MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground;
-        x: 28; y: 40; implicitWidth: 34; implicitHeight: 34
+        x: 16; y: 16; implicitWidth: 34; implicitHeight: 34
         materialForm: false; backdrop: ambientBackdrop
         iconOnly: true; iconName: "close"; iconColor: page.foreground
         onClicked: page.closeRequested(); Accessible.name: qsTr("Close now playing")
