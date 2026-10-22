@@ -28,8 +28,9 @@ QtObject {
     readonly property color focus: AppTheme.focusRing
     readonly property color sidebarAccent: AppTheme.dark ? "#ff453a" : "#fa233b"
     // Original music-navigation artwork: compact, rounded, consistent strokes.
-    function sidebarIconSource(name) {
+    function sidebarIconSource(name, color) {
         const glyphs = {
+            person: '<circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>', 
             account: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="3"/><path d="M5.5 18a7 7 0 0 1 13 0"/>',
             folder: '<path d="M3 7V4h7l2 3h9v14H3z"/>',
             sparkle: '<rect x="3" y="3" width="6.5" height="6.5" rx="1.4"/><rect x="14.5" y="3" width="6.5" height="6.5" rx="1.4"/><rect x="3" y="14.5" width="6.5" height="6.5" rx="1.4"/><rect x="14.5" y="14.5" width="6.5" height="6.5" rx="1.4"/>',
@@ -40,7 +41,7 @@ QtObject {
             queue: '<path d="M3 5h13M3 10h13M3 15h7M18 18V10l3 1"/><ellipse cx="15.6" cy="19" rx="2.5" ry="1.8" fill="currentColor" stroke="none"/>',
             playlist: '<path d="M3 5h13M3 10h13M3 15h7M18 18V10l3 1"/><ellipse cx="15.6" cy="19" rx="2.5" ry="1.8" fill="currentColor" stroke="none"/>'
         }
-        const ink = sidebarAccent.toString()
+        const ink = (color || sidebarAccent).toString()
         return "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" color="' + ink + '" fill="none" stroke="' + ink + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + (glyphs[name] || glyphs.music) + '</svg>')
     }
 

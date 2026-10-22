@@ -10,6 +10,7 @@ class AccountController final : public QObject {
     Q_PROPERTY(QString state READ state NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(QString nickname READ nickname NOTIFY changed)
+    Q_PROPERTY(QString avatarUrl READ avatarUrl NOTIFY changed)
     Q_PROPERTY(QString qrImage READ qrImage NOTIFY changed)
     Q_PROPERTY(bool authenticated READ authenticated NOTIFY changed)
     Q_PROPERTY(bool cleanupRequired READ cleanupRequired NOTIFY changed)
@@ -19,6 +20,7 @@ public:
     QString state() const { return m_state; }
     QString message() const { return m_message; }
     QString nickname() const { return m_nickname; }
+    QString avatarUrl() const { return authenticated() ? m_avatarUrl : QString{}; }
     QString qrImage() const { return m_image; }
     QString storageMessage() const { return m_storageMessage; }
     bool cleanupRequired() const { return m_cleanupRequired; }
@@ -42,5 +44,5 @@ private:
     QElapsedTimer m_expiry;
     quint64 m_generation = 0;
     bool m_cleanupRequired = false;
-    QString m_state = "restoring", m_message, m_nickname, m_image, m_key, m_storageMessage;
+    QString m_state = "restoring", m_message, m_nickname, m_avatarUrl, m_image, m_key, m_storageMessage;
 };

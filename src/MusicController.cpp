@@ -1615,7 +1615,14 @@ void MusicController::refreshLibrary()
     for (int index = 0; index < m_tracks.size(); ++index)
         m_trackIndex.insert(m_tracks.at(index).id, index);
     m_libraryFolders = m_database.libraryRoots();
-    m_libraryModel.setTracks(m_tracks);
+    // Imported-file navigation must not include remote metadata persisted for
+    // playback, device favorites or playlists. Keep the complete id index above
+    // for those shared collections and the queue.
+    QList<TrackRecord> localTracks;
+    for (const auto &track : std::as_const(m_tracks)) {
+        if (track.source == QStringLiteral("local")) localTracks.append(track);
+    }
+    m_libraryModel.setTracks(localTracks);
     refreshGroups();
     refreshPlaylists();
     refreshQueueModel();
@@ -1639,6 +1646,7 @@ void MusicController::refreshGroups()
     QMap<QString, Group> albumsByName;
     QMap<QString, Group> artistsByName;
     for (const TrackRecord &track : std::as_const(m_tracks)) {
+        if (track.source != QStringLiteral("local")) continue;
         const QString albumName = fallbackName(track.album, tr("Unknown album"));
         const QString albumArtist = fallbackName(
             track.albumArtist, fallbackName(track.artist, tr("Unknown artist")));

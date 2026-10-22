@@ -69,7 +69,7 @@ input.on("line", async (line) => {
       const body: any = response.body;
       const profile = body.data?.profile ?? body.profile;
       const account = body.data?.account ?? body.account;
-      emit({ id, ok: true, body: { authenticated: Boolean(account?.id && profile?.userId), nickname: profile?.nickname || "", userId: String(profile?.userId || "") } }); return;
+      emit({ id, ok: true, body: { authenticated: Boolean(account?.id && profile?.userId), nickname: profile?.nickname || "", avatarUrl: profile?.avatarUrl || "", userId: String(profile?.userId || "") } }); return;
     }
     if (req.action === "artistTracks") {
       const response = await artists(params, createRequest);

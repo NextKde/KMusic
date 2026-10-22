@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import Qt5Compat.GraphicalEffects
 import Kos.Ui
 ApplicationWindow {
     id: window
@@ -40,7 +41,7 @@ ApplicationWindow {
     }
     function openAccount() { accountDialog.open() }
     function reviewOnlineSearch(text) { music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
-    function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else appearanceSelect.openMenu() }
+    function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else settingsMenu.popup() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
     function materialReviewState() {
         const state = JSON.parse(nowPlaying.materialReviewState())
@@ -127,7 +128,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     visible: ["songs", "search", "detail", "queue", "playlist", "favorites", "recent"].indexOf(window.destination) >= 0
                     music: window.music; bottomContentInset: window.playerContentInset; heading: window.pageTitle
-                    emptyMessage: recentView ? qsTr("Your local playback history is empty. Played songs will appear here.") : favoritesView ? qsTr("Your local favorites are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
+                    emptyMessage: recentView ? qsTr("Your playback history on this device is empty. Played songs will appear here.") : favoritesView ? qsTr("Your favorites on this device are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
                     queueView: window.destination === "queue"; recentView: window.destination === "recent"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
                     onImportRequested: folderDialog.open()
@@ -205,88 +206,180 @@ ApplicationWindow {
             refractionStrength: 5; magnification: 1.025
             reflectionStrength: 0
         }
-        ScrollView {
-            id: sidebar
+        ColumnLayout {
+            id: sidebarShell
             x: 0; y: 35; width: 236; height: parent.height - y
-            contentWidth: availableWidth; clip: true
+            spacing: 0
+            ScrollView {
+                id: sidebar
+                Layout.fillWidth: true; Layout.fillHeight: true
+                contentWidth: availableWidth; clip: true
+                ColumnLayout {
+                    width: sidebar.availableWidth - 2 * MusicColors.sidebarPadding
+                    x: MusicColors.sidebarPadding; spacing: MusicColors.sidebarRowGap
+                    RowLayout {
+                        Layout.leftMargin: MusicColors.sidebarControlInset; Layout.topMargin: 8
+                        Layout.bottomMargin: MusicColors.sidebarGroupGap; spacing: 8
+                        Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
+                        Label { text: "KMusic"; color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarTitleSize; font.weight: Font.DemiBold }
+                    }
+                    LiquidTextField {
+                        id: search; objectName: "reviewLibrarySearch"
+                        readonly property bool onlineScope: ["new", "online", "onlineAlbum"].indexOf(window.destination) >= 0
+                        backdrop: sidebarBackdrop; unfilteredBackdrop: true
+                        textColor: MusicColors.sidebarLabelPrimary
+                        mutedTextColor: MusicColors.sidebarLabelTertiary; shadowEnabled: false
+                        Layout.fillWidth: true; Layout.bottomMargin: 12
+                        implicitHeight: MusicColors.sidebarSearchHeight
+                        materialForm: false; liquidFinish: true; liquidIntensity: "strong"
+                        cornerRadius: height / 2
+                        placeholderText: onlineScope ? qsTr("Search NetEase") : qsTr("Search local music")
+                        font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.Normal
+                        leftPadding: MusicColors.sidebarControlInset + MusicColors.sidebarSearchIconSize + MusicColors.sidebarIconGap
+                        rightPadding: MusicColors.sidebarControlInset
+                        onOnlineScopeChanged: { clear(); music.setSearch("") }
+                        onTextChanged: {
+                            if (!onlineScope) {
+                                if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search local music") }
+                                music.setSearch(text)
+                            }
+                        }
+                        onAccepted: {
+                            if (onlineScope && text.trim().length) {
+                                window.destination = "online"
+                                onlinePage.queryText = text
+                                music.searchOnline(text)
+                            }
+                        }
+                        VectorIcon {
+                            x: MusicColors.sidebarControlInset; anchors.verticalCenter: parent.verticalCenter
+                            name: "search"; size: MusicColors.sidebarSearchIconSize
+                            color: MusicColors.sidebarLabelSecondary
+                        }
+                    }
+                    Label { text: qsTr("Online Music"); color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.DemiBold; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
+                    MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
+                    MusicNavigationButton { Layout.fillWidth: true; iconName: "search"; text: qsTr("Search"); checked: window.destination === "online" || window.destination === "onlineAlbum"; onClicked: window.navigate("online", qsTr("Online search")) }
+                    RowLayout {
+                        Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset
+                        Label { text: qsTr("Local Music"); color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.DemiBold; Layout.fillWidth: true }
+                        MusicActionButton {
+                            id: localMenuButton
+                            iconOnly: true; iconName: "more"; implicitWidth: 28; implicitHeight: 28; flat: true
+                            Accessible.name: qsTr("Local music menu")
+                            onClicked: localMusicMenu.popup()
+                            Menu {
+                                id: localMusicMenu
+                                MenuItem {
+                                    text: qsTr("Import music folder…"); enabled: !music.scanning
+                                    onTriggered: { window.navigate("songs", qsTr("Local songs")); folderDialog.open() }
+                                }
+                                MenuItem {
+                                    text: music.scanning ? qsTr("Scanning…") : qsTr("Rescan music folders")
+                                    enabled: !music.scanning && music.libraryFolders.length > 0
+                                    onTriggered: music.rescanLibrary()
+                                }
+                            }
+                        }
+                    }
+                    Repeater {
+                        model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}]
+                        delegate: MusicNavigationButton {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            text: modelData.label; iconName: modelData.icon
+                            checked: window.destination === modelData.key || (modelData.key === "songs" && ["search", "detail"].indexOf(window.destination) >= 0)
+                            onClicked: window.navigate(modelData.key, modelData.label)
+                        }
+                    }
+                    Label { text: qsTr("On This Device"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
+                    MusicNavigationButton { objectName: "reviewFavoritesNav"; Layout.fillWidth: true; iconName: "heart"; iconSource: ""; text: qsTr("Favorites"); checked: window.destination === "favorites"; onClicked: window.navigate("favorites", qsTr("Favorites on this device")) }
+                    MusicNavigationButton { objectName: "reviewRecentNav"; Layout.fillWidth: true; iconName: "repeat"; iconSource: ""; text: qsTr("Recently played"); checked: window.destination === "recent"; onClicked: window.navigate("recent", qsTr("Recently played on this device")) }
+                    RowLayout {
+                        Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset
+                        Label { text: qsTr("On-device Playlists"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.fillWidth: true }
+                        MusicActionButton { iconOnly: true; iconName: "plus"; iconColor: MusicColors.sidebarAccent; implicitWidth: 28; implicitHeight: 28; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
+                    }
+                    Repeater {
+                        model: music.playlists
+                        delegate: MusicNavigationButton {
+                            required property var modelData
+                            Layout.fillWidth: true; text: modelData.name; iconName: "playlist"
+                            checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
+                            onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
+                        }
+                    }
+                    Item { implicitHeight: MusicColors.sidebarGroupGap }
+                }
+            }
             ColumnLayout {
-                width: sidebar.width - 2 * MusicColors.sidebarPadding
-                x: MusicColors.sidebarPadding; spacing: MusicColors.sidebarRowGap
+                Layout.fillWidth: true
+                Layout.margins: MusicColors.sidebarPadding
+                spacing: 8
+                MusicNavigationButton { Layout.fillWidth: true; iconName: "queue"; text: qsTr("Play queue"); checked: window.destination === "queue"; onClicked: window.navigate("queue", qsTr("Play queue")) }
                 RowLayout {
-                    Layout.leftMargin: MusicColors.sidebarControlInset; Layout.topMargin: 8
-                    Layout.bottomMargin: MusicColors.sidebarGroupGap; spacing: 8
-                    Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
-                    Label { text: "KMusic"; color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarTitleSize; font.weight: Font.DemiBold }
-                }
-                LiquidTextField {
-                    id: search; objectName: "reviewLibrarySearch"
-                    backdrop: sidebarBackdrop; unfilteredBackdrop: true
-                    textColor: MusicColors.sidebarLabelPrimary
-                    mutedTextColor: MusicColors.sidebarLabelTertiary; shadowEnabled: false
-                    Layout.fillWidth: true; Layout.bottomMargin: 12
-                    implicitHeight: MusicColors.sidebarSearchHeight
-                    materialForm: false; liquidFinish: true; liquidIntensity: "strong"
-                    cornerRadius: height / 2
-                    placeholderText: qsTr("Search library"); font.pixelSize: MusicColors.sidebarSearchSize
-                    font.weight: Font.Normal
-                    leftPadding: MusicColors.sidebarControlInset + MusicColors.sidebarSearchIconSize + MusicColors.sidebarIconGap
-                    rightPadding: MusicColors.sidebarControlInset
-                    onTextChanged: { if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search") }; music.setSearch(text) }
-                    VectorIcon {
-                        x: MusicColors.sidebarControlInset; anchors.verticalCenter: parent.verticalCenter
-                        name: "search"; size: MusicColors.sidebarSearchIconSize
-                        color: MusicColors.sidebarLabelSecondary
+                    Layout.fillWidth: true; spacing: 8
+                    Button {
+                        id: accountButton
+                        objectName: "reviewAccountButton"
+                        Layout.fillWidth: true; implicitHeight: 44
+                        hoverEnabled: true
+                        Accessible.name: music.account.authenticated ? qsTr("Account: %1").arg(music.account.nickname) : qsTr("Sign in to NetEase")
+                        onClicked: accountDialog.open()
+                        background: Rectangle {
+                            radius: 8
+                            color: accountButton.down ? AppTheme.withAlpha(MusicColors.text, .10) : accountButton.hovered ? MusicColors.hoverFill : "transparent"
+                            border.width: accountButton.visualFocus ? 2 : 0
+                            border.color: MusicColors.sidebarAccent
+                        }
+                        contentItem: RowLayout {
+                            spacing: 8
+                            Rectangle {
+                                id: avatar
+                                Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 16
+                                color: AppTheme.dark ? "#48484a" : "#d4d4d8"
+                                Image {
+                                    anchors.centerIn: parent; width: 24; height: 24
+                                    source: MusicColors.sidebarIconSource("person", AppTheme.dark ? "#b0b0b5" : "#8e8e93")
+                                    visible: !profileAvatar.visible || profileAvatar.status !== Image.Ready
+                                }
+                                Image {
+                                    id: profileAvatar
+                                    anchors.fill: parent
+                                    visible: music.account.authenticated && source.toString().length > 0
+                                    source: music.account.authenticated ? music.account.avatarUrl : ""
+                                    asynchronous: true; fillMode: Image.PreserveAspectCrop
+                                    layer.enabled: true
+                                    layer.effect: OpacityMask { maskSource: Rectangle { width: avatar.width; height: avatar.height; radius: width / 2 } }
+                                }
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: music.account.authenticated ? music.account.nickname || qsTr("NetEase account") : qsTr("Sign In")
+                                color: MusicColors.sidebarLabelPrimary; font.pixelSize: 13
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                    MusicActionButton {
+                        id: settingsButton
+                        iconOnly: true; iconName: "settings"; implicitWidth: 28; implicitHeight: 28; flat: true
+                        Accessible.name: qsTr("Settings")
+                        onClicked: settingsMenu.popup()
+                        Menu {
+                            id: settingsMenu
+                            Menu {
+                                title: qsTr("Appearance")
+                                MenuItem { text: qsTr("System appearance"); checkable: true; checked: AppTheme.appearanceMode === "system"; onTriggered: AppTheme.appearanceMode = "system" }
+                                MenuItem { text: qsTr("Light appearance"); checkable: true; checked: AppTheme.appearanceMode === "light"; onTriggered: AppTheme.appearanceMode = "light" }
+                                MenuItem { text: qsTr("Dark appearance"); checkable: true; checked: AppTheme.appearanceMode === "dark"; onTriggered: AppTheme.appearanceMode = "dark" }
+                            }
+                        }
                     }
                 }
-                MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
-                MusicNavigationButton { Layout.fillWidth: true; iconName: "search"; text: qsTr("Online search"); checked: window.destination === "online"; onClicked: window.navigate("online", qsTr("Online search")) }
-                Label { text: qsTr("Library"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
-                Repeater {
-                    model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"favorites", label:qsTr("Local favorites"), icon:"heart"}, {key:"recent", label:qsTr("Recently played"), icon:"repeat"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}, {key:"queue", label:qsTr("Play queue"), icon:"queue"}]
-                    delegate: MusicNavigationButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        objectName: modelData.key === "favorites" ? "reviewFavoritesNav" : modelData.key === "recent" ? "reviewRecentNav" : ""
-                        text: modelData.label; iconName: modelData.icon; iconSource: modelData.key === "favorites" || modelData.key === "recent" ? "" : MusicColors.sidebarIconSource(modelData.icon); checked: window.destination === modelData.key
-                        onClicked: window.navigate(modelData.key, modelData.label)
-                    }
-                }
-                RowLayout {
-                    Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset
-                    Label { text: qsTr("Playlists"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.fillWidth: true }
-                    MusicActionButton { iconOnly: true; iconName: "plus"; iconColor: MusicColors.sidebarAccent; implicitWidth: 28; implicitHeight: 28; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
-                }
-                Repeater {
-                    model: music.playlists
-                    delegate: MusicNavigationButton {
-                        required property var modelData
-                        Layout.fillWidth: true; text: modelData.name; iconName: "playlist"
-                        checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
-                        onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
-                    }
-                }
-                Label { text: qsTr("Settings"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
-                MusicNavigationButton {
-                    Layout.fillWidth: true; checkable: false; iconName: "account"
-                    objectName: "reviewAccountButton"
-                    text: music.account.authenticated ? qsTr("NetEase account") : qsTr("Sign in to NetEase")
-                    onClicked: accountDialog.open()
-                }
-                MusicNavigationButton { Layout.fillWidth: true; checkable: false; iconName: "folder"; text: music.scanning ? qsTr("Scanning…") : qsTr("Import music folder"); enabled: !music.scanning; onClicked: folderDialog.open() }
-                MusicSelect {
-                    id: appearanceSelect
-                    implicitHeight: 28
-                    Layout.topMargin: 8
-                    textColor: MusicColors.sidebarLabelPrimary
-                    mutedTextColor: MusicColors.sidebarLabelSecondary
-                    focusRingColor: MusicColors.sidebarAccent
-                    Layout.fillWidth: true; model: [qsTr("System appearance"), qsTr("Light appearance"), qsTr("Dark appearance")]; materialForm: true
-                    appearanceMode: AppTheme.appearanceMode; currentIndex: AppTheme.appearanceMode === "system" ? 0 : AppTheme.dark ? 2 : 1
-                    onActivated: index => AppTheme.appearanceMode = ["system", "light", "dark"][index]
-                }
-                Item { implicitHeight: MusicColors.sidebarGroupGap }
             }
         }
+
         }
         LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; blur: .19; maximumTextureSize: 2560 }
         PlayerBar { id: player; visible: window.destination !== "now"; anchors.bottom: parent.bottom; anchors.bottomMargin: 16

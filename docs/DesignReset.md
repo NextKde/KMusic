@@ -85,3 +85,23 @@ Previous component checks do not establish whole-app design acceptance.
 The next gate is one coherent, running 1280×800 main window, with a 1024×640 layout check: kos-settings exterior, music sidebar/content/player proportions, consistent vector icons and Forma details. Use genuine source-backed music/artwork or honest empty states. Remove repetitive abstract fixture covers and ad hoc text-symbol icons. Preserve the existing source, playback, preview and lyrics work. General visual fixes still belong in the shared library and require Gallery regression.
 
 Automatic polling remains paused. Run this bounded review locally in dedicated App / Gallery windows, following the latest explicit user authorization. Publish only genuine evidence with its actual source/runtime identity; do not claim whole-app acceptance.
+
+
+## 2026-10-22 capability-based navigation
+
+Online Music exposes existing NetEase discovery/search/details. Local Music's
+songs/albums/artists now include source=local records only. The complete database,
+queue and on-device favorites/history/playlists retain remote references and do
+not claim cloud synchronization. Account cloud playlists/likes are not exposed
+without backend support. Import/rescan live in the Local Music section menu;
+appearance lives in the bottom Settings menu.
+
+A pinned bottom account row shows a gray default avatar when signed out or when
+an image fails; authenticated profile HTTPS avatar/nickname open the existing
+account dialog. Only the public avatar URL crosses into QML; session security is
+unchanged and avatar state clears on logout/expiry. Queue is source-independent.
+Sidebar search submits NetEase searches with Enter in online destinations and
+filters imported files in local destinations.
+
+Source changes require rebuilding. No build/run/screenshot/verify was performed;
+runtime.json still identifies the prior binary. User acceptance is pending.
