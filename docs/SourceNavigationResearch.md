@@ -49,3 +49,7 @@ Round7 adds a media connection preview. Music servers expose server libraries;
 WebDAV exposes folders/files, not an album API. The dialog accepts only a session
 example label and shows a read-only .invalid address. No server requests, saved
 credentials or fabricated library. Real multi-instance adapters remain absent.
+
+### Round 8: local folders and device collections
+
+The local folder page lists actual registered import roots and uses existing import/rescan operations; it is not a nested file browser. Local album/artist/artwork information comes from file metadata. Device favorites, history and playlists explicitly describe their cross-source references and separation from platform-account collections; the queue also states its cross-source scope. Shared material effects are unchanged. Source only; no build, interaction checks or screenshots.

@@ -11,6 +11,7 @@ ColumnLayout {
     readonly property alias reviewList: list
     property var trackModel: music.libraryModel
     property string heading: qsTr("Songs")
+    property string scopeDescription: ""
     property bool onlineView: false
     property bool albumView: false
     property Component headerContent: null
@@ -33,6 +34,7 @@ ColumnLayout {
         MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
     Label { visible: page.showHeading; Layout.leftMargin: 32; text: (page.recentView ? qsTr("On this device") + " · " : "") + (page.trackModel.count === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.trackModel.count)); color: AppTheme.mutedText }
+    Label { visible: page.showHeading && page.scopeDescription.length > 0; Layout.fillWidth: true; Layout.leftMargin: 32; Layout.rightMargin: 32; text: page.scopeDescription; color: AppTheme.mutedText; font.pixelSize: 13; wrapMode: Text.WordWrap }
     Rectangle { visible: page.showHeading; Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
     ListView {
         id: list

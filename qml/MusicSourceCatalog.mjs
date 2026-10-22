@@ -28,7 +28,7 @@ export function sections(id) {
     ]
     if (id === "local") return [
         {en: "Music Library", zh: "音乐库", entries: [entry("songs", "Songs", "歌曲", "songs", "connected"), entry("albums", "Albums", "专辑", "albums", "connected"), entry("artists", "Artists", "艺术家", "artists", "connected")]},
-        {en: "Manage", zh: "管理", entries: [entry("folders", "Music folders", "音乐文件夹", "demo", "prototype")]}
+        {en: "Manage", zh: "管理", entries: [entry("folders", "Music folders", "音乐文件夹", "folders", "connected")]}
     ]
     if (id === "webdav") return [{en: "Connection", zh: "连接", entries: [entry("connection", "Connection preview", "连接示意", "demo", "unconnected")]}, {en: "File Source", zh: "文件来源", entries: [entry("folders", "Folders", "文件夹", "demo", "unconnected"), entry("files", "Audio files", "音频文件", "demo", "unconnected")]}]
     return [{en: "Connection", zh: "连接", entries: [entry("connection", "Connection preview", "连接示意", "demo", "unconnected")]}, {en: "Server Library", zh: "服务器音乐库", entries: [entry("albums", "Albums", "专辑", "demo", "unconnected"), entry("artists", "Artists", "艺术家", "demo", "unconnected"), entry("playlists", "Playlists", "歌单", "demo", "unconnected"), entry("favorites", "Server favorites", "服务器收藏", "demo", "unconnected")]}]

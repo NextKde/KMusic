@@ -188,6 +188,11 @@ ApplicationWindow {
                     anchors.fill: parent
                     visible: ["songs", "search", "detail", "queue", "playlist", "favorites", "recent"].indexOf(window.destination) >= 0
                     music: window.music; bottomContentInset: window.playerContentInset; heading: window.pageTitle
+                    scopeDescription: recentView ? qsTr("Playback recorded by KMusic on this device, across sources. This is separate from platform account history.")
+                        : favoritesView ? qsTr("Favorites saved by KMusic on this device, across sources. This does not change likes in a platform account.")
+                        : playlistView ? qsTr("A playlist saved by KMusic on this device. Platform and server playlists are managed in their own source sections.")
+                        : queueView ? qsTr("The current playback queue can contain tracks from different sources.")
+                        : qsTr("Imported local audio files. Albums, artists and artwork come from file metadata when available.")
                     emptyMessage: recentView ? qsTr("Your playback history on this device is empty. Played songs will appear here.") : favoritesView ? qsTr("Your favorites on this device are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
                     queueView: window.destination === "queue"; recentView: window.destination === "recent"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
@@ -213,6 +218,11 @@ ApplicationWindow {
                     }
                 }
                 OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
+                LocalFoldersPage {
+                    anchors.fill: parent; visible: window.destination === "folders"
+                    music: window.music; bottomContentInset: window.playerContentInset
+                    onImportRequested: folderDialog.open()
+                }
                 SourceDemoPage {
                     anchors.fill: parent; visible: window.destination === "sourceDemo"
                     sourceId: window.selectedSource
