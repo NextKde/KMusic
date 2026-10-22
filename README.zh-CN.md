@@ -1,108 +1,58 @@
-# KMusic
+<p align="center"><img src="data/kmusic.svg" width="80" height="80" alt="KMusic logo"></p>
 
-[English](README.md)
+<h1 align="center">KMusic</h1>
 
-采用 Qt Quick 的原生音乐应用，实际链接固定版本的 nextkdeAppDemo / Kos.Ui。
-当前整体候选采用方角自绘窗体、右侧窗控、真实当前曲目与来源搜索入口、专辑架及常驻播放器。
-已移除重复抽象离线封面；没有资料时显示真实空态，不将搜索结果冒充推荐。
-本地导入、搜索、播放、队列和歌单使用现有 NextKde 后端。SPlayer Next 网易云请求/加密模块
-已通过纯 Node 辅助进程接入搜索、详情、歌词与播放地址，并交给真实 GStreamer 播放器。
-试听、不可播、网络和账号失效有明确状态。二维码登录和歌曲／专辑／歌单／歌手浏览已实现；真实手机确认、认证权限及最终界面验收仍待完成。
-详见[当前交付状态](docs/DeliveryStatus.zh-CN.md)。
+<p align="center"><strong>原生 Qt 音乐播放器，属于 NextKDE。</strong><br>在线发现、本地音乐与自己的音乐服务器，共用一个播放器。</p>
 
-构建依赖 Git、CMake>=3.21、C++20 编译器、pkg-config、Qt6>=6.8 的
-Core/Gui/Qml/Quick/QuickControls2/QuickDialogs2/Concurrent/DBus/Network/Sql、
-Qt6Keychain、libqrencode、GStreamer core/audio/pbutils 开发包和 TagLib>=1.12。
-运行时需 QtQuick.Effects、Qt5Compat.GraphicalEffects、Qt SVG，以及可工作的
-GStreamer 音频输出和对应解码插件（本机使用 base/good/libav）。
-在线请求另需应用进程 PATH 中可找到 Node.js>=22.19，本轮实际使用 22.23.1；
-无需 npm 安装、Electron 或完整 NextKde 桌面。系统凭据库由 QtKeychain 提供，无明文 Cookie 回退。
-子模块自带配对的已烘焙 shader，普通应用构建无需重新烘焙 GLSL。
+<p align="center">
+  <a href="#get-started">开始使用</a> ·
+  <a href="docs/Installation.zh-CN.md">安装指南</a> ·
+  <a href="README.md">English</a>
+</p>
+
+<p align="center"><code>Linux</code> &nbsp; <code>Qt 6.8+</code> &nbsp; <code>GStreamer</code></p>
+
+开发预览版，尚未发布正式版本。功能测试与安装测试不代表视觉验收。
+
+## 音乐与资料库
+
+| 在线音乐 | 本地音乐 | 媒体源 |
+| :--- | :--- | :--- |
+| 网易云发现、搜索、详情、歌词和二维码登录。 | 扫描文件夹、读取标签与内嵌封面，管理本机歌单。 | 连接单个 Navidrome / OpenSubsonic 服务器。 |
+
+- **播放** — 队列、进度、音量、随机与循环，以及沉浸式歌词视图。
+- **个人** — 网易云账号歌单、喜欢、收藏和播放记录的只读接入；真实账号授权及权限仍需用户确认。
+- **外观** — 浅色、深色、跟随系统与语言选择；覆盖滚动内容的位置使用共享 QML 液态材质。
+- **边界** — B站尚未接入；不支持 Jellyfin/WebDAV、多服务器或远端歌单写入。缺少文件封面时显示占位图，不自动生成封面。网易云试听与播放权限取决于服务端。
+
+<a id="get-started"></a>
+## 开始使用
+
+先准备[安装指南](docs/Installation.zh-CN.md)所列依赖，再以普通用户运行：
 
 ```sh
-git clone --branch codex/music-development --recurse-submodules https://github.com/NextKde/KMusic.git
+git clone --branch codex/music-development https://github.com/NextKde/KMusic.git
 cd KMusic
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build -j4
-./build/kmusic
+./install.sh check
+./install.sh install --version 49264b0d45a6f8958e8d8b6eb4e5da1ee3e655d0
 ```
 
-已有工作区在配置前运行 `git submodule update --init --recursive`。
-构建会将纯 Node 音源辅助程序复制到 `build/kmusic` 旁。可选用户目录安装：
+上面固定到已通过安装矩阵的提交。安装器从官方仓库下载对应源码并编译；缺依赖直接返回统一 JSON 错误，**不会自动安装依赖，也不会调用 sudo**。安装成功后从应用启动器打开 KMusic。
 
-```sh
-cmake --install build --prefix "$HOME/.local"
-"$HOME/.local/bin/kmusic"
-```
+| 发行版（x86_64） | 已运行的安装测试 |
+| :--- | :--- |
+| Arch Linux / Ubuntu 26.04 / Debian 13 | 成功安装、更新、卸载、失败路径及离屏启动 |
+| Ubuntu 24.04 默认依赖 | 依赖不足时拒绝安装；不是成功安装认证 |
 
-安装规则包含 `share/kmusic/providers`、桌面入口及图标，但尚未在干净机器上验证安装启动；
-当前是开发候选，不是发行包。使用 nvm 时也需确保桌面启动环境能够找到 Node。
+[测试运行与日志](https://github.com/NextKde/KMusic/actions/runs/39783294345) · [完整安装、卸载与故障说明](docs/Installation.zh-CN.md)
 
-通过侧栏或 Ctrl+O 导入本地音乐文件夹。点击歌曲播放，+ 加入队列，··· 加入已建歌单。
-Ctrl+F 搜索本地资料库；底栏提供播放、进度、音量、随机、循环和队列/正在播放入口。
-侧栏可切换浅色/深色/系统外观。
-默认数据目录 `~/.local/share/kmusic`，缓存 `~/.cache/kmusic`，与 KOS Music 隔离；
-可通过 `KOS_MUSIC_DATA_DIR` / `KOS_MUSIC_CACHE_DIR` 指定独立验收目录。
+## 开发与文档
 
-设置 `KMUSIC_REVIEW_DIR` 可开启仅用于本机验收的文件请求接口：原子写入 `request.json`，
-`{"action":"capture","path":"/absolute/out.png"}` 抓取实际窗口内容并写出 response.json。
-亦支持 theme（theme=light/dark/system）、page（page=new/songs/queue/now）和 resize（width/height）。
-截图来自实际窗口渲染，不是离屏模拟，截图成功本身不等于视觉验收通过。
+- [Local Music](docs/LocalMusic.zh-CN.md) · [Personal](docs/PersonalBackend.zh-CN.md) · [Media Sources](docs/MediaSources.zh-CN.md)
+- [Design](docs/Design.zh-CN.md) · [Roadmap](docs/Roadmap.zh-CN.md) · [Source attribution](NOTICE.md)
+- [App Store integration / 自动化测试](https://github.com/NextKde/NextKde/blob/codex/settings-extension-store/docs/app-store/KMusicInstallation.zh-CN.md)
+- [Historical development notes](docs/DevelopmentNotes.zh-CN.md)
 
-详见[确认计划](docs/ProjectPlan.zh-CN.md)、[组件对应](docs/ComponentInventory.zh-CN.md)与[来源](NOTICE.md)。
-
-在线入口为 **Online search**，输入关键词搜索、点击结果播放、+入队、···查看实际获取的详情。
-最近选择区与播放页会显示试听限制；无播放地址、账号和网络错误会明确呈现。临时播放URL不作为持久歌曲身份，
-不从其他播放器读取账号 Cookie；已有二维码登录入口，实际手机扫码仍由用户完成。原LX适配器不是默认来源。
-
-[整体设计校正](docs/DesignReset.zh-CN.md)定义下一轮完整外壳和音乐内容验收。
-透明模糊使用纯QML采样真实应用页面、封面及背景underlay，保留清晰文字和液态光学。
-当前候选使用共享 LiquidBackdrop/LiquidSurface：固定覆盖区采样真实内容，52px 悬浮胶囊
-播放器单次采样真实页面，普通内容动作用实色材质分支。外壳为 30px 自绘窗饰和 236px 侧栏。
-侧栏只采样真正延伸到其下方的应用内容，不捕获或模糊外部桌面像素；不依赖原生合成器特效。
-整体视觉验收仍待完成。
-
-在线恢复会区分曲库整曲时长与上次实际解码流的长度。试听会话重启后保留真实流时长与位置，
-用简明网易云／试听状态说明；历史可用性不等于当前播放权限，也不会恢复旧 URL。重启后点击播放
-会先重新解析地址再加载引擎。旧会话没有流元数据时显示未知播放时长，避免将整曲长度当作试听长度。
-会话仅保存曲目ID、位置、上次可用性分类、流时长与音质，不保存播放URL、Cookie、请求头或Token。
-本机review状态提供不含敏感信息的解析/加载计数与确认状态，供重启/恢复专项核对。
-
-发现页沿固定版本SPlayer网易云album_new接口加载8张公开新碟，有明确加载、错误和重试。
-这不是个性化推荐，不自动播放。点击封面进入真实专辑资料与曲目列表，浏览不会改动播放或保存歌曲。
-可明确选择整张播放、单曲或加入队列；固定顶栏在真实滚动内容上方，“Find in album”筛选已载入曲目。
-封面上的小播放按钮可直接播放整张。每次播放仍重新解析地址，账号/版权限制可能使曲目仅可试听或不可播。
-
-### 网易云登录
-
-从侧栏“Sign in to NetEase”生成二维码，在网易云音乐官方手机端扫码并确认。
-二维码在本机生成；会话通过 QtKeychain 保存到系统凭据库，不允许明文回退。
-保存失败会明确提示仅本次会话有效。退出会清除本机凭据并请求服务端退出；
-会话过期需要重新扫码。账户变化后旧播放地址失效，下次播放重新解析。
-登录不改变会员和曲目版权限制。专用截图接口在显示二维码或账户身份时拒绝截图。
-实际扫码、系统凭据恢复与认证失效处理仍需用户验证；匿名浏览无需扫码。
-
-在线搜索支持歌曲、歌单、专辑和歌手；点击集合结果进入同一个详情页，不改变播放或队列。
-歌单按来源 trackIds 顺序与 ID 去重，逐批补齐曲目元数据，每批最多 200 项。若还有更多内容，页面明确显示
-已载入/总数与部分载入状态，按钮使用“播放/入队已载入曲目”，只操作这一部分，
-不宣称完整歌单可用。每首歌仍通过真实地址解析确认当前播放权限。
-
-歌单详情可通过“加载更多”逐批获取，每批最多 200 首，按源曲目顺序及 ID 去重追加。失败保留已加载列表并可重试；本地筛选不改变已载／总数，继续加载不播放或改队列。
-
-歌手搜索复用同一详情页展示网易云真实热门歌曲，已加载热门数量与来源作品总数分开显示，不宣称全部作品。“播放／入队热门歌曲”需明确操作，浏览不改变播放。“专辑”入口按每批 30 项获取真实歌手专辑，显示已载／总数与更多状态；进入现有专辑详情后，返回恢复歌手与已载专辑列表。
-
-在线搜索及详情曲目可“保存到本地歌单”。打开选择器不写库，选定歌单后才事务保存曲目元数据与本地关联；也可直接在选择器创建歌单。重启恢复本地歌单、队列身份、位置和历史试听事实，不自动播放。明确恢复网易云播放时重新解析地址及当前权限，音乐 SQLite 数据库不保存可播放 URL 或账户 Cookie。
-
-**本地收藏**仅保存在本机音乐数据库（schema 3）。歌曲行和正在播放页的爱心可明确收藏／取消收藏；在线曲目仅在加入收藏时保存元数据。取消收藏保留曲目、本地歌单和播放队列，侧栏重启后展示真实本地收藏，不读取或同步网易云账户喜欢列表。
-
-**最近播放**是本地记录，仅当音频引擎真正进入播放状态时记录，同一次加载只记一次；解析出地址、加载、浏览和权限拒绝均不算成功播放。同曲目去重并按最后成功开始时间排序，重启后保留，明确播放在线曲目仍重新解析当前权限。Schema 4 新建确认记录表，不将旧版加载时写入的时间戳冒称已确认播放。
-
-播放地址解析期间暂停会使该次尝试失效，迟到的地址／错误不会启动播放或覆盖暂停状态；明确恢复播放时重新解析。
-
-不循环的队列到达末尾时会完整终止并取消待完成的解析／恢复。自然 EOS 带消息产生时的引擎代号，只对当前已加载曲目且仍有播放意图时生效；暂停、停止或换曲会使旧 EOS 失效。
-
-随机播放按队列位置区分重复歌曲；无循环时一轮每个位置最多播放一次，耗尽后停止。明确选曲或停止后重播、队列修改和播放模式修改会重置一轮；正常暂停恢复保留进度。列表循环开启新一轮，单曲循环在自然结束后重播当前项。失败恢复期间持续排除已失败歌曲 ID，包括列表循环，避免全不可播队列无限重试。
-
-上一首依据包含恢复进度的逻辑位置判断：超过 3 秒回到当前曲开头，否则选择队列前一项，并保持原暂停状态。恢复但尚未加载的在线歌曲会重新解析后准备到零点，不复用已保存的播放 URL。
-
-应用商店安装接口：kos-shell 仓库中的 `docs/app-store/KMusicInstallation.zh-CN.md`。入口 `./install.sh`；缺依赖直接失败，不自动安装依赖。
+<!-- progress-links:start -->
+[Latest progress and screenshots](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md) · [Component Gallery](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
+<!-- progress-links:end -->
