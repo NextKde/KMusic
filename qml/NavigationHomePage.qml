@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Kos.Ui
+import "UiLanguage.mjs" as Language
 
 ScrollView {
     id: page
@@ -26,7 +27,7 @@ ScrollView {
                     delegate: MusicNavigationButton {
                         required property var modelData
                         Layout.fillWidth: true; checkable: false
-                        text: modelData.zh || modelData.en
+                        text: Language.chinese() ? modelData.zh || modelData.en : modelData.en || modelData.zh
                         onClicked: page.entryRequested(modelData)
                     }
                 }

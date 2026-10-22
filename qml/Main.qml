@@ -5,6 +5,7 @@ import QtQuick.Dialogs
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import Kos.Ui
+import "UiLanguage.mjs" as Language
 import "MusicSourceCatalog.mjs" as SourceCatalog
 ApplicationWindow {
     id: window
@@ -35,9 +36,9 @@ ApplicationWindow {
     function savedSourceSearch(provider) { return sourceSearchDrafts[provider] || "" }
     property var sourcePrototypeEntry: ({})
     property var demoMediaAliases: ({})
-    readonly property bool chineseNavigation: true
+    readonly property bool chineseNavigation: Language.chinese()
     readonly property var activeSource: SourceCatalog.source(selectedSource)
-    function sourceLabel(item) { return SourceCatalog.label(item, chineseNavigation) }
+    function sourceLabel(item) { return SourceCatalog.label(item, chineseNavigation) || item.zh || item.en || "" }
     function openSourceEntry(entry) {
         selectedSourceEntry = entry.id
         if (entry.status === "connected") navigate(entry.route, sourceLabel(entry))
@@ -69,7 +70,7 @@ ApplicationWindow {
             focusBeforeNow.forceActiveFocus(Qt.OtherFocusReason)
         else discoverNav.forceActiveFocus(Qt.OtherFocusReason)
     }
-    property string pageTitle: qsTr("歌曲")
+    property string pageTitle: Language.text("Songs", "歌曲")
     property double selectedPlaylist: -1
     readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
     property int sensitiveContentRevision: 0
@@ -116,7 +117,7 @@ ApplicationWindow {
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
     function navigate(key, title) {
-        destination = key; pageTitle = title || qsTr("歌曲")
+        destination = key; pageTitle = title || Language.text("Songs", "歌曲")
         music.setSearch(selectedSource === "local" ? savedSourceSearch("local") : "")
         music.setLibraryView("songs")
     }
@@ -171,7 +172,7 @@ ApplicationWindow {
                 visible: window.navigationArea === "discover" || window.navigationArea === "personal"
                 x: 32; y: 34; spacing: 10
                 Repeater {
-                    model: [{id:"netease", name:"网易云音乐"}, {id:"bilibili", name:"哔哩哔哩"}]
+                    model: [{id:"netease", name:Language.text("NetEase Cloud Music", "网易云音乐")}, {id:"bilibili", name:Language.text("Bilibili", "哔哩哔哩")}]
                     delegate: MusicActionButton {
                         required property var modelData
                         text: modelData.name; checkable: true; checked: window.onlineProvider === modelData.id
@@ -184,14 +185,14 @@ ApplicationWindow {
                 NavigationHomePage {
                     anchors.fill: parent
                     visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
-                    title: window.destination === "personalHome" ? "个人" : window.destination === "localHome" ? "本地音乐" : window.destination === "mediaHome" ? "媒体源" : "设置"
+                    title: window.destination === "personalHome" ? Language.text("Personal", "个人") : window.destination === "localHome" ? Language.text("Local Music", "本地音乐") : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
                     bottomContentInset: window.playerContentInset
-                    groups: window.destination === "personalHome" ? [{title: "我的音乐", entries: SourceCatalog.sections(window.onlineProvider)[1].entries}]
+                    groups: window.destination === "personalHome" ? [{title: Language.text("My Music", "我的音乐"), entries: SourceCatalog.sections(window.onlineProvider)[1].entries}]
                         : window.destination === "localHome" ? [
-                            {title: "音乐库", entries: SourceCatalog.sections("local")[0].entries.concat([{id:"folders", zh:"音乐文件夹", en:"Music folders", route:"folders", status:"connected"}])},
-                            {title: "本机收藏", entries: [{id:"favorites", zh:"喜欢的音乐"}, {id:"recent", zh:"最近播放"}, {id:"newPlaylist", zh:"新建歌单"}].concat(music.playlists.map(p => ({id:"playlist", playlistId:p.id, zh:p.name}))) }]
-                        : window.destination === "mediaHome" ? [{title: "添加媒体源", entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
-                        : [{title:"外观", entries:[{id:"system", zh:"跟随系统"}, {id:"light", zh:"浅色"}, {id:"dark", zh:"深色"}]}]
+                            {title: Language.text("Music Library", "音乐库"), entries: SourceCatalog.sections("local")[0].entries.concat([{id:"folders", zh:Language.text("Music folders", "音乐文件夹"), en:"Music folders", route:"folders", status:"connected"}])},
+                            {title: Language.text("On This Device", "本机收藏"), entries: [{id:"favorites", zh:Language.text("Favorites", "喜欢的音乐")}, {id:"recent", zh:Language.text("Recently Played", "最近播放")}, {id:"newPlaylist", zh:Language.text("New Playlist", "新建歌单")}].concat(music.playlists.map(p => ({id:"playlist", playlistId:p.id, zh:p.name}))) }]
+                        : window.destination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
+                        : [{title:Language.text("Appearance", "外观"), entries:[{id:"system", zh:Language.text("System", "跟随系统")}, {id:"light", zh:Language.text("Light", "浅色")}, {id:"dark", zh:Language.text("Dark", "深色")}]}]
                     onEntryRequested: entry => {
                         if (window.destination === "personalHome") window.openSourceEntry(entry)
                         else if (window.destination === "mediaHome") window.selectSource(entry.id)
@@ -219,12 +220,12 @@ ApplicationWindow {
                     anchors.fill: parent
                     visible: ["songs", "search", "detail", "queue", "playlist", "favorites", "recent"].indexOf(window.destination) >= 0
                     music: window.music; bottomContentInset: window.playerContentInset; heading: window.pageTitle
-                    scopeDescription: recentView ? qsTr("KMusic 在本机记录的播放历史，与平台账号历史分别保存。")
-                        : favoritesView ? qsTr("保存在本机的喜欢，不会修改平台账号的喜欢。")
-                        : playlistView ? qsTr("保存在本机的歌单。平台和服务器歌单在各自来源中管理。")
-                        : queueView ? qsTr("当前播放队列可包含不同来源的歌曲。")
-                        : qsTr("已导入的本地音频，专辑、艺术家和封面信息来自文件标签。")
-                    emptyMessage: recentView ? qsTr("暂无本机播放历史，播放过的歌曲会出现在这里。") : favoritesView ? qsTr("暂无本机喜欢的歌曲，可通过爱心按钮添加。") : queueView ? qsTr("播放队列为空") : playlistView ? qsTr("歌单为空，可从歌曲列表添加。") : qsTr("暂无本地歌曲，请导入音乐文件夹。")
+                    scopeDescription: recentView ? Language.text("Playback recorded by KMusic on this device, across sources. This is separate from platform account history.", "KMusic 在本机记录的播放历史，与平台账号历史分别保存。")
+                        : favoritesView ? Language.text("Favorites saved by KMusic on this device, across sources. This does not change likes in a platform account.", "保存在本机的喜欢，不会修改平台账号的喜欢。")
+                        : playlistView ? Language.text("A playlist saved by KMusic on this device. Platform and server playlists are managed in their own source sections.", "保存在本机的歌单。平台和服务器歌单在各自来源中管理。")
+                        : queueView ? Language.text("The current playback queue can contain tracks from different sources.", "当前播放队列可包含不同来源的歌曲。")
+                        : Language.text("Imported local audio files. Albums, artists and artwork come from file metadata when available.", "已导入的本地音频，专辑、艺术家和封面信息来自文件标签。")
+                    emptyMessage: recentView ? Language.text("Your playback history on this device is empty. Played songs will appear here.", "暂无本机播放历史，播放过的歌曲会出现在这里。") : favoritesView ? Language.text("Your favorites on this device are empty. Add songs using the heart button.", "暂无本机喜欢的歌曲，可通过爱心按钮添加。") : queueView ? Language.text("Your queue is empty", "播放队列为空") : playlistView ? Language.text("This device playlist is empty. Add tracks from a song list.", "歌单为空，可从歌曲列表添加。") : Language.text("No local songs match. Import a music folder or change the local search.", "暂无本地歌曲，请导入音乐文件夹。")
                     queueView: window.destination === "queue"; recentView: window.destination === "recent"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
                     onImportRequested: { window.selectSource("local"); folderDialog.open() }
@@ -235,16 +236,16 @@ ApplicationWindow {
                     anchors.fill: parent; visible: window.destination === "albums" || window.destination === "artists"; contentWidth: availableWidth; clip: true
                     ColumnLayout {
                         width: groupScroll.availableWidth - 64; x: 32; spacing: 18
-                        Label { text: window.destination === "artists" ? qsTr("艺术家") : qsTr("专辑"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 24 }
+                        Label { text: window.destination === "artists" ? Language.text("Artists", "艺术家") : Language.text("Albums", "专辑"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 24 }
                         Repeater {
                             model: window.destination === "artists" ? music.artists : music.albums
                             delegate: MusicNavigationButton {
                                 required property var modelData
-                                Layout.fillWidth: true; text: modelData.name + " · " + modelData.count + qsTr(" 首歌曲")
+                                Layout.fillWidth: true; text: modelData.name + " · " + modelData.count + Language.text(" songs", " 首歌曲")
                                 onClicked: { music.setLibraryView(window.destination === "artists" ? "artist" : "album", modelData.filterValue); window.pageTitle = modelData.name; window.destination = "detail" }
                             }
                         }
-                        Label { visible: (window.destination === "artists" ? music.artists : music.albums).length === 0; text: qsTr("导入音乐文件夹以开始使用。"); color: AppTheme.mutedText }
+                        Label { visible: (window.destination === "artists" ? music.artists : music.albums).length === 0; text: Language.text("Import a music folder to get started.", "导入音乐文件夹以开始使用。"); color: AppTheme.mutedText }
                         Item { Layout.preferredHeight: window.playerContentInset; Layout.fillWidth: true }
                     }
                 }
@@ -348,13 +349,13 @@ ApplicationWindow {
                         Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
                         Label { text: "KMusic"; color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarTitleSize; font.weight: Font.DemiBold }
                     }
-                    Label { text: "在线音乐"; color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
-                    MusicNavigationButton { id: discoverNav; Layout.fillWidth: true; text: "发现"; iconName: "music"; checked: window.navigationArea === "discover"; onClicked: window.openPrimary("discover") }
-                    MusicNavigationButton { Layout.fillWidth: true; text: "个人"; iconName: "person"; checked: window.navigationArea === "personal"; onClicked: window.openPrimary("personal") }
-                    Label { text: "本地与媒体源"; color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
-                    MusicNavigationButton { Layout.fillWidth: true; text: "本地音乐"; iconName: "folder"; checked: window.navigationArea === "local"; onClicked: window.openPrimary("local") }
-                    MusicNavigationButton { Layout.fillWidth: true; text: "媒体源"; iconName: "album"; checked: window.navigationArea === "media"; onClicked: window.openPrimary("media") }
-                    MusicNavigationButton { Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; text: "设置"; iconName: "settings"; checked: window.navigationArea === "settings"; onClicked: window.openPrimary("settings") }
+                    Label { text: Language.text("Online Music", "在线音乐"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
+                    MusicNavigationButton { id: discoverNav; Layout.fillWidth: true; text: Language.text("Discover", "发现"); iconName: "music"; checked: window.navigationArea === "discover"; onClicked: window.openPrimary("discover") }
+                    MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Personal", "个人"); iconName: "person"; checked: window.navigationArea === "personal"; onClicked: window.openPrimary("personal") }
+                    Label { text: Language.text("Local & Sources", "本地与媒体源"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
+                    MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Local Music", "本地音乐"); iconName: "folder"; checked: window.navigationArea === "local"; onClicked: window.openPrimary("local") }
+                    MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Media Sources", "媒体源"); iconName: "album"; checked: window.navigationArea === "media"; onClicked: window.openPrimary("media") }
+                    MusicNavigationButton { Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; text: Language.text("Settings", "设置"); iconName: "settings"; checked: window.navigationArea === "settings"; onClicked: window.openPrimary("settings") }
                     Item { implicitHeight: MusicColors.sidebarGroupGap }
                 }
             }
@@ -369,15 +370,15 @@ ApplicationWindow {
                         id: settingsButton
                         visible: false
                         iconOnly: true; iconName: "settings"; implicitWidth: 28; implicitHeight: 28; flat: true
-                        Accessible.name: qsTr("设置")
+                        Accessible.name: Language.text("Settings", "设置")
                         onClicked: settingsMenu.popup()
                         Menu {
                             id: settingsMenu
                             Menu {
-                                title: qsTr("外观")
-                                MenuItem { text: qsTr("跟随系统"); checkable: true; checked: AppTheme.appearanceMode === "system"; onTriggered: AppTheme.appearanceMode = "system" }
-                                MenuItem { text: qsTr("浅色模式"); checkable: true; checked: AppTheme.appearanceMode === "light"; onTriggered: AppTheme.appearanceMode = "light" }
-                                MenuItem { text: qsTr("深色模式"); checkable: true; checked: AppTheme.appearanceMode === "dark"; onTriggered: AppTheme.appearanceMode = "dark" }
+                                title: Language.text("Appearance", "外观")
+                                MenuItem { text: Language.text("System", "跟随系统"); checkable: true; checked: AppTheme.appearanceMode === "system"; onTriggered: AppTheme.appearanceMode = "system" }
+                                MenuItem { text: Language.text("Light appearance", "浅色模式"); checkable: true; checked: AppTheme.appearanceMode === "light"; onTriggered: AppTheme.appearanceMode = "light" }
+                                MenuItem { text: Language.text("Dark appearance", "深色模式"); checkable: true; checked: AppTheme.appearanceMode === "dark"; onTriggered: AppTheme.appearanceMode = "dark" }
                             }
                         }
                     }
@@ -389,7 +390,7 @@ ApplicationWindow {
         LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; blur: .19; maximumTextureSize: 2560 }
         PlayerBar { id: player; visible: window.destination !== "now"; anchors.bottom: parent.bottom; anchors.bottomMargin: 16
             width: Math.min(820, parent.width - 236 - 32); x: 236 + (parent.width - 236 - width) / 2
-            backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", qsTr("播放队列")); onNowPlayingRequested: window.destination = "now" }
+            backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", Language.text("Play queue", "播放队列")); onNowPlayingRequested: window.destination = "now" }
         NowPlaying {
             id: nowPlaying; anchors.fill: parent
             visible: window.destination === "now"; music: window.music
@@ -407,23 +408,23 @@ ApplicationWindow {
     }
     AccountDialog { id: accountDialog; account: music.account }
     KosWindowResizeHandles { targetWindow: window }
-    FolderDialog { id: folderDialog; title: qsTr("导入音乐文件夹"); onAccepted: music.addLibraryFolder(selectedFolder.toString()) }
+    FolderDialog { id: folderDialog; title: Language.text("Import music folder", "导入音乐文件夹"); onAccepted: music.addLibraryFolder(selectedFolder.toString()) }
     LiquidDialog {
-        id: playlistDialog; anchors.centerIn: parent; width: 360; modal: true; title: qsTr("新建歌单"); standardButtons: Dialog.Ok | Dialog.Cancel
-        contentItem: LiquidTextField { id: playlistName; placeholderText: qsTr("歌单名称"); materialForm: false; liquidFinish: true }
+        id: playlistDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("New Playlist", "新建歌单"); standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: LiquidTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); materialForm: false; liquidFinish: true }
         onAccepted: { if (playlistName.text.trim()) music.createPlaylist(playlistName.text.trim()); playlistName.text = "" }
     }
     LiquidDialog {
-        id: addDialog; anchors.centerIn: parent; width: 360; modal: true; title: qsTr("保存到本机歌单"); standardButtons: Dialog.Close
+        id: addDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("Save to local playlist", "保存到本机歌单"); standardButtons: Dialog.Close
         onClosed: music.clearPreparedPlaylistTrack()
         contentItem: ColumnLayout {
             Label { text: music.preparedPlaylistTitle; color: AppTheme.text; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
             RowLayout {
                 Layout.fillWidth: true
-                LiquidTextField { id: newPlaylistName; materialForm: true; placeholderText: qsTr("新歌单名称"); Layout.fillWidth: true }
-                MusicActionButton { objectName: "reviewCreateLocalPlaylist"; text: qsTr("创建"); enabled: newPlaylistName.text.trim().length > 0; onClicked: { music.createPlaylist(newPlaylistName.text.trim()); newPlaylistName.text = "" } }
+                LiquidTextField { id: newPlaylistName; materialForm: true; placeholderText: Language.text("New playlist name", "新歌单名称"); Layout.fillWidth: true }
+                MusicActionButton { objectName: "reviewCreateLocalPlaylist"; text: Language.text("Create", "创建"); enabled: newPlaylistName.text.trim().length > 0; onClicked: { music.createPlaylist(newPlaylistName.text.trim()); newPlaylistName.text = "" } }
             }
-            Label { visible: music.playlists.length === 0; text: qsTr("先创建歌单，再选择歌单保存歌曲。"); color: AppTheme.text; wrapMode: Text.WordWrap }
+            Label { visible: music.playlists.length === 0; text: Language.text("Create a playlist above, then choose it to save this song.", "先创建歌单，再选择歌单保存歌曲。"); color: AppTheme.text; wrapMode: Text.WordWrap }
             Repeater {
                 model: music.playlists
                 delegate: MusicNavigationButton {
