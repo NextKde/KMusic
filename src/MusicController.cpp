@@ -96,6 +96,7 @@ MusicController::MusicController(QObject *parent)
     connect(&m_engine, &PlaybackEngine::downloadCompleted, this, [this](const QString &path) {
         if (m_audioCache)
             m_audioCache->storeCompleted(m_engineCacheKey, path);
+        emit audioCacheChanged();
     });
     // Separate source, whole-track, and skip deadlines bound every recovery path.
     m_attemptTimeout.setParent(this);
@@ -462,7 +463,10 @@ void MusicController::initialize()
                                     .toDouble(&volumeOk);
     m_engine.setVolume(volumeOk ? storedVolume : 0.8);
     refreshLibrary();
-    m_queueIds = m_database.queueTrackIds();
+    m_restorePlayback = m_database.setting(QStringLiteral("restorePlayback"), QStringLiteral("true")) == QLatin1String("true");
+    m_startupAutoplay = m_database.setting(QStringLiteral("startupAutoplay"), QStringLiteral("false")) == QLatin1String("true");
+    emit startupPreferencesChanged();
+    m_queueIds = m_restorePlayback ? m_database.queueTrackIds() : QList<qint64>{};
     m_queueIndex = m_database.setting(QStringLiteral("queueIndex"), QStringLiteral("-1"))
                        .toInt();
     refreshQueueModel();
@@ -502,6 +506,8 @@ void MusicController::initialize()
     emit readyChanged();
     reloadDiscovery();
     rescanLibrary();
+    if (m_restorePlayback && m_startupAutoplay && currentTrackId() > 0)
+        QTimer::singleShot(0, this, [this] { if (m_restorePlayback && m_startupAutoplay) play(); });
 }
 
 MusicController::~MusicController()
@@ -2493,4 +2499,31 @@ void MusicController::restoreArtistDetails()
     m_artistAlbumsVisible = true; m_albumLoading = false; m_albumLoadingMore = false;
     m_albumError.clear(); m_albumLoadMoreError.clear(); m_albumMessage.clear();
     m_albumTracksModel.setSearch({}); m_albumTracksModel.setTracks(m_albumTracks); emit onlineAlbumChanged();
+}
+
+void MusicController::setRestorePlayback(bool enabled)
+{
+    if (!m_ready || !m_database.setSetting(QStringLiteral("restorePlayback"), enabled ? QStringLiteral("true") : QStringLiteral("false"))) return;
+    m_restorePlayback = enabled;
+    if (!enabled) setStartupAutoplay(false);
+    emit startupPreferencesChanged();
+}
+void MusicController::setStartupAutoplay(bool enabled)
+{
+    enabled = enabled && m_restorePlayback;
+    if (!m_ready || !m_database.setSetting(QStringLiteral("startupAutoplay"), enabled ? QStringLiteral("true") : QStringLiteral("false"))) return;
+    m_startupAutoplay = enabled;
+    emit startupPreferencesChanged();
+}
+qlonglong MusicController::audioCacheBytes() const
+{
+    return m_audioCache ? m_audioCache->sizeBytes() : 0;
+}
+void MusicController::clearAudioCache()
+{
+    if (!m_audioCache) return;
+    const QString active = m_engine.source().isLocalFile() ? QFileInfo(m_engine.source().toLocalFile()).absoluteFilePath() : QString{};
+    const bool complete = m_audioCache->clearCompleted(active, m_engineCacheKey);
+    m_cacheCleanupMessage = complete ? tr("Completed audio cache cleared.") : tr("Some cache files were kept because they are in use or could not be removed.");
+    emit audioCacheChanged();
 }

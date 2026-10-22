@@ -27,6 +27,10 @@ class MusicController : public QObject {
     Q_OBJECT
     QML_ELEMENT
 
+    Q_PROPERTY(bool restorePlayback READ restorePlayback WRITE setRestorePlayback NOTIFY startupPreferencesChanged)
+    Q_PROPERTY(bool startupAutoplay READ startupAutoplay WRITE setStartupAutoplay NOTIFY startupPreferencesChanged)
+    Q_PROPERTY(qlonglong audioCacheBytes READ audioCacheBytes NOTIFY audioCacheChanged)
+    Q_PROPERTY(QString cacheCleanupMessage READ cacheCleanupMessage NOTIFY audioCacheChanged)
     Q_PROPERTY(AccountController *account READ account CONSTANT)
     Q_PROPERTY(TrackListModel *recentModel READ recentModel CONSTANT)
     Q_PROPERTY(TrackListModel *favoritesModel READ favoritesModel CONSTANT)
@@ -304,7 +308,17 @@ public:
     Q_INVOKABLE void requestRaise();
     Q_INVOKABLE void clearError();
 
+    bool restorePlayback() const { return m_restorePlayback; }
+    bool startupAutoplay() const { return m_startupAutoplay; }
+    void setRestorePlayback(bool enabled);
+    void setStartupAutoplay(bool enabled);
+    qlonglong audioCacheBytes() const;
+    QString cacheCleanupMessage() const { return m_cacheCleanupMessage; }
+    Q_INVOKABLE void refreshAudioCache() { emit audioCacheChanged(); }
+    Q_INVOKABLE void clearAudioCache();
 signals:
+    void startupPreferencesChanged();
+    void audioCacheChanged();
     void readyChanged();
     void libraryChanged();
     void favoritesChanged();
@@ -484,6 +498,9 @@ private:
     QString m_activeScanRoot;
     qint64 m_selectedPlaylistId = -1;
     int m_queueIndex = -1;
+    bool m_restorePlayback = true;
+    bool m_startupAutoplay = false;
+    QString m_cacheCleanupMessage;
     bool m_ready = false;
     bool m_scanning = false;
     bool m_shuffle = false;

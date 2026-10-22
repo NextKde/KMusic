@@ -62,3 +62,22 @@ void AudioCache::prune()
             QFile::remove(entry.absoluteFilePath());
     }
 }
+
+qint64 AudioCache::sizeBytes() const
+{
+    qint64 bytes = 0;
+    for (const auto &entry : QDir(m_directory).entryInfoList({QStringLiteral("*.audio")}, QDir::Files | QDir::NoSymLinks))
+        bytes += entry.size();
+    return bytes;
+}
+
+bool AudioCache::clearCompleted(const QString &protectedPath, const QString &protectedKey)
+{
+    bool complete = true;
+    for (const auto &entry : QDir(m_directory).entryInfoList({QStringLiteral("*.audio")}, QDir::Files | QDir::NoSymLinks)) {
+        if (entry.absoluteFilePath() == protectedPath
+            || (!protectedKey.isEmpty() && entry.absoluteFilePath() == pathFor(protectedKey))) { complete = false; continue; }
+        if (!QFile::remove(entry.absoluteFilePath())) complete = false;
+    }
+    return complete;
+}

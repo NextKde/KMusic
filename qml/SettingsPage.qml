@@ -13,6 +13,7 @@ ScrollView {
     signal foldersRequested()
     signal accountRequested()
     signal clearSearchRequested()
+    onVisibleChanged: if (visible) music.refreshAudioCache()
     contentWidth: availableWidth
     clip: true
     component Heading: Label {
@@ -71,7 +72,15 @@ ScrollView {
                 onActivated: index => page.music.onlineQuality = qualities[index]
             }
         }
-        Note { text: Language.text("Restoring the last track and startup autoplay are not available yet.", "暂未接入上次播放恢复和启动自动播放。") }
+        SettingRow {
+            label: Language.text("Restore last playback", "恢复上次播放")
+            description: Language.text("Restore the queue, track and position on next launch, without playing automatically.", "下次启动恢复队列、歌曲和进度，默认不自动播放。")
+            LiquidGlassSwitch { materialForm: true; checked: page.music.restorePlayback; onToggled: checked => page.music.restorePlayback = checked }
+        }
+        SettingRow {
+            label: Language.text("Play automatically on startup", "启动时自动播放")
+            LiquidGlassSwitch { materialForm: true; enabled: page.music.restorePlayback; checked: page.music.startupAutoplay; onToggled: checked => page.music.startupAutoplay = checked }
+        }
         Heading { text: Language.text("Lyrics", "歌词") }
         SettingRow {
             label: Language.text("Font size", "字体大小")
@@ -123,7 +132,13 @@ ScrollView {
             description: Language.text("Saved on this device, separately for each source.", "保存在本机，各来源分别记录。")
             MusicActionButton { text: Language.text("Clear", "清空"); onClicked: clearHistory.open() }
         }
-        Note { text: Language.text("Cache usage and cache cleanup controls are not available yet.", "缓存占用统计和清理功能暂未接入设置。") }
+        SettingRow {
+            label: Language.text("Completed audio cache", "已完成的音频缓存")
+            description: (page.music.audioCacheBytes / 1048576).toFixed(1) + " MB · " + Language.text("Local music, artwork and playlists are kept.", "保留本地音乐、封面和歌单。")
+            MusicActionButton { text: Language.text("Refresh", "刷新"); onClicked: page.music.refreshAudioCache() }
+            MusicActionButton { text: Language.text("Clear", "清理"); enabled: page.music.audioCacheBytes > 0; onClicked: clearCache.open() }
+        }
+        Note { text: page.music.cacheCleanupMessage; visible: text.length > 0 }
         Heading { text: Language.text("About", "关于") }
         SettingRow {
             label: "KMusic"
@@ -134,6 +149,14 @@ ScrollView {
             MusicActionButton { text: Language.text("License", "许可证"); onClicked: Qt.openUrlExternally("https://github.com/NextKde/KMusic/blob/codex/music-development/LICENSE") }
         }
         Item { Layout.preferredHeight: page.bottomContentInset + 24 }
+    }
+    LiquidDialog {
+        id: clearCache
+        parent: Overlay.overlay; anchors.centerIn: parent; width: 380
+        modal: true; dim: true; standardButtons: Dialog.Ok | Dialog.Cancel
+        title: Language.text("Clear audio cache?", "清理音频缓存？")
+        contentItem: Label { text: Language.text("Only completed audio cache is removed. Active files and downloads are kept; songs may need to download again.", "仅删除已完成的音频缓存，保留正在使用和下载中的文件；之后播放可能需要重新下载。"); wrapMode: Text.WordWrap; color: AppTheme.text }
+        onAccepted: page.music.clearAudioCache()
     }
     LiquidDialog {
         id: clearHistory

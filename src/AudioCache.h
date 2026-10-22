@@ -12,6 +12,8 @@ public:
     bool storeCompleted(const QString &key, const QString &path);
     void remove(const QString &key);
     QString downloadDirectory() const;
+    qint64 sizeBytes() const;
+    bool clearCompleted(const QString &protectedPath, const QString &protectedKey);
 
 private:
     QString pathFor(const QString &key) const;
