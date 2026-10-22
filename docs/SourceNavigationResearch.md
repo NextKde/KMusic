@@ -28,3 +28,8 @@ https://github.com/navidrome/website/blob/master/content/en/docs/developers/subs
 https://jellyfin.org/docs/general/server/media/music.html/
 
 Round plan and source-level capability matrix are in the Chinese companion.
+
+Round4 isolates search drafts for the two integrated providers. NetEase navigation
+search submits on Enter; local input filters imported files. Unsupported source
+search is disabled, not routed to another backend. Ctrl+F respects source scope;
+Ctrl+O/import switches to local. Multiple account/server search is not integrated.

@@ -14,6 +14,26 @@ ApplicationWindow {
     flags: Qt.Window | Qt.FramelessWindowHint
     property string selectedSource: "netease"
     property string selectedSourceEntry: "discover"
+    property var sourceSearchDrafts: ({})
+    property bool restoringSourceSearch: false
+    function rememberSourceSearch(provider, query) {
+        const next = Object.assign({}, sourceSearchDrafts)
+        next[provider] = query
+        sourceSearchDrafts = next
+    }
+    function savedSourceSearch(provider) { return sourceSearchDrafts[provider] || "" }
+    function submitSourceSearch() {
+        if (selectedSource === "netease" && search.text.trim().length) {
+            selectedSourceEntry = "search"
+            onlinePage.queryText = search.text
+            destination = "online"
+            music.searchOnline(search.text)
+        } else if (selectedSource === "local") {
+            selectedSourceEntry = "songs"
+            destination = "search"; pageTitle = qsTr("Search local music")
+            music.setSearch(search.text)
+        }
+    }
     property var sourcePrototypeEntry: ({})
     readonly property bool chineseNavigation: Qt.locale().name.startsWith("zh")
     readonly property var activeSource: SourceCatalog.source(selectedSource)
@@ -24,10 +44,15 @@ ApplicationWindow {
         else { sourcePrototypeEntry = entry; destination = "sourceDemo"; pageTitle = sourceLabel(entry) }
     }
     function selectSource(id) {
-        if (selectedSource !== id) { search.clear(); music.setSearch("") }
+        restoringSourceSearch = true
+        if (selectedSource === "netease" || selectedSource === "local") rememberSourceSearch(selectedSource, search.text)
         selectedSource = id
         const sections = SourceCatalog.sections(id)
         if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
+        search.text = savedSourceSearch(id)
+        if (id === "netease") onlinePage.queryText = search.text
+        music.setSearch(id === "local" ? search.text : "")
+        restoringSourceSearch = false
     }
     property string destination: "new"
     property string lastContentDestination: "new"
@@ -58,7 +83,7 @@ ApplicationWindow {
         window.destination = "playlist"; window.pageTitle = entry.name
     }
     function openAccount() { accountDialog.open() }
-    function reviewOnlineSearch(text) { music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
+    function reviewOnlineSearch(text) { window.selectSource("netease"); music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else settingsMenu.popup() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
     function materialReviewState() {
@@ -77,8 +102,8 @@ ApplicationWindow {
         return JSON.stringify(state)
     }
     function reviewAlbumFilter(text) { albumPage.filterText = text }
-    function reviewOnlineAlbum(row) { collectionReturnDestination = "new"; music.openDiscoveryAlbum(row); destination = "onlineAlbum" }
-    function reviewCollectionSearch(text, kind) { destination = "online"; music.onlineSearchKind = kind; onlinePage.queryText = text; music.searchOnline(text) }
+    function reviewOnlineAlbum(row) { window.selectSource("netease"); collectionReturnDestination = "new"; music.openDiscoveryAlbum(row); destination = "onlineAlbum" }
+    function reviewCollectionSearch(text, kind) { window.selectSource("netease"); destination = "online"; music.onlineSearchKind = kind; onlinePage.queryText = text; music.searchOnline(text) }
     function openCollection(row) { collectionReturnDestination = "online"; music.openOnlineCollection(row); destination = "onlineAlbum" }
     function reviewReleaseScroll(fraction) { return discover.scrollReleaseReview(fraction) }
     function reviewScroll(fraction) {
@@ -90,11 +115,15 @@ ApplicationWindow {
     function setReviewTheme(theme) { AppTheme.appearanceMode = theme }
     function toggleMaximized() { if (visibility === Window.Maximized) showNormal(); else showMaximized() }
     function toggleFullScreen() { if (visibility === Window.FullScreen) showNormal(); else showFullScreen() }
-    function navigate(key, title) { destination = key; pageTitle = title || qsTr("Songs"); music.setSearch(""); music.setLibraryView("songs") }
+    function navigate(key, title) {
+        destination = key; pageTitle = title || qsTr("Songs")
+        music.setSearch(selectedSource === "local" ? savedSourceSearch("local") : "")
+        music.setLibraryView("songs")
+    }
     Component.onCompleted: { AppTheme.appearanceMode = "light" }
-    Shortcut { sequence: "Ctrl+O"; onActivated: folderDialog.open() }
+    Shortcut { sequence: "Ctrl+O"; onActivated: { window.selectSource("local"); folderDialog.open() } }
     Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
-    Shortcut { sequence: "Ctrl+F"; onActivated: { window.navigate("search", qsTr("Search")); search.forceActiveFocus() } }
+    Shortcut { sequence: "Ctrl+F"; onActivated: { if (search.enabled) { search.forceActiveFocus(); search.selectAll() } } }
     Connections {
         target: music
         function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
@@ -135,8 +164,8 @@ ApplicationWindow {
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
                     visible: window.destination === "new"; music: window.music
-                    onImportRequested: folderDialog.open()
-                    onOnlineRequested: window.navigate("online", qsTr("Online search"))
+                    onImportRequested: { window.selectSource("local"); folderDialog.open() }
+                    onOnlineRequested: { window.selectSource("netease"); window.openSourceEntry(SourceCatalog.sections("netease")[0].entries[1]) }
                     onOnlineAlbumRequested: row => window.reviewOnlineAlbum(row)
                     onNowPlayingRequested: window.destination = "now"
                     onAlbumRequested: (filter, title) => { window.music.setLibraryView("album", filter); window.pageTitle = title; window.destination = "detail" }
@@ -149,7 +178,7 @@ ApplicationWindow {
                     emptyMessage: recentView ? qsTr("Your playback history on this device is empty. Played songs will appear here.") : favoritesView ? qsTr("Your favorites on this device are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
                     queueView: window.destination === "queue"; recentView: window.destination === "recent"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
-                    onImportRequested: folderDialog.open()
+                    onImportRequested: { window.selectSource("local"); folderDialog.open() }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
                 ScrollView {
@@ -177,7 +206,14 @@ ApplicationWindow {
                     entryName: window.sourcePrototypeEntry.en ? window.sourceLabel(window.sourcePrototypeEntry) : ""
                     connectionStatus: window.activeSource.status
                 }
-                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row) }
+                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row)
+                    onQueryTextChanged: {
+                        if (window.selectedSource === "netease" && !window.restoringSourceSearch) {
+                            window.rememberSourceSearch("netease", queryText)
+                            if (!search.activeFocus) search.text = queryText
+                        }
+                    }
+                }
             }
         }
         Rectangle {
@@ -258,24 +294,20 @@ ApplicationWindow {
                         implicitHeight: MusicColors.sidebarSearchHeight
                         materialForm: false; liquidFinish: true; liquidIntensity: "strong"
                         cornerRadius: height / 2
-                        placeholderText: onlineScope ? qsTr("Search NetEase") : qsTr("Search local music")
+                        placeholderText: !enabled ? qsTr("Search unavailable · demo") : onlineScope ? qsTr("Search NetEase") : qsTr("Search local music")
                         font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.Normal
                         leftPadding: MusicColors.sidebarControlInset + MusicColors.sidebarSearchIconSize + MusicColors.sidebarIconGap
                         rightPadding: MusicColors.sidebarControlInset
-                        onOnlineScopeChanged: { clear(); music.setSearch("") }
                         onTextChanged: {
-                            if (!onlineScope) {
+                            if (window.restoringSourceSearch || !enabled) return
+                            window.rememberSourceSearch(window.selectedSource, text)
+                            if (window.selectedSource === "local") {
+                                window.selectedSourceEntry = "songs"
                                 if (text.length) { window.destination = "search"; window.pageTitle = qsTr("Search local music") }
                                 music.setSearch(text)
                             }
                         }
-                        onAccepted: {
-                            if (onlineScope && text.trim().length) {
-                                window.destination = "online"
-                                onlinePage.queryText = text
-                                music.searchOnline(text)
-                            }
-                        }
+                        onAccepted: window.submitSourceSearch()
                         VectorIcon {
                             x: MusicColors.sidebarControlInset; anchors.verticalCenter: parent.verticalCenter
                             name: "search"; size: MusicColors.sidebarSearchIconSize
