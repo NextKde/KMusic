@@ -5,12 +5,30 @@ import QtQuick.Dialogs
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import Kos.Ui
+import "MusicSourceCatalog.mjs" as SourceCatalog
 ApplicationWindow {
     id: window
     required property var music
     width: 1100; height: 680; minimumWidth: 1024; minimumHeight: 640
     visible: true; title: "KMusic"; color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
+    property string selectedSource: "netease"
+    property string selectedSourceEntry: "discover"
+    property var sourcePrototypeEntry: ({})
+    readonly property bool chineseNavigation: Qt.locale().name.startsWith("zh")
+    readonly property var activeSource: SourceCatalog.source(selectedSource)
+    function sourceLabel(item) { return SourceCatalog.label(item, chineseNavigation) }
+    function openSourceEntry(entry) {
+        selectedSourceEntry = entry.id
+        if (entry.status === "connected") navigate(entry.route, sourceLabel(entry))
+        else { sourcePrototypeEntry = entry; destination = "sourceDemo"; pageTitle = sourceLabel(entry) }
+    }
+    function selectSource(id) {
+        if (selectedSource !== id) { search.clear(); music.setSearch("") }
+        selectedSource = id
+        const sections = SourceCatalog.sections(id)
+        if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
+    }
     property string destination: "new"
     property string lastContentDestination: "new"
     property string collectionReturnDestination: "new"
@@ -47,7 +65,7 @@ ApplicationWindow {
         const state = JSON.parse(nowPlaying.materialReviewState())
         state.homeButton = discover.homeOpticalState()
         state.playerControls = player.reviewState()
-        state.navigation = { selected: discoverNav.checked, hovered: discoverNav.hovered, visualFocus: discoverNav.visualFocus }
+        state.navigation = { source: window.selectedSource, entry: window.selectedSourceEntry }
         state.playerPanel = { sampling: player.sampling, backdropAvailable: playerBackdrop.available,
             source: playerBackdrop.sourceItem.objectName, x: player.x, y: player.y, width: player.width, height: player.height,
             radius: player.radius, bottomInset: window.playerContentInset }
@@ -153,6 +171,12 @@ ApplicationWindow {
                     }
                 }
                 OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
+                SourceDemoPage {
+                    anchors.fill: parent; visible: window.destination === "sourceDemo"
+                    sourceName: window.sourceLabel(window.activeSource)
+                    entryName: window.sourcePrototypeEntry.en ? window.sourceLabel(window.sourcePrototypeEntry) : ""
+                    connectionStatus: window.activeSource.status
+                }
                 OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row) }
             }
         }
@@ -225,7 +249,8 @@ ApplicationWindow {
                     }
                     LiquidTextField {
                         id: search; objectName: "reviewLibrarySearch"
-                        readonly property bool onlineScope: ["new", "online", "onlineAlbum"].indexOf(window.destination) >= 0
+                        readonly property bool onlineScope: window.selectedSource === "netease"
+                        enabled: window.selectedSource === "netease" || window.selectedSource === "local"
                         backdrop: sidebarBackdrop; unfilteredBackdrop: true
                         textColor: MusicColors.sidebarLabelPrimary
                         mutedTextColor: MusicColors.sidebarLabelTertiary; shadowEnabled: false
@@ -257,39 +282,69 @@ ApplicationWindow {
                             color: MusicColors.sidebarLabelSecondary
                         }
                     }
-                    Label { text: qsTr("Online Music"); color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.DemiBold; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
-                    MusicNavigationButton { id: discoverNav; objectName: "reviewDiscoverNav"; Layout.fillWidth: true; iconName: "sparkle"; text: qsTr("Discover"); checked: window.destination === "new"; onClicked: window.navigate("new") }
-                    MusicNavigationButton { Layout.fillWidth: true; iconName: "search"; text: qsTr("Search"); checked: window.destination === "online" || window.destination === "onlineAlbum"; onClicked: window.navigate("online", qsTr("Online search")) }
                     RowLayout {
-                        Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset
-                        Label { text: qsTr("Local Music"); color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarSearchSize; font.weight: Font.DemiBold; Layout.fillWidth: true }
+                        Layout.fillWidth: true; spacing: 4
+                        MusicNavigationButton {
+                            Layout.fillWidth: true
+                            checkable: false; iconName: window.activeSource.category === "media" ? "folder" : "music"
+                            text: window.sourceLabel(window.activeSource) + "  ▾"
+                            Accessible.name: qsTr("Choose music source")
+                            onClicked: sourceMenu.popup()
+                            Menu {
+                                id: sourceMenu
+                                MenuItem { text: qsTr("Online Music"); enabled: false }
+                                MenuItem { text: "网易云音乐"; checkable: true; checked: window.selectedSource === "netease"; onTriggered: window.selectSource("netease") }
+                                MenuItem { text: "哔哩哔哩 · Demo"; checkable: true; checked: window.selectedSource === "bilibili"; onTriggered: window.selectSource("bilibili") }
+                                MenuSeparator {}
+                                MenuItem { text: qsTr("Local Music"); checkable: true; checked: window.selectedSource === "local"; onTriggered: window.selectSource("local") }
+                                MenuSeparator {}
+                                MenuItem { text: qsTr("Media Sources"); enabled: false }
+                                MenuItem { text: "Navidrome / OpenSubsonic · Demo"; onTriggered: window.selectSource("navidrome") }
+                                MenuItem { text: "Jellyfin · Demo"; onTriggered: window.selectSource("jellyfin") }
+                                MenuItem { text: "WebDAV · Demo"; onTriggered: window.selectSource("webdav") }
+                            }
+                        }
                         MusicActionButton {
-                            id: localMenuButton
+                            visible: window.selectedSource === "local"
                             iconOnly: true; iconName: "more"; implicitWidth: 28; implicitHeight: 28; flat: true
                             Accessible.name: qsTr("Local music menu")
                             onClicked: localMusicMenu.popup()
                             Menu {
                                 id: localMusicMenu
-                                MenuItem {
-                                    text: qsTr("Import music folder…"); enabled: !music.scanning
-                                    onTriggered: { window.navigate("songs", qsTr("Local songs")); folderDialog.open() }
-                                }
-                                MenuItem {
-                                    text: music.scanning ? qsTr("Scanning…") : qsTr("Rescan music folders")
-                                    enabled: !music.scanning && music.libraryFolders.length > 0
-                                    onTriggered: music.rescanLibrary()
-                                }
+                                MenuItem { text: qsTr("Import music folder…"); enabled: !music.scanning; onTriggered: { window.selectSource("local"); folderDialog.open() } }
+                                MenuItem { text: music.scanning ? qsTr("Scanning…") : qsTr("Rescan music folders"); enabled: !music.scanning && music.libraryFolders.length > 0; onTriggered: music.rescanLibrary() }
                             }
                         }
                     }
+                    Label {
+                        Layout.leftMargin: MusicColors.sidebarControlInset
+                        text: window.activeSource.status === "connected" ? qsTr("Available") : qsTr("Navigation demo · not connected")
+                        color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
+                    }
                     Repeater {
-                        model: [{key:"songs", label:qsTr("Songs"), icon:"music"}, {key:"albums", label:qsTr("Albums"), icon:"album"}, {key:"artists", label:qsTr("Artists"), icon:"artist"}]
-                        delegate: MusicNavigationButton {
+                        model: SourceCatalog.sections(window.selectedSource)
+                        delegate: ColumnLayout {
+                            id: sourceSection
                             required property var modelData
-                            Layout.fillWidth: true
-                            text: modelData.label; iconName: modelData.icon
-                            checked: window.destination === modelData.key || (modelData.key === "songs" && ["search", "detail"].indexOf(window.destination) >= 0)
-                            onClicked: window.navigate(modelData.key, modelData.label)
+                            Layout.fillWidth: true; spacing: MusicColors.sidebarRowGap
+                            Label {
+                                Layout.leftMargin: MusicColors.sidebarControlInset
+                                Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4
+                                text: window.sourceLabel(sourceSection.modelData)
+                                color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold
+                            }
+                            Repeater {
+                                model: sourceSection.modelData.entries
+                                delegate: MusicNavigationButton {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    objectName: modelData.id === "discover" ? "reviewDiscoverNav" : ""
+                                    text: window.sourceLabel(modelData)
+                                    iconName: modelData.id === "search" ? "search" : modelData.id === "albums" ? "album" : modelData.id === "artists" ? "artist" : modelData.id === "history" ? "repeat" : modelData.id === "liked" || modelData.id === "favorites" ? "heart" : modelData.id === "folders" ? "folder" : "music"
+                                    checked: window.selectedSourceEntry === modelData.id && ["favorites", "recent", "playlist", "queue", "now"].indexOf(window.destination) < 0
+                                    onClicked: window.openSourceEntry(modelData)
+                                }
+                            }
                         }
                     }
                     Label { text: qsTr("On This Device"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
