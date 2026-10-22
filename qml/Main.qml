@@ -326,14 +326,20 @@ ApplicationWindow {
                 : window.destination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
                 : window.destination === "albums" ? Language.text("Albums", "专辑")
                 : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
-            LiquidSurface {
-                anchors.fill: parent; radius: 0
-                backdrop: sidebarBackdrop
-                tintColor: window.contentColor; tintStrength: .90
-                readability: 0; diffuseStrength: 0
-                blurStrength: .3; refractionStrength: 5; magnification: 1.025
-                reflectionStrength: 0; edgeShadeStrength: 0
-                rimColor: "transparent"
+            Item {
+                anchors.fill: parent
+                clip: true
+                // Crop the sampled surface's antialiased edge at this flush seam.
+                // Keep the optical pass; only its transparent perimeter is outside the bar.
+                LiquidSurface {
+                    anchors.fill: parent; anchors.margins: -2; radius: 0
+                    backdrop: sidebarBackdrop
+                    tintColor: window.contentColor; tintStrength: .90
+                    readability: 0; diffuseStrength: 0
+                    blurStrength: .3; refractionStrength: 5; magnification: 1.025
+                    reflectionStrength: 0; edgeShadeStrength: 0
+                    rimColor: "transparent"
+                }
             }
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; spacing: 24
