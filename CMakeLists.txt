@@ -36,3 +36,19 @@ add_custom_target(kmusic_providers ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/providers ${CMAKE_CURRENT_BINARY_DIR}/providers)
 add_dependencies(kmusic kmusic_providers)
 install(DIRECTORY providers/ DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/kmusic/providers)
+
+# Explicitly opt-in integration runner. Uses isolated data paths supplied by the runner.
+option(KMUSIC_BUILD_LOCAL_TESTS "Build local-library integration tests" OFF)
+if(KMUSIC_BUILD_LOCAL_TESTS)
+    qt_add_executable(kmusic_local_tests tests/local_music_integration.cpp
+        src/MusicController.cpp src/TrackListModel.cpp src/AudioCache.cpp
+        src/MetadataScanner.cpp src/MusicDatabase.cpp src/MprisService.cpp
+        src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
+        src/LyricsService.cpp src/OnlineMusicProvider.cpp src/AccountController.cpp)
+    target_include_directories(kmusic_local_tests PRIVATE src)
+    target_link_libraries(kmusic_local_tests PRIVATE Qt6Keychain::Qt6Keychain
+        PkgConfig::MUSIC_QRENCODE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Concurrent
+        Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
+    target_compile_definitions(kmusic_local_tests PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
+    add_dependencies(kmusic_local_tests kmusic_providers)
+endif()
