@@ -168,7 +168,7 @@ ApplicationWindow {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
             Item {
-                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 30 : floatingHeader.visible ? 134 : 30
+                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 30 : floatingHeader.visible ? 118 : 30
                 NavigationHomePage {
                     anchors.fill: parent
                     visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
@@ -193,7 +193,7 @@ ApplicationWindow {
                 }
                 DiscoveryPage {
                     id: discover
-                    showHeading: false; topContentInset: 114
+                    showHeading: false; topContentInset: 88
                     bottomContentInset: window.playerContentInset
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
@@ -310,7 +310,7 @@ ApplicationWindow {
         }
         Item {
             id: floatingHeader
-            x: 268; y: 46; width: parent.width - x - 32; height: 72
+            x: 236; y: 30; width: parent.width - x; height: 72
             visible: window.destination !== "now" && window.destination !== "onlineAlbum" && window.destination !== "online"
             readonly property string heading: window.destination === "new" ? Language.text("Discover", "发现")
                 : window.destination === "personalHome" ? Language.text("Personal", "个人")
@@ -321,23 +321,13 @@ ApplicationWindow {
                 : window.destination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
                 : window.destination === "albums" ? Language.text("Albums", "专辑")
                 : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
-            Rectangle {
-                id: floatingPanelOutline
-                anchors.fill: parent; radius: 22; color: "white"; visible: false
-            }
-            DropShadow {
-                anchors.fill: floatingPanelOutline; source: floatingPanelOutline
-                horizontalOffset: 0; verticalOffset: 5; radius: 18; samples: 37
-                color: AppTheme.dark ? "#50000000" : "#24000000"
-                transparentBorder: true
-            }
             LiquidSurface {
-                anchors.fill: parent; radius: 22; backdrop: sidebarBackdrop
+                anchors.fill: parent; radius: 0; backdrop: sidebarBackdrop
                 tintColor: window.contentColor; tintStrength: .84; readability: 0
                 blurStrength: .3; refractionStrength: 2; reflectionStrength: .2
             }
             RowLayout {
-                anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 18; spacing: 24
+                anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; spacing: 24
                 Label { text: floatingHeader.heading; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
                 LiquidTextField {
                     id: floatingSearch
