@@ -1,59 +1,60 @@
-# KMusic
+<p align="center"><img src="data/kmusic.svg" width="80" height="80" alt="KMusic logo"></p>
 
-Native NextKde music application. Development is in progress.
+<h1 align="center">KMusic</h1>
 
-<!-- progress-links:start -->
-[Latest progress and screenshots](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md) · [Current source](https://github.com/NextKde/KMusic/tree/codex/music-development) · [Component Gallery progress](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
-<!-- progress-links:end -->
+<p align="center"><strong>A native Qt music player for NextKDE.</strong><br>Online discovery, local music, and your own music server in one player.</p>
 
-The approved project plan is in [docs/ProjectPlan.zh-CN.md](https://github.com/NextKde/KMusic/blob/codex/music-development/docs/ProjectPlan.zh-CN.md).
+<p align="center">
+  <a href="#get-started">Get started</a> ·
+  <a href="docs/Installation.md">Installation</a> ·
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-## Development milestone
+<p align="center"><code>Linux</code> &nbsp; <code>Qt 6.8+</code> &nbsp; <code>GStreamer</code></p>
 
-Native Qt Quick music player consuming the pinned `Kos.Ui` module from
-[nextkdeAppDemo](https://github.com/NextKde/nextkdeAppDemo). The first UI milestone
-uses original, explicitly labelled offline editorial art and the existing NextKde
-local library/playback backend. SPlayer Next NetEase integration is in progress;
-this milestone does not claim online streaming support or final UI acceptance.
+![KMusic Discover — playlists, new songs and floating player](docs/images/kmusic-discover.png)
 
-### Build and run
+Development preview; no stable release has been published. Functional and installer tests do not establish visual acceptance.
 
-Qt 6.8+ (Core, Gui, Qml, Quick, QuickControls2, QuickDialogs2, Concurrent, DBus,
-Network and Sql), Qt5Compat.GraphicalEffects, Qt SVG support, GStreamer development
-packages (core/audio/pbutils) and TagLib 1.12+ are required. Audio decoding also
-needs the corresponding GStreamer codec plugins and a working audio sink.
+## Music and libraries
+
+| Online music | Local music | Media sources |
+| :--- | :--- | :--- |
+| NetEase discovery, search, details, lyrics and QR sign-in. | Scan folders, read tags and embedded artwork, and manage device playlists. | Connect one Navidrome / OpenSubsonic server. |
+
+- **Playback** — queue, seeking, volume, shuffle, repeat, and an immersive lyrics view.
+- **Personal** — read-only NetEase playlists, liked songs, collections and listening history; real account authorization and permissions still require user validation.
+- **Appearance** — light, dark, system and language preferences; shared QML liquid materials cover scrolling content.
+- **Boundaries** — Bilibili is not connected. Jellyfin/WebDAV, multiple servers and remote playlist writes are not supported. Missing file artwork uses a placeholder, not generated artwork. NetEase previews and access depend on the service.
+
+<a id="get-started"></a>
+## Get started
+
+Prepare the dependencies in the [installation guide](docs/Installation.md), then run as a regular user:
 
 ```sh
-git clone --recursive https://github.com/NextKde/KMusic.git
+git clone --branch codex/music-development https://github.com/NextKde/KMusic.git
 cd KMusic
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build -j4
-./build/kmusic
+./install.sh check
+./install.sh install --version 49264b0d45a6f8958e8d8b6eb4e5da1ee3e655d0
 ```
 
-Import a local folder from the sidebar or Ctrl+O. Select a song to play; + adds it
-to the queue and ··· adds it to an existing playlist. Ctrl+F focuses library search.
-The bottom player provides transport, seek, volume, shuffle, repeat, queue and
-now-playing views. Light/dark/system appearance is in the sidebar.
+This pins the revision that passed the installer matrix. The installer downloads and builds that source from the official repository. Missing dependencies return structured JSON errors; **it never installs dependencies or invokes sudo**. Open KMusic from the application launcher after installation.
 
-Data defaults to `~/.local/share/kmusic`, cache to `~/.cache/kmusic`, isolated from
-KOS Music. `KOS_MUSIC_DATA_DIR` and `KOS_MUSIC_CACHE_DIR` override these for review.
-Only local music is exposed by this initial UI; inherited LX adapters are not a
-default source and are not wired into the app.
+| Distribution (x86_64) | Executed installer coverage |
+| :--- | :--- |
+| Arch Linux / Ubuntu 26.04 / Debian 13 | Install, upgrade, uninstall, failure paths and offscreen startup |
+| Ubuntu 24.04 default dependencies | Expected dependency rejection, not successful installation certification |
 
-### Live review hook
+[Test run and logs](https://github.com/NextKde/KMusic/actions/runs/39783294345) · [Installation, removal and troubleshooting](docs/Installation.md)
 
-Opt in with `KMUSIC_REVIEW_DIR=/absolute/private/review-directory`. Atomically
-write `request.json` there with one of:
+## Development and documentation
 
-```json
-{"action":"capture","path":"/absolute/output.png"}
-```
+- [Local Music](docs/LocalMusic.md) · [Personal](docs/PersonalBackend.md) · [Media Sources](docs/MediaSources.md)
+- [Design](docs/Design.md) · [Roadmap](docs/Roadmap.md) · [Source attribution](NOTICE.md)
+- [App Store integration / 自动化测试](https://github.com/NextKde/NextKde/blob/codex/settings-extension-store/docs/app-store/KMusicInstallation.zh-CN.md)
+- [Historical development notes](docs/DevelopmentNotes.md)
 
-Other actions are `theme` (`theme`: `light`, `dark`, `system`), `page` (`page`: `new`,
-`songs`, `queue`, `now`) and `resize` (`width`, `height`). Capture grabs the live
-window content using its actual renderer and DPR, then writes `response.json`
-with `ok` and `path`. It is not an offscreen rendering or a visual acceptance test.
-
-See [design](docs/Design.md), [confirmed plan](https://github.com/NextKde/KMusic/blob/codex/music-development/docs/ProjectPlan.zh-CN.md),
-[component inventory](docs/ComponentInventory.md) and [source provenance](NOTICE.md).
+<!-- progress-links:start -->
+[Latest progress and screenshots](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md) · [Component Gallery](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
+<!-- progress-links:end -->

@@ -1,5 +1,8 @@
 # NextKde Music 设计契约
 
+> 2026-10-20：已暂停等待用户确认新版[项目计划书](ProjectPlan.zh-CN.md)。
+> 新计划覆盖本文中的 VM-only、本地音乐优先、证据目录与仓库命名约定。
+
 [English](Design.md)
 
 Apple Music 的“新发现”页面决定导航、编辑推荐区、专辑横排、歌曲列表与常驻播放器的信息架构。

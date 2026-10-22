@@ -1,0 +1,3 @@
+[submodule "vendor/nextkdeAppDemo"]
+	path = vendor/nextkdeAppDemo
+	url = https://github.com/NextKde/nextkdeAppDemo.git

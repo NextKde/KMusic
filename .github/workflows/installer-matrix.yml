@@ -1,0 +1,54 @@
+name: Installer distro matrix
+on:
+  push:
+    branches: [codex/music-development]
+    paths: [install.sh, packaging/**, .github/workflows/installer-matrix.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  install:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Arch Linux
+            image: archlinux:base
+          - name: Ubuntu 26.04
+            image: ubuntu:26.04
+          - name: Debian 13
+            image: debian:13
+          - name: Ubuntu 24.04 dependency rejection
+            image: ubuntu:24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: NextKde/NextKde
+          ref: 0a7edebf3991a7cf8326eb125b7bf88374a5298c
+          path: kos-tests
+          persist-credentials: false
+          sparse-checkout: tests/app-store
+      - name: Run real installation and failure cases inside isolated distro
+        env:
+          IMAGE: ${{ matrix.image }}
+          REVISION: ${{ github.sha }}
+        run: |
+          mkdir -p results
+          docker pull "$IMAGE"
+          docker image inspect "$IMAGE" > results/container-image.json
+          docker run --rm -v "$PWD:/source:ro" -v "$PWD/results:/results" "$IMAGE" \
+            bash /source/kos-tests/tests/app-store/run-kmusic-container.sh \
+            /source "$REVISION" /source/kos-tests/tests/app-store /results
+      - name: Preserve complete evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ strategy.job-index }}
+          path: results
+          retention-days: 14
