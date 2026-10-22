@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: NextKde/NextKde
-          ref: 71a2671f20165bc680e52a69af8abcf1feba5ab4
+          ref: 06fc1572c12af22a6c3506c929f6c1853586b1f2
           path: kos-tests
           persist-credentials: false
           sparse-checkout: tests/app-store
