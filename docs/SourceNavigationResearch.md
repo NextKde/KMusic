@@ -59,3 +59,7 @@ The local folder page lists actual registered import roots and uses existing imp
 Unified selected-source checks, honest NetEase partial-integration status, empty device-playlist guidance and settings alignment when the online account is hidden. Replaced the removed discovery-navigation focus target with the real source picker when leaving immersive playback. Empty local results and playlists have distinct guidance. Source review only; no automated interaction or visual acceptance.
 
 After the final build/open, user review should cover provider-appropriate categories, isolated NetEase/local query drafts, account-vs-device collection scope, real registered folders, explicitly unconnected media examples, sidebar scrolling and keyboard focus. Account collection adapters, Bilibili integration, server connections and true multi-account/server isolation remain unimplemented. Materials are unchanged; runtime.json records the actual running revision.
+
+### Round 10: candidate delivery (2026-10-22 13:32 +08)
+
+Native build succeeded and KMusic reopened with app binary cf6b128 and shared components 26d8aca. Only the required startup process and component-loading error log were checked. No screenshots, automated interaction or visual acceptance. The navigation candidate is now running for user review; the bounded ten-round task ends and its automation is removed.
