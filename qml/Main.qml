@@ -334,34 +334,43 @@ ApplicationWindow {
                     implicitHeight: 36; materialForm: false
                     backdrop: sidebarBackdrop; liquidIntensity: "strong"
                     scale: 1; hoverEnabled: false
-                    leftPadding: 0; rightPadding: 0
+                    leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0
                     visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
                     contentItem: RowLayout {
                         spacing: 0
                         Button {
                             id: headerSearchButton
-                            Layout.preferredWidth: 40; Layout.fillHeight: true
+                            Layout.preferredWidth: 40; Layout.minimumWidth: 0; Layout.fillHeight: true
+                            padding: 0
                             enabled: window.selectedSource === "netease" || window.selectedSource === "local"
                             Accessible.name: Language.text("Search", "搜索")
                             onClicked: searchPopup.open()
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
-                            contentItem: VectorIcon { name: "search"; size: 16; color: AppTheme.text }
+                            contentItem: Item {
+                                implicitWidth: 16; implicitHeight: 16
+                                VectorIcon { anchors.centerIn: parent; width: 16; height: 16; name: "search"; size: 16; color: AppTheme.text }
+                            }
                         }
                         Rectangle { visible: platformButton.visible; implicitWidth: 1; Layout.preferredHeight: 16; color: AppTheme.border }
                         Button {
                             id: platformButton
-                            Layout.fillWidth: true; Layout.fillHeight: true
+                            Layout.preferredWidth: 39; Layout.minimumWidth: 0; Layout.fillHeight: true
+                            padding: 0
                             visible: window.navigationArea === "discover" || window.navigationArea === "personal"
                             Accessible.name: Language.text("Switch platform", "切换平台")
                             // Reserved icon only; platform behavior will be defined later.
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
-                            contentItem: VectorIcon { name: "repeat"; size: 16; color: AppTheme.text }
+                            contentItem: Item {
+                                implicitWidth: 16; implicitHeight: 16
+                                VectorIcon { anchors.centerIn: parent; width: 16; height: 16; name: "repeat"; size: 16; color: AppTheme.text }
+                            }
 
                         }
                     }
                 }
                 Button {
                     id: headerAvatar
+                    padding: 0
                     Layout.preferredWidth: 32; Layout.preferredHeight: 32
                     Layout.leftMargin: -12
                     visible: window.navigationArea === "discover" || window.navigationArea === "personal"
@@ -373,7 +382,7 @@ ApplicationWindow {
                     }
                     background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
                     contentItem: Item {
-                        VectorIcon { anchors.centerIn: parent; name: "person"; size: 18; color: AppTheme.mutedText; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
+                        Image { anchors.centerIn: parent; width: 18; height: 18; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
                         Image {
                             id: avatarImage
                             anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
