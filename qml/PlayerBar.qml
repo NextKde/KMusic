@@ -34,14 +34,6 @@ LiquidCard {
         }
         Item {
             Layout.fillWidth: true; Layout.minimumWidth: 180; Layout.fillHeight: true
-            // A quiet local reading plate stops underlying album captions from
-            // competing with current-track metadata. It does not sample again.
-            LiquidSurface {
-                anchors.fill: parent; anchors.margins: -3
-                radius: 10; backdrop: null; reflectionStrength: 0
-                tintColor: bar.tintColor
-                tintStrength: AppTheme.dark ? .76 : .84
-            }
             RowLayout {
                 anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
                 height: 30; spacing: 8
