@@ -28,7 +28,7 @@ Item {
     }
     Column {
         anchors.top: cover.bottom; anchors.topMargin: 8; width: parent.width; spacing: 3
-        Label { width: parent.width; text: tile.title; color: AppTheme.text; font.pixelSize: 13; elide: Text.ElideRight }
-        Label { width: parent.width; text: tile.subtitle; color: AppTheme.mutedText; font.pixelSize: 11; elide: Text.ElideRight }
+        Label { width: parent.width; textFormat: Text.PlainText; text: tile.title; color: AppTheme.text; font.pixelSize: 13; elide: Text.ElideRight }
+        Label { width: parent.width; textFormat: Text.PlainText; text: tile.subtitle; color: AppTheme.mutedText; font.pixelSize: 11; elide: Text.ElideRight }
     }
 }

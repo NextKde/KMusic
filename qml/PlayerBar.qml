@@ -42,8 +42,8 @@ LiquidCard {
                 Artwork { source: bar.music.currentArtworkUrl; title: bar.music.currentTitle; Layout.preferredWidth: 30; Layout.preferredHeight: 30; radius: 4 }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2
-                    Label { text: bar.music.currentTitle || qsTr("Nothing playing"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 12; font.weight: Font.DemiBold }
-                    Label { text: bar.music.currentArtist ? bar.music.currentArtist + (bar.music.currentAlbum ? " — " + bar.music.currentAlbum : "") : qsTr("Choose a song to begin"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 11 }
+                    Label { textFormat: Text.PlainText; text: bar.music.currentTitle || qsTr("Nothing playing"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 12; font.weight: Font.DemiBold }
+                    Label { textFormat: Text.PlainText; text: bar.music.currentArtist ? bar.music.currentArtist + (bar.music.currentAlbum ? " — " + bar.music.currentAlbum : "") : qsTr("Choose a song to begin"); Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 11 }
                 }
             }
             LiquidSlider {

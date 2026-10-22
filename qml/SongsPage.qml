@@ -79,10 +79,10 @@ ColumnLayout {
                 Artwork { source: row.artworkUrl; title: row.title; Layout.preferredWidth: 40; Layout.preferredHeight: 40; radius: 5 }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 3
-                    Label { text: row.title; color: page.music.currentTrackId > 0 && (page.music.currentTrackId === row.trackId || ((page.onlineView || page.albumView) && row.providerId === page.music.currentProviderId)) ? MusicColors.sidebarAccent : AppTheme.text; Layout.fillWidth: true; elide: Text.ElideRight; font.weight: Font.Medium }
-                    Label { text: row.artist; color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
+                    Label { textFormat: Text.PlainText; text: row.title; color: page.music.currentTrackId > 0 && (page.music.currentTrackId === row.trackId || ((page.onlineView || page.albumView) && row.providerId === page.music.currentProviderId)) ? MusicColors.sidebarAccent : AppTheme.text; Layout.fillWidth: true; elide: Text.ElideRight; font.weight: Font.Medium }
+                    Label { textFormat: Text.PlainText; text: row.artist; color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
                 }
-                Label { text: row.album; color: AppTheme.mutedText; Layout.preferredWidth: Math.max(60, list.width * .17); elide: Text.ElideRight }
+                Label { textFormat: Text.PlainText; text: row.album; color: AppTheme.mutedText; Layout.preferredWidth: Math.max(60, list.width * .17); elide: Text.ElideRight }
                 Label { text: row.durationText; color: AppTheme.mutedText; Layout.preferredWidth: 45 }
                 MusicActionButton {
                     iconOnly: true; iconName: "heart"; iconFilled: row.localFavorite

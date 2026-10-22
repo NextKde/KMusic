@@ -29,8 +29,8 @@ ListView {
             Artwork { Layout.preferredWidth: 58; Layout.preferredHeight: 58; source: resultRow.modelData.artwork || ""; title: resultRow.modelData.title; radius: 6 }
             ColumnLayout {
                 Layout.fillWidth: true; spacing: 6
-                Label { Layout.fillWidth: true; text: resultRow.modelData.title; color: AppTheme.text; font.pixelSize: 14; elide: Text.ElideRight }
-                Label { Layout.fillWidth: true; text: resultRow.modelData.kind === "playlist" ? qsTr("Playlist · %1").arg(resultRow.modelData.artist) : resultRow.modelData.kind === "artist" ? qsTr("Artist") + (resultRow.modelData.artist ? " · " + resultRow.modelData.artist : "") : qsTr("Album · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
+                Label { Layout.fillWidth: true; textFormat: Text.PlainText; text: resultRow.modelData.title; color: AppTheme.text; font.pixelSize: 14; elide: Text.ElideRight }
+                Label { Layout.fillWidth: true; textFormat: Text.PlainText; text: resultRow.modelData.kind === "playlist" ? qsTr("Playlist · %1").arg(resultRow.modelData.artist) : resultRow.modelData.kind === "artist" ? qsTr("Artist") + (resultRow.modelData.artist ? " · " + resultRow.modelData.artist : "") : qsTr("Album · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
             }
             Label { text: resultRow.modelData.totalCount > 0 ? (resultRow.modelData.totalCount === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(resultRow.modelData.totalCount)) : ""; color: AppTheme.mutedText; font.pixelSize: 11 }
             VectorIcon { name: "back"; rotation: 180; color: AppTheme.mutedText; size: 16 }
