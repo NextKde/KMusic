@@ -195,7 +195,7 @@ ScrollView {
                 }
             }
         }
-        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: AppTheme.border }
+        Item { Layout.fillWidth: true; implicitHeight: 1 }
         SongSection { heading: Language.text("New songs", "新歌速递"); section: "newSongs" }
         CoverShelf { heading: Language.text("New releases", "新碟上架"); albums: true; state: ({items: page.music.discoveryAlbums, loading: page.music.discoveryLoading, error: page.music.discoveryError}) }
         CoverShelf { heading: Language.text("On the charts", "排行榜"); section: "charts"; state: page.feed("charts") }
