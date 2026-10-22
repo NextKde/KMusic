@@ -67,24 +67,77 @@ ScrollView {
     }
     LiquidDialog {
         id: connection
-        parent: Overlay.overlay; anchors.centerIn: parent; width: 440; modal: true; dim: true
-        title: Language.text("Connect music server", "连接音乐服务器"); standardButtons: Dialog.Cancel
+        parent: Overlay.overlay; anchors.centerIn: parent
+        width: Math.min(420, parent.width - 40)
+        modal: true; dim: true
+        title: Language.text("Connect music server", "连接音乐服务器")
+        standardButtons: Dialog.NoButton
+        padding: 20
+        header: Label {
+            text: connection.title; color: AppTheme.text
+            font.pixelSize: 18; font.weight: Font.DemiBold
+            leftPadding: 20; rightPadding: 20; topPadding: 20; bottomPadding: 8
+        }
         onOpened: { address.text = page.server.server; username.text = page.server.username; password.text = "" }
         onClosed: password.text = ""
+        component Field: LiquidTextField {
+            Layout.fillWidth: true
+            implicitHeight: 36; font.pixelSize: 13
+            materialForm: true; cornerRadius: 8
+            glassColor: AppTheme.dark ? "#39393e" : "#f0f0f3"
+            outlineColor: activeFocus ? AppTheme.withAlpha(AppTheme.text, .24) : "transparent"
+        }
+        component FieldLabel: Label {
+            color: AppTheme.mutedText; font.pixelSize: 12; font.weight: Font.Medium
+        }
         contentItem: ColumnLayout {
-            spacing: 12
-            Label { text: Language.text("Server address", "服务器地址"); color: AppTheme.text }
-            LiquidTextField { id: address; Layout.fillWidth: true; materialForm: true; placeholderText: "https://music.example.com" }
-            Label { text: Language.text("Username", "用户名"); color: AppTheme.text }
-            LiquidTextField { id: username; Layout.fillWidth: true; materialForm: true }
-            Label { text: Language.text("Password", "密码"); color: AppTheme.text }
-            LiquidTextField { id: password; Layout.fillWidth: true; materialForm: true; echoMode: TextInput.Password }
-            RowLayout {
-                Label { Layout.fillWidth: true; text: Language.text("Remember securely", "安全保存登录信息"); color: AppTheme.text }
-                LiquidGlassSwitch { id: remember; materialForm: true; checked: true }
+            spacing: 16
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 6
+                FieldLabel { text: Language.text("Server address", "服务器地址") }
+                Field { id: address; placeholderText: "https://music.example.com"; inputMethodHints: Qt.ImhUrlCharactersOnly; Accessible.name: Language.text("Server address", "服务器地址") }
             }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText; font.pixelSize: 12; text: Language.text("Use HTTPS for remote servers. HTTP connections are not encrypted.", "远程服务器请使用 HTTPS，HTTP 连接不加密。") }
-            MusicActionButton { Layout.alignment: Qt.AlignHCenter; text: Language.text("Connect", "连接"); enabled: address.text.trim().length > 0 && username.text.trim().length > 0 && password.text.length > 0; onClicked: { page.view = "albums"; page.server.connectServer(address.text, username.text, password.text, remember.checked); connection.close() } }
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 6
+                FieldLabel { text: Language.text("Username", "用户名") }
+                Field { id: username; placeholderText: Language.text("Your server username", "服务器用户名"); Accessible.name: Language.text("Username", "用户名") }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 6
+                FieldLabel { text: Language.text("Password", "密码") }
+                Field { id: password; placeholderText: Language.text("Enter password", "输入密码"); echoMode: TextInput.Password; Accessible.name: Language.text("Password", "密码") }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { Layout.fillWidth: true; font.pixelSize: 13; text: Language.text("Remember securely", "安全保存登录信息"); color: AppTheme.text }
+                LiquidGlassSwitch { id: remember; materialForm: true; checked: true; Accessible.name: Language.text("Remember securely", "安全保存登录信息") }
+            }
+            Label {
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                color: AppTheme.mutedText; font.pixelSize: 12
+                text: Language.text("Use HTTPS for an encrypted connection.", "使用 HTTPS 地址可加密连接。")
+            }
+        }
+        footer: Item {
+            implicitHeight: 60
+            RowLayout {
+                anchors.centerIn: parent; spacing: 10
+                MusicActionButton {
+                    text: Language.text("Cancel", "取消")
+                    onClicked: connection.reject()
+                }
+                MusicActionButton {
+                    text: Language.text("Connect", "连接")
+                    enabled: address.text.trim().length > 0 && username.text.trim().length > 0 && password.text.length > 0
+                    surfaceColor: AppTheme.dark ? "#ededf0" : "#303036"
+                    textColor: AppTheme.dark ? "#202024" : "#ffffff"
+                    onClicked: {
+                        page.view = "albums"
+                        page.server.connectServer(address.text, username.text, password.text, remember.checked)
+                        connection.close()
+                    }
+                }
+            }
         }
     }
 }
