@@ -6,11 +6,13 @@ import NextKde.Music
 TestCase {
     name: "MusicInput"
     when: windowShown
+    visible: true
     width: 320; height: 100
     MusicTextField { id: search; width: 280; height: 36; searchField: true }
     function cleanup() { search.text = ""; AppTheme.appearanceMode = "system" }
     function test_clear_preserves_focus() {
         search.text = "test query"
+        waitForRendering(search)
         mouseClick(search, search.width - 18, search.height / 2)
         compare(search.text, "")
         verify(search.activeFocus)
