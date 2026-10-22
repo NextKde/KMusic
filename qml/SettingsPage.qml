@@ -9,10 +9,6 @@ ScrollView {
     required property var music
     required property var preferences
     property real bottomContentInset: 0
-    signal importRequested()
-    signal foldersRequested()
-    signal accountRequested()
-    signal mediaRequested()
     signal clearSearchRequested()
     onVisibleChanged: if (visible) music.refreshAudioCache()
     contentWidth: availableWidth
@@ -39,10 +35,15 @@ ScrollView {
     }
     ColumnLayout {
         width: page.availableWidth - 64; x: 32; spacing: 8
-        Heading { text: Language.text("General & Appearance", "通用与外观") }
+        Heading { text: Language.text("Appearance", "外观") }
         SettingRow {
             label: Language.text("Language", "语言")
-            Label { text: Language.text("Follow system · English", "跟随系统 · 中文"); color: AppTheme.mutedText }
+            MusicSelect {
+                materialForm: true
+                model: [Language.text("Follow system", "跟随系统"), "English", "简体中文"]
+                currentIndex: Math.max(0, ["system", "en", "zh_CN"].indexOf(languagePreferences.selection))
+                onActivated: index => languagePreferences.selection = ["system", "en", "zh_CN"][index]
+            }
         }
         SettingRow {
             label: Language.text("Appearance", "外观")
@@ -63,8 +64,8 @@ ScrollView {
         }
         Heading { text: Language.text("Playback", "播放") }
         SettingRow {
-            label: Language.text("Preferred online quality", "首选在线音质")
-            description: Language.text("Actual quality depends on the source and your account permissions.", "实际音质取决于来源和账号权限。")
+            label: Language.text("NetEase streaming quality", "网易云播放音质")
+            description: Language.text("Subject to track availability and your NetEase account permissions.", "实际音质取决于歌曲和网易云账号权限。")
             MusicSelect {
                 materialForm: true
                 readonly property var qualities: ["128k", "320k", "flac", "flac24bit"]
@@ -108,29 +109,6 @@ ScrollView {
             description: Language.text("Reduce motion takes priority when enabled.", "开启减少动画时优先遵循减少动画设置。")
             LiquidGlassSwitch { materialForm: true; checked: page.preferences.smoothLyrics; onToggled: checked => page.preferences.smoothLyrics = checked }
         }
-        Heading { text: Language.text("Local Music", "本地音乐") }
-        SettingRow {
-            label: Language.text("Music folders", "音乐文件夹")
-            description: Language.text("Registered folders: ", "已添加文件夹：") + page.music.libraryFolders.length
-            MusicActionButton { text: Language.text("Manage", "管理"); onClicked: page.foldersRequested() }
-            MusicActionButton { text: Language.text("Add", "添加"); enabled: page.music.ready && !page.music.scanning; onClicked: page.importRequested() }
-        }
-        SettingRow {
-            label: Language.text("Refresh library", "刷新曲库")
-            description: page.music.scanning ? page.music.scanStatus : Language.text("Read tags and artwork from your music files again.", "重新读取音乐文件的标签和封面。")
-            MusicActionButton { text: Language.text("Rescan", "重新扫描"); enabled: page.music.ready && !page.music.scanning && page.music.libraryFolders.length > 0; onClicked: page.music.rescanLibrary() }
-        }
-        Heading { text: Language.text("Accounts & Media Sources", "账号与媒体源") }
-        SettingRow {
-            label: Language.text("NetEase Cloud Music", "网易云音乐")
-            description: page.music.account.authenticated ? page.music.account.nickname : Language.text("Not signed in", "未登录")
-            MusicActionButton { text: page.music.account.authenticated ? Language.text("Manage account", "管理账号") : Language.text("Sign in", "登录"); onClicked: page.accountRequested() }
-        }
-        SettingRow {
-            label: "Navidrome / OpenSubsonic"
-            description: page.music.mediaServer.connected ? page.music.mediaServer.server : Language.text("Not connected", "未连接")
-            MusicActionButton { text: Language.text("Manage", "管理"); onClicked: page.mediaRequested() }
-        }
         Heading { text: Language.text("Storage", "存储") }
         SettingRow {
             label: Language.text("Search history", "搜索历史")
@@ -140,7 +118,6 @@ ScrollView {
         SettingRow {
             label: Language.text("Completed audio cache", "已完成的音频缓存")
             description: (page.music.audioCacheBytes / 1048576).toFixed(1) + " MB · " + Language.text("Local music, artwork and playlists are kept.", "保留本地音乐、封面和歌单。")
-            MusicActionButton { text: Language.text("Refresh", "刷新"); onClicked: page.music.refreshAudioCache() }
             MusicActionButton { text: Language.text("Clear", "清理"); enabled: page.music.audioCacheBytes > 0; onClicked: clearCache.open() }
         }
         Note { text: page.music.cacheCleanupMessage; visible: text.length > 0 }

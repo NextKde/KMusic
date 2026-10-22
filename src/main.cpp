@@ -1,6 +1,10 @@
 #include "MusicController.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQmlPropertyMap>
+#include <QSettings>
+#include <QLocale>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QQuickItem>
@@ -39,6 +43,24 @@ int main(int argc, char *argv[]) {
     QQuickWindow::setDefaultAlphaBuffer(true);
     MusicController music;
     QQmlApplicationEngine engine;
+    QQmlPropertyMap languagePreferences;
+    QSettings settings;
+    QString language = settings.value("UserPreferences/language", "system").toString();
+    if (!QStringList{"system", "en", "zh_CN"}.contains(language)) language = "system";
+    languagePreferences.insert("selection", language);
+    const auto applyLanguage = [&engine](const QString &selection) {
+        const auto languages = QLocale::system().uiLanguages();
+        engine.setUiLanguage(selection == "system"
+            ? (languages.isEmpty() ? QLocale::system().name() : languages.first()) : selection);
+    };
+    applyLanguage(language);
+    QObject::connect(&languagePreferences, &QQmlPropertyMap::valueChanged, &engine,
+        [&settings, applyLanguage](const QString &key, const QVariant &value) {
+            if (key != "selection" || !QStringList{"system", "en", "zh_CN"}.contains(value.toString())) return;
+            settings.setValue("UserPreferences/language", value);
+            applyLanguage(value.toString());
+        });
+    engine.rootContext()->setContextProperty("languagePreferences", &languagePreferences);
     engine.setInitialProperties({{QStringLiteral("music"), QVariant::fromValue(&music)}});
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);

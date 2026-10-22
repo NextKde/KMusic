@@ -217,11 +217,7 @@ ApplicationWindow {
                 SettingsPage {
                     anchors.fill: parent; visible: window.contentDestination === "settingsHome"
                     music: window.music; preferences: userPreferences; bottomContentInset: window.playerContentInset
-                    onImportRequested: folderDialog.open()
-                    onFoldersRequested: { window.openPrimary("local"); localPage.openSection("folders") }
-                    onAccountRequested: accountDialog.open()
                     onClearSearchRequested: searchPopup.clearAllHistory()
-                    onMediaRequested: window.openPrimary("media")
                 }
                 LocalMusicPage {
                     id: localPage
