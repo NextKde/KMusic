@@ -53,3 +53,9 @@ credentials or fabricated library. Real multi-instance adapters remain absent.
 ### Round 8: local folders and device collections
 
 The local folder page lists actual registered import roots and uses existing import/rescan operations; it is not a nested file browser. Local album/artist/artwork information comes from file metadata. Device favorites, history and playlists explicitly describe their cross-source references and separation from platform-account collections; the queue also states its cross-source scope. Shared material effects are unchanged. Source only; no build, interaction checks or screenshots.
+
+### Round 9: source polish and user review
+
+Unified selected-source checks, honest NetEase partial-integration status, empty device-playlist guidance and settings alignment when the online account is hidden. Replaced the removed discovery-navigation focus target with the real source picker when leaving immersive playback. Empty local results and playlists have distinct guidance. Source review only; no automated interaction or visual acceptance.
+
+After the final build/open, user review should cover provider-appropriate categories, isolated NetEase/local query drafts, account-vs-device collection scope, real registered folders, explicitly unconnected media examples, sidebar scrolling and keyboard focus. Account collection adapters, Bilibili integration, server connections and true multi-account/server isolation remain unimplemented. Materials are unchanged; runtime.json records the actual running revision.

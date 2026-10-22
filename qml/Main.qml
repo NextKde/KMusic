@@ -68,7 +68,7 @@ ApplicationWindow {
         destination = lastContentDestination
         if (focusBeforeNow && focusBeforeNow.visible && focusBeforeNow.enabled)
             focusBeforeNow.forceActiveFocus(Qt.OtherFocusReason)
-        else discoverNav.forceActiveFocus(Qt.OtherFocusReason)
+        else sourcePicker.forceActiveFocus(Qt.OtherFocusReason)
     }
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
@@ -193,7 +193,7 @@ ApplicationWindow {
                         : playlistView ? qsTr("A playlist saved by KMusic on this device. Platform and server playlists are managed in their own source sections.")
                         : queueView ? qsTr("The current playback queue can contain tracks from different sources.")
                         : qsTr("Imported local audio files. Albums, artists and artwork come from file metadata when available.")
-                    emptyMessage: recentView ? qsTr("Your playback history on this device is empty. Played songs will appear here.") : favoritesView ? qsTr("Your favorites on this device are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
+                    emptyMessage: recentView ? qsTr("Your playback history on this device is empty. Played songs will appear here.") : favoritesView ? qsTr("Your favorites on this device are empty. Add songs using the heart button.") : queueView ? qsTr("Your queue is empty") : playlistView ? qsTr("This device playlist is empty. Add tracks from a song list.") : qsTr("No local songs match. Import a music folder or change the local search.")
                     queueView: window.destination === "queue"; recentView: window.destination === "recent"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
                     onImportRequested: { window.selectSource("local"); folderDialog.open() }
@@ -352,6 +352,7 @@ ApplicationWindow {
                     RowLayout {
                         Layout.fillWidth: true; spacing: 4
                         MusicNavigationButton {
+                            id: sourcePicker
                             Layout.fillWidth: true
                             checkable: false; iconName: window.activeSource.category === "media" ? "folder" : "music"
                             text: window.sourceLabel(window.activeSource) + "  ▾"
@@ -366,9 +367,9 @@ ApplicationWindow {
                                 MenuItem { text: qsTr("Local Music"); checkable: true; checked: window.selectedSource === "local"; onTriggered: window.selectSource("local") }
                                 MenuSeparator {}
                                 MenuItem { text: qsTr("Media Sources"); enabled: false }
-                                MenuItem { text: "Navidrome / OpenSubsonic · Demo"; onTriggered: window.selectSource("navidrome") }
-                                MenuItem { text: "Jellyfin · Demo"; onTriggered: window.selectSource("jellyfin") }
-                                MenuItem { text: "WebDAV · Demo"; onTriggered: window.selectSource("webdav") }
+                                MenuItem { text: "Navidrome / OpenSubsonic · Demo"; checkable: true; checked: window.selectedSource === "navidrome"; onTriggered: window.selectSource("navidrome") }
+                                MenuItem { text: "Jellyfin · Demo"; checkable: true; checked: window.selectedSource === "jellyfin"; onTriggered: window.selectSource("jellyfin") }
+                                MenuItem { text: "WebDAV · Demo"; checkable: true; checked: window.selectedSource === "webdav"; onTriggered: window.selectSource("webdav") }
                             }
                         }
                         MusicActionButton {
@@ -385,7 +386,7 @@ ApplicationWindow {
                     }
                     Label {
                         Layout.leftMargin: MusicColors.sidebarControlInset
-                        text: window.activeSource.status === "connected" ? qsTr("Available") : qsTr("Navigation demo · not connected")
+                        text: window.activeSource.status === "connected" ? window.selectedSource === "netease" ? qsTr("Browse available · account menus are demos") : qsTr("Local file library") : qsTr("Navigation demo · not connected")
                         color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
                     }
                     Repeater {
@@ -436,6 +437,12 @@ ApplicationWindow {
                             checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
                             onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
                         }
+                    }
+                    Label {
+                        visible: music.playlists.length === 0
+                        Layout.fillWidth: true; Layout.leftMargin: MusicColors.sidebarControlInset
+                        text: qsTr("No device playlists yet")
+                        color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
                     }
                     Item { implicitHeight: MusicColors.sidebarGroupGap }
                 }
@@ -495,6 +502,7 @@ ApplicationWindow {
                             }
                         }
                     }
+                    Item { visible: !accountButton.visible; Layout.fillWidth: true }
                     MusicActionButton {
                         id: settingsButton
                         iconOnly: true; iconName: "settings"; implicitWidth: 28; implicitHeight: 28; flat: true
