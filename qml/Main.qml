@@ -129,6 +129,7 @@ ApplicationWindow {
         function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
         function onPreparedPlaylistTrackSaved() { addDialog.close() }
         function onDiscoveryCollectionOpened() { window.collectionReturnDestination = "new"; window.destination = "onlineAlbum" }
+        function onPersonalCollectionOpened() { window.collectionReturnDestination = "personalHome"; window.destination = "onlineAlbum" }
     }
     Connections {
         target: music.account
@@ -139,6 +140,7 @@ ApplicationWindow {
             window.rememberSourceSearch("netease", "")
             onlinePage.queryText = ""
             window.restoringSourceSearch = false
+            if (window.navigationArea === "personal") window.destination = "personalHome"
         }
     }
     readonly property real playerContentInset: player.height + 32 + (music.errorMessage.length > 0 || music.scanning ? 36 : 0)
@@ -172,25 +174,30 @@ ApplicationWindow {
                 anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 0 : floatingHeader.visible ? 68 : 30
                 NavigationHomePage {
                     anchors.fill: parent
-                    visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
+                    visible: ["localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
                     showHeading: false
-                    title: window.destination === "personalHome" ? Language.text("Personal", "个人") : window.destination === "localHome" ? Language.text("Local Music", "本地音乐") : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
+                    title: window.destination === "localHome" ? Language.text("Local Music", "本地音乐") : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
                     bottomContentInset: window.playerContentInset
-                    groups: window.destination === "personalHome" ? [{title: Language.text("My Music", "我的音乐"), entries: SourceCatalog.sections(window.onlineProvider)[1].entries}]
-                        : window.destination === "localHome" ? [
+                    groups: window.destination === "localHome" ? [
                             {title: Language.text("Music Library", "音乐库"), entries: SourceCatalog.sections("local")[0].entries.concat([{id:"folders", zh:Language.text("Music folders", "音乐文件夹"), en:"Music folders", route:"folders", status:"connected"}])},
                             {title: Language.text("On This Device", "本机收藏"), entries: [{id:"favorites", zh:Language.text("Favorites", "喜欢的音乐")}, {id:"recent", zh:Language.text("Recently Played", "最近播放")}, {id:"newPlaylist", zh:Language.text("New Playlist", "新建歌单")}].concat(music.playlists.map(p => ({id:"playlist", playlistId:p.id, zh:p.name}))) }]
                         : window.destination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
                         : [{title:Language.text("Appearance", "外观"), entries:[{id:"system", zh:Language.text("System", "跟随系统")}, {id:"light", zh:Language.text("Light", "浅色")}, {id:"dark", zh:Language.text("Dark", "深色")}]}]
                     onEntryRequested: entry => {
-                        if (window.destination === "personalHome") window.openSourceEntry(entry)
-                        else if (window.destination === "mediaHome") window.selectSource(entry.id)
+                        if (window.destination === "mediaHome") window.selectSource(entry.id)
                         else if (window.destination === "settingsHome") AppTheme.appearanceMode = entry.id
                         else if (entry.id === "newPlaylist") playlistDialog.open()
                         else if (entry.id === "playlist") { window.selectedPlaylist = entry.playlistId; music.selectPlaylist(entry.playlistId); window.destination = "playlist"; window.pageTitle = entry.zh }
                         else if (entry.route) window.openSourceEntry(entry)
                         else window.navigate(entry.id, entry.zh)
                     }
+                }
+                PersonalPage {
+                    anchors.fill: parent
+                    visible: window.destination === "personalHome"
+                    music: window.music; provider: window.onlineProvider
+                    bottomContentInset: window.playerContentInset
+                    onSignInRequested: accountDialog.open()
                 }
                 DiscoveryPage {
                     id: discover
