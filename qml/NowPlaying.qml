@@ -3,13 +3,18 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
 import Kos.Ui
+import "UiLanguage.mjs" as Language
 Item {
     id: page
     required property var music
     signal closeRequested()
-    onVisibleChanged: if (visible) forceActiveFocus(Qt.OtherFocusReason)
+    onVisibleChanged: if (visible) {
+        presentationMode = 1
+        music.lyricsEnabled = true
+        forceActiveFocus(Qt.OtherFocusReason)
+    }
     Keys.onEscapePressed: event => { page.closeRequested(); event.accepted = true }
-    property int presentationMode: 0
+    property int presentationMode: 1
     readonly property color foreground: "#f5f7fa"
     readonly property color secondary: "#b9c5d2"
     function clock(milliseconds) {
@@ -19,34 +24,18 @@ Item {
     clip: true
     function ownsControlFocus(item) {
         for (let node = item; node; node = node.parent)
-            if (node === lyricsSwitch || node === modeSelector) return true
+            if (node === modeButtons) return true
         return false
     }
-    // Fixed, opt-in review paths drive the same states as the real controls.
-    // They do not claim pointer/keyboard event delivery or interaction acceptance.
     function reviewMaterialAction(action, index) {
-        if (action === "switchPress") lyricsSwitch._beginPress()
-        else if (action === "switchRelease") { lyricsSwitch._endPress(); lyricsSwitch.toggle() }
-        else if (action === "switchCancel") lyricsSwitch._endPress()
-        else if (action === "switchHover") lyricsSwitch._setHovered(index !== 0)
-        else if (action === "switchFocus") lyricsSwitch.forceActiveFocus()
-        else if (action === "segmentPress") modeSelector._beginPress(index)
-        else if (action === "segmentRelease") { modeSelector._endPress(); modeSelector.select(index) }
-        else if (action === "segmentCancel") modeSelector._endPress()
-        else if (action === "segmentFocus") { modeSelector._beginPress(presentationMode); modeSelector._endPress() }
+        if (action === "segmentRelease") page.presentationMode = index === 0 ? 0 : 1
     }
     function materialReviewState() {
-        return JSON.stringify({ lyricsEnabled: music.lyricsEnabled, mode: presentationMode,
-            switchPressed: lyricsSwitch._pressed, switchHovered: lyricsSwitch._hovered,
-            switchExpansion: lyricsSwitch._expansion, switchThumbX: lyricsSwitch._thumbX,
-            switchStretch: lyricsSwitch._stretch, switchFocus: lyricsSwitch.activeFocus,
-            switchSampling: lyricsSwitch.sampling, segmentPressed: modeSelector._pressedIndex,
-            segmentVisual: modeSelector._visualIndex, segmentPending: modeSelector._pendingIndex,
-            lensX: modeSelector._lensPosition, segmentSampling: modeSelector.sampling })
+        return JSON.stringify({ lyricsEnabled: music.lyricsEnabled, mode: presentationMode })
     }
     Connections {
         target: page.music
-        function onLyricsEnabledChanged() { if (!page.music.lyricsEnabled) page.presentationMode = 0 }
+        function onReadyChanged() { if (page.visible && page.music.ready) page.music.lyricsEnabled = true }
     }
     Item {
         id: ambientScene
@@ -144,29 +133,7 @@ Item {
             Label { Layout.fillWidth: true; elide: Text.ElideRight; text: page.music.providerStatus; color: page.secondary; font.pixelSize: 11; ToolTip.text: text; ToolTip.visible: statusHover.hovered; HoverHandler { id: statusHover } }
         }
         ColumnLayout {
-            Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumWidth: 240; spacing: 18
-            RowLayout {
-                Layout.fillWidth: true
-                LiquidSegmentedControl {
-                    id: modeSelector
-                    Layout.fillWidth: true
-                    materialForm: true
-                    backgroundColor: "#25354a"; selectionColor: "#475c74"
-                    textColor: page.foreground; mutedTextColor: page.secondary
-                    labels: [qsTr("Up next"), qsTr("Lyrics")]
-                    currentIndex: page.presentationMode
-                    onSelectionRequested: index => { if (index === 1) page.music.lyricsEnabled = true; page.presentationMode = index }
-                }
-                LiquidGlassSwitch {
-                    id: lyricsSwitch
-                    visible: page.presentationMode === 1
-                    materialForm: true; darkAppearance: true
-                    checked: page.music.lyricsEnabled
-                    accentColor: "#6885a3"
-                    Accessible.name: qsTr("Enable lyrics")
-                    onToggled: checked => page.music.lyricsEnabled = checked
-                }
-            }
+            Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumWidth: 240; Layout.bottomMargin: 46; spacing: 18
             Label { visible: page.presentationMode === 0; text: qsTr("Queue · %1 remaining").arg(Math.max(0, page.music.queueModel.count - page.music.queueIndex - 1)); color: page.foreground; font.pixelSize: 14; font.weight: Font.DemiBold }
             ListView {
                 id: upcoming
@@ -212,10 +179,47 @@ Item {
                 }
                 ColumnLayout {
                     anchors.centerIn: parent; width: parent.width - 32; visible: parent.count === 0; spacing: 12
-                    Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; text: !page.music.lyricsEnabled ? qsTr("Lyrics off") : page.music.lyricsLoading ? qsTr("Loading lyrics…") : page.music.lyricsError || qsTr("Lyrics unavailable"); color: page.secondary }
+                    Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; text: page.music.lyricsLoading ? qsTr("Loading lyrics…") : page.music.lyricsError || qsTr("Lyrics unavailable"); color: page.secondary }
                     MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; Layout.alignment: Qt.AlignHCenter; text: qsTr("Retry lyrics"); visible: page.music.lyricsEnabled && !page.music.lyricsLoading && page.music.currentTrackId > 0; onClicked: page.music.reloadLyrics() }
                 }
             }
         }
     }
+    LiquidCard {
+        id: modeButtons
+        anchors.right: parent.right; anchors.rightMargin: 32
+        anchors.bottom: parent.bottom; anchors.bottomMargin: 24
+        width: 88; height: 38; radius: 19; padding: 3
+        backdrop: ambientBackdrop
+        tintColor: "#8393a6"; tintStrength: .18; readability: 0
+        RowLayout {
+            anchors.fill: parent; spacing: 2
+            Button {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                padding: 0
+                Accessible.name: Language.text("Lyrics", "歌词")
+                checked: page.presentationMode === 1
+                onClicked: { page.music.lyricsEnabled = true; page.presentationMode = 1 }
+                ToolTip.text: Accessible.name; ToolTip.visible: hovered
+                background: Rectangle { radius: height / 2; color: parent.checked ? "#30ffffff" : parent.hovered ? "#15ffffff" : "transparent" }
+                contentItem: Item {
+                    Image {
+                        anchors.centerIn: parent; width: 17; height: 17
+                        source: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-8l-5 3v-3H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M7 8h10M7 12h7" fill="none" stroke="#f5f7fa" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+                    }
+                }
+            }
+            Button {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                padding: 0
+                Accessible.name: Language.text("Queue", "播放队列")
+                checked: page.presentationMode === 0
+                onClicked: page.presentationMode = 0
+                ToolTip.text: Accessible.name; ToolTip.visible: hovered
+                background: Rectangle { radius: height / 2; color: parent.checked ? "#30ffffff" : parent.hovered ? "#15ffffff" : "transparent" }
+                contentItem: Item { VectorIcon { anchors.centerIn: parent; width: 17; height: 17; name: "queueList"; size: 17; color: page.foreground } }
+            }
+        }
+    }
+
 }
