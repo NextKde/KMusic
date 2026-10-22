@@ -8,6 +8,11 @@ import songUrl from "./netease/modules/song_url.ts";
 import lyric from "./netease/modules/lyric_new.ts";
 import albumNew from "./netease/modules/album_new.ts";
 import album from "./netease/modules/album.ts";
+import personalized from "./netease/modules/personalized.ts";
+import topSong from "./netease/modules/top_song.ts";
+import toplist from "./netease/modules/toplist.ts";
+import recommendSongs from "./netease/modules/recommend_songs.ts";
+import recommendResource from "./netease/modules/recommend_resource.ts";
 import artists from "./netease/modules/artists.ts";
 import artistAlbum from "./netease/modules/artist_album.ts";
 import playlist from "./netease/modules/playlist_detail.ts";
@@ -26,16 +31,29 @@ function mergeCookies(lines: string[]) {
   for (const line of lines) Object.assign(session, cookieToJson(line.split(";")[0]));
 }
 function sessionString() { return Object.entries(session).map(([k,v]) => `${k}=${v}`).join("; "); }
-const modules = { artistAlbums: artistAlbum, search: cloudsearch, detail: songDetail, lyric, album, playlist, newAlbums: albumNew };
+const discoveryModules = { discoveryPlaylists: personalized, discoveryNewSongs: topSong,
+  discoveryCharts: toplist, discoveryDailySongs: recommendSongs, discoveryDailyPlaylists: recommendResource };
+const modules = { ...discoveryModules, artistAlbums: artistAlbum, search: cloudsearch, detail: songDetail, lyric, album, playlist, newAlbums: albumNew };
 const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
 const emit = (data: unknown) => process.stdout.write(JSON.stringify(data) + "\n");
 input.on("line", async (line) => {
   if (line.length > 32768) return;
   let id: number | string = "";
+  const requestAuthEpoch = authEpoch;
+  let discoveryRequest = false;
+  let dailyDiscoveryRequest = false;
+  let requestHadSession = false;
   try {
     const req = JSON.parse(line);
     id = req.id;
     const params = { ...(req.params ?? {}), cookie: { ...session } };
+    discoveryRequest = Object.hasOwn(discoveryModules, req.action);
+    dailyDiscoveryRequest = req.action === "discoveryDailySongs" || req.action === "discoveryDailyPlaylists";
+    if ((discoveryRequest && !dailyDiscoveryRequest) || req.action === "newAlbums") params.cookie = {};
+    requestHadSession = Boolean(params.cookie.MUSIC_U);
+    if (dailyDiscoveryRequest && !session.MUSIC_U) {
+      emit({ id, ok: false, category: "auth", message: "Sign in to NetEase for daily recommendations" }); return;
+    }
     if (req.action === "sessionRestore") {
       ++authEpoch; playlistSnapshots.clear(); session = cookieToJson(String(req.params?.cookie || ""));
       emit({ id, ok: true }); return;
@@ -135,13 +153,19 @@ input.on("line", async (line) => {
     if (!mod) throw new Error("Unsupported provider action");
     const response = await mod(params, createRequest);
     const body: any = response.body;
+    if (dailyDiscoveryRequest && requestAuthEpoch !== authEpoch) {
+      emit({ id, ok: false, category: "cancelled", message: "Account changed" }); return;
+    }
     if (body.code === 301 || body.code === 401 || body.code === -460) {
-      emit({ id, ok: false, category: "auth", sessionExpired: Boolean(session.MUSIC_U) && [301,401].includes(Number(body.code)), message: "NetEase login is required or expired", code: body.code });
+      emit({ id, ok: false, category: "auth", sessionExpired: requestHadSession && requestAuthEpoch === authEpoch && [301,401].includes(Number(body.code)), message: "NetEase login is required or expired", code: body.code });
     } else if (body.code && body.code !== 200) {
       emit({ id, ok: false, category: "provider", message: body.msg || body.message || "NetEase request failed", code: body.code });
     } else emit({ id, ok: true, body });
   } catch (error: any) {
+    if (dailyDiscoveryRequest && requestAuthEpoch !== authEpoch) {
+      emit({ id, ok: false, category: "cancelled", message: "Account changed" }); return;
+    }
     const status = error?.response?.status;
-    emit({ id, ok: false, category: status === 301 || status === 401 ? "auth" : status === 502 ? "network" : "provider", sessionExpired: Boolean(session.MUSIC_U) && [301,401].includes(Number(error?.response?.body?.code)), message: status ? "NetEase request failed; retry or check your account" : "Network request failed; check your connection and retry", code: status });
+    emit({ id, ok: false, category: status === 301 || status === 401 ? "auth" : status === 502 ? "network" : "provider", sessionExpired: requestHadSession && requestAuthEpoch === authEpoch && [301,401].includes(Number(error?.response?.body?.code)), message: status ? "NetEase request failed; retry or check your account" : "Network request failed; check your connection and retry", code: status });
   }
 });

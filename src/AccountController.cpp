@@ -113,7 +113,7 @@ void AccountController::checkSession(quint64 generation, const QString &cookie) 
         if (!body.value("authenticated").toBool()) {
             m_nickname.clear(); m_avatarUrl.clear(); clearStored();
             m_provider->accountRequest("sessionRestore", {{"cookie", ""}}, [](const QJsonObject &) {});
-            setState("expired", tr("Your NetEase session expired. Sign in again.")); return;
+            setState("expired", tr("Your NetEase session expired. Sign in again.")); emit sessionChanged(); return;
         }
         m_nickname = body.value("nickname").toString();
         const QUrl avatar(body.value("avatarUrl").toString());

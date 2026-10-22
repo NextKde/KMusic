@@ -73,6 +73,8 @@ MusicController::MusicController(QObject *parent)
     , m_account(&m_onlineProvider, this)
     , m_scanWatcher(this)
 {
+    for (const auto &section : {"playlists", "newSongs", "charts", "dailySongs", "dailyPlaylists"})
+        m_discoveryFeed.insert(section, QVariantMap{{"items", QVariantList{}}, {"loading", false}, {"error", QString{}}});
     m_recentModel.setMode(QStringLiteral("queue"));
     m_favoritesModel.setMode(QStringLiteral("queue"));
     connect(this, &MusicController::currentTrackChanged, this, &MusicController::favoritesChanged);
@@ -221,6 +223,21 @@ void MusicController::initialize()
         QDir(cachePath).filePath(QStringLiteral("audio")));
     m_engine.setDownloadDirectory(m_audioCache->downloadDirectory());
     connect(&m_account, &AccountController::sessionChanged, this, [this] {
+        // Clear private discovery data before refreshing on login, restore,
+        // logout or expiry. The provider epoch rejects old-account replies.
+        m_onlineProvider.cancelDiscoveryFeed();
+        m_discoveryTracks.clear();
+        for (const auto &section : {"dailySongs", "dailyPlaylists"})
+            m_discoveryFeed.insert(section, QVariantMap{{"items", QVariantList{}}, {"loading", false},
+                {"error", m_account.authenticated() ? QString{} : tr("Sign in to NetEase for daily recommendations")}});
+        if (m_discoveryCollectionSection == QLatin1String("dailyPlaylists")) {
+            m_onlineProvider.cancelCollectionRequests();
+            m_onlineAlbum.clear(); m_albumTracks.clear(); m_albumTracksModel.setTracks({});
+            m_albumLoading = false; m_albumLoadingMore = false; m_albumError.clear(); m_albumLoadMoreError.clear();
+            m_discoveryCollectionSection.clear(); emit onlineAlbumChanged();
+        }
+        emit discoveryChanged();
+        if (m_ready) reloadDiscovery();
         // An account change never reuses a URL resolved with old credentials.
         const auto track = findTrack(currentTrackId());
         if (!track || track->source != QLatin1String("netease")) return;
@@ -238,6 +255,15 @@ void MusicController::initialize()
     connect(&m_onlineProvider, &OnlineMusicProvider::collectionsReady, this, [this](const QVariantList &rows) {
         m_onlineCollections = rows; emit onlineCollectionsChanged();
     });
+    connect(&m_onlineProvider, &OnlineMusicProvider::discoverySectionReady, this,
+        [this](const QString &section, const QVariantList &items, const QList<TrackRecord> &tracks, const QString &error) {
+            if (!m_discoveryFeed.contains(section)) return;
+            if ((section == QLatin1String("dailySongs") || section == QLatin1String("dailyPlaylists"))
+                && !m_account.authenticated()) return;
+            m_discoveryFeed.insert(section, QVariantMap{{"items", items}, {"loading", false}, {"error", error}});
+            m_discoveryTracks.insert(section, tracks);
+            emit discoveryChanged();
+        });
     connect(&m_onlineProvider, &OnlineMusicProvider::newAlbumsReady, this, [this](const QVariantList &albums, const QString &error) {
         m_discoveryLoading = false; m_discoveryError = error; m_discoveryAlbums = albums; emit discoveryChanged();
     });
@@ -2165,14 +2191,59 @@ QVariantMap MusicController::playbackSessionInfo() const
 
 void MusicController::reloadDiscovery()
 {
-    if (!m_ready || m_discoveryLoading) return;
+    if (!m_ready) return;
+    m_onlineProvider.cancelDiscoveryFeed();
+    m_discoveryTracks.clear();
+    for (const auto &section : {"playlists", "newSongs", "charts", "dailySongs", "dailyPlaylists"}) {
+        const bool daily = QString::fromLatin1(section).startsWith(QLatin1String("daily"));
+        const bool canLoad = !daily || m_account.authenticated();
+        m_discoveryFeed.insert(section, QVariantMap{{"items", QVariantList{}}, {"loading", canLoad},
+            {"error", canLoad ? QString{} : tr("Sign in to NetEase for daily recommendations")}});
+    }
     m_discoveryLoading = true; m_discoveryError.clear(); emit discoveryChanged();
     m_onlineProvider.loadNewAlbums();
+    for (const auto &section : {"playlists", "newSongs", "charts", "dailySongs", "dailyPlaylists"}) {
+        if (QString::fromLatin1(section).startsWith(QLatin1String("daily")) && !m_account.authenticated()) continue;
+        m_onlineProvider.loadDiscoverySection(QString::fromLatin1(section));
+    }
+}
+void MusicController::openDiscoveryItem(const QString &section, int row)
+{
+    if (section != QLatin1String("playlists") && section != QLatin1String("charts")
+        && section != QLatin1String("dailyPlaylists")) return;
+    if (section == QLatin1String("dailyPlaylists") && !m_account.authenticated()) return;
+    const auto items = m_discoveryFeed.value(section).toMap().value("items").toList();
+    if (row < 0 || row >= items.size()) return;
+    const auto entry = items.at(row).toMap();
+    if (entry.value("providerId").toString().isEmpty()) return;
+    m_onlineProvider.cancelCollectionRequests();
+    resetArtistBrowse();
+    m_discoveryCollectionSection = section;
+    m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
+    m_onlineAlbum = entry; m_onlineAlbum.insert("kind", "playlist");
+    m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear();
+    m_albumTracks.clear(); m_albumTracksModel.setSearch({});
+    retryOnlineAlbum();
+    emit discoveryCollectionOpened();
+}
+void MusicController::playDiscoverySong(const QString &section, int row)
+{
+    if (!m_ready || (section != QLatin1String("newSongs") && section != QLatin1String("dailySongs"))) return;
+    if (section == QLatin1String("dailySongs") && !m_account.authenticated()) return;
+    const auto tracks = m_discoveryTracks.value(section);
+    if (row < 0 || row >= tracks.size()) return;
+    QString error;
+    const qint64 id = m_database.addExternalTrack(tracks.at(row), &error);
+    if (id < 0) { setError(error); return; }
+    refreshLibrary();
+    setQueue({id}, 0); // Explicit click only; browsing never saves or alters playback.
+    startCurrentTrack(); // Reuses current-account URL resolve and preview/rights handling.
 }
 void MusicController::openDiscoveryAlbum(int row)
 {
     if (row < 0 || row >= m_discoveryAlbums.size()) return;
     const auto album = m_discoveryAlbums.at(row).toMap();
+    m_discoveryCollectionSection.clear();
     resetArtistBrowse();
     if (album.value("providerId").toString().isEmpty()) return;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
@@ -2266,6 +2337,7 @@ void MusicController::setOnlineSearchKind(const QString &kind)
 void MusicController::openOnlineCollection(int row)
 {
     if (row < 0 || row >= m_onlineCollections.size()) return;
+    m_discoveryCollectionSection.clear();
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
     resetArtistBrowse();
     m_onlineAlbum = m_onlineCollections.at(row).toMap();

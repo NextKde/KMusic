@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QSet>
 #include <algorithm>
 #include <utility>
 
@@ -237,6 +238,57 @@ void OnlineMusicProvider::loadDetail(const QString &songId) {
             {"artist", joinedArtists(song.value("ar").toArray())}, {"album", album.value("name").toString()},
             {"artwork", album.value("picUrl").toString()}, {"durationMs", song.value("dt").toVariant()},
             {"source", "NetEase"}});
+    });
+}
+
+void OnlineMusicProvider::loadDiscoverySection(const QString &section) {
+    static const QHash<QString, QString> actions{{"playlists", "discoveryPlaylists"},
+        {"newSongs", "discoveryNewSongs"}, {"charts", "discoveryCharts"},
+        {"dailySongs", "discoveryDailySongs"}, {"dailyPlaylists", "discoveryDailyPlaylists"}};
+    if (!actions.contains(section)) return;
+    const auto epoch = m_discoveryFeedEpoch;
+    const auto sessionEpoch = m_sessionEpoch;
+    const bool daily = section == QLatin1String("dailySongs") || section == QLatin1String("dailyPlaylists");
+    request(actions.value(section), {{"limit", 12}, {"type", 0}}, [this, section, epoch, sessionEpoch, daily](const QJsonObject &response) {
+        if (epoch != m_discoveryFeedEpoch || (daily && sessionEpoch != m_sessionEpoch)) return;
+        if (!response.value("ok").toBool()) { emit discoverySectionReady(section, {}, {}, failureText(response)); return; }
+        const auto body = response.value("body").toObject();
+        QVariantList items;
+        QList<TrackRecord> tracks;
+        QSet<QString> ids;
+        if (section == "newSongs" || section == "dailySongs") {
+            const auto songs = section == "dailySongs"
+                ? body.value("data").toObject().value("dailySongs").toArray() : body.value("data").toArray();
+            const QJsonObject adapted{{"code", 200}, {"result", QJsonObject{{"songs", songs}}}};
+            const auto parsed = parseNeteaseSearch(QJsonDocument(adapted).toJson());
+            for (const auto &track : parsed) {
+                if (track.providerId == "0" || track.title.isEmpty() || ids.contains(track.providerId)) continue;
+                ids.insert(track.providerId); tracks.append(track);
+                items.append(QVariantMap{{"providerId", track.providerId}, {"kind", "song"},
+                    {"title", track.title}, {"artist", track.artist}, {"artwork", track.artworkUrl},
+                    {"durationMs", track.durationMs}, {"album", track.album}, {"source", "NetEase"}});
+                if (items.size() >= 12) break;
+            }
+        } else {
+            const auto entries = body.value(section == "charts" ? "list" : section == "dailyPlaylists" ? "recommend" : "result").toArray();
+            for (const auto &value : entries) {
+                const auto entry = value.toObject();
+                const QString id = QString::number(entry.value("id").toVariant().toLongLong());
+                const QString title = entry.value("name").toString();
+                if (id == "0" || title.isEmpty() || ids.contains(id)) continue;
+                ids.insert(id);
+                const QString description = entry.value("description").toString(entry.value("copywriter").toString());
+                QString artist = entry.value("creator").toObject().value("nickname").toString();
+                if (artist.isEmpty()) artist = entry.value("updateFrequency").toString();
+                items.append(QVariantMap{{"providerId", id}, {"kind", "playlist"}, {"title", title},
+                    {"artist", artist}, {"description", description}, {"source", "NetEase"},
+                    {"artwork", entry.value("coverImgUrl").toString(entry.value("picUrl").toString())},
+                    {"totalCount", entry.value("trackCount").toInt()}});
+                if (items.size() >= 12) break;
+            }
+        }
+        emit discoverySectionReady(section, items, tracks,
+            items.isEmpty() ? tr("No items returned by NetEase. Retry later.") : QString{});
     });
 }
 
