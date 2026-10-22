@@ -129,6 +129,18 @@ ApplicationWindow {
         function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
         function onPreparedPlaylistTrackSaved() { addDialog.close() }
     }
+    Connections {
+        target: music.account
+        function onSessionChanged() {
+            // The draft belongs to the former account context; never carry it
+            // into the new session or into another source's account page.
+            window.restoringSourceSearch = true
+            window.rememberSourceSearch("netease", "")
+            onlinePage.queryText = ""
+            if (window.selectedSource === "netease") search.clear()
+            window.restoringSourceSearch = false
+        }
+    }
     readonly property real playerContentInset: player.height + 32 + (music.errorMessage.length > 0 || music.scanning ? 36 : 0)
     readonly property color shellColor: AppTheme.dark ? "#242426" : "#f2f2f4"
     readonly property color contentColor: AppTheme.dark ? "#1c1c1e" : "#ffffff"
@@ -202,9 +214,15 @@ ApplicationWindow {
                 OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
                 SourceDemoPage {
                     anchors.fill: parent; visible: window.destination === "sourceDemo"
+                    sourceId: window.selectedSource
+                    entryId: window.selectedSourceEntry
+                    requiresLogin: window.sourcePrototypeEntry.login === true
+                    authenticated: window.selectedSource === "netease" && music.account.authenticated
                     sourceName: window.sourceLabel(window.activeSource)
                     entryName: window.sourcePrototypeEntry.en ? window.sourceLabel(window.sourcePrototypeEntry) : ""
                     connectionStatus: window.activeSource.status
+                    bottomContentInset: window.playerContentInset
+                    onAccountRequested: accountDialog.open()
                 }
                 OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row)
                     onQueryTextChanged: {
@@ -364,6 +382,12 @@ ApplicationWindow {
                                 Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4
                                 text: window.sourceLabel(sourceSection.modelData)
                                 color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold
+                            }
+                            Label {
+                                Layout.fillWidth: true; Layout.leftMargin: MusicColors.sidebarControlInset
+                                visible: window.selectedSource === "netease" && sourceSection.modelData.en === "My Music"
+                                text: music.account.authenticated ? qsTr("Account menus · demo") : qsTr("Sign in required · demo")
+                                color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
                             }
                             Repeater {
                                 model: sourceSection.modelData.entries

@@ -18,6 +18,8 @@ export function sections(id) {
             entry("liked", "Liked songs", "我喜欢的音乐", "demo", "prototype", true),
             entry("created", "Created playlists", "创建的歌单", "demo", "prototype", true),
             entry("collected", "Collected playlists", "收藏的歌单", "demo", "prototype", true),
+            entry("albums", "Collected albums", "收藏的专辑", "demo", "prototype", true),
+            entry("artists", "Followed artists", "关注的歌手", "demo", "prototype", true),
             entry("history", "Recently played", "最近播放", "demo", "prototype", true)]}
     ]
     if (id === "bilibili") return [

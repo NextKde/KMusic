@@ -33,3 +33,9 @@ Round4 isolates search drafts for the two integrated providers. NetEase navigati
 search submits on Enter; local input filters imported files. Unsupported source
 search is disabled, not routed to another backend. Ctrl+F respects source scope;
 Ctrl+O/import switches to local. Multiple account/server search is not integrated.
+
+Round5 separates anonymous browsing from account menus, including daily picks,
+likes, created/collected playlists, collected albums, followed artists and recent
+plays. Real sign-in remains available; signed-in collection pages explicitly stay
+unintegrated. Session changes clear NetEase drafts without clearing local drafts.
+No account collections were fetched or fabricated, and no user scan was performed.
