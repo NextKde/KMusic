@@ -330,8 +330,8 @@ ApplicationWindow {
                 Label { text: floatingHeader.heading; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
                 LiquidActionButton {
                     id: headerActions
-                    Layout.preferredWidth: platformButton.visible ? 80 : 40
-                    implicitHeight: 36; materialForm: false
+                    Layout.preferredWidth: platformButton.visible ? 72 : 36
+                    implicitHeight: 32; materialForm: false
                     backdrop: sidebarBackdrop; liquidIntensity: "strong"
                     scale: 1; hoverEnabled: false
                     leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0
@@ -340,29 +340,29 @@ ApplicationWindow {
                         spacing: 0
                         Button {
                             id: headerSearchButton
-                            Layout.preferredWidth: 40; Layout.minimumWidth: 0; Layout.fillHeight: true
+                            Layout.preferredWidth: 36; Layout.minimumWidth: 0; Layout.fillHeight: true
                             padding: 0
                             enabled: window.selectedSource === "netease" || window.selectedSource === "local"
                             Accessible.name: Language.text("Search", "搜索")
                             onClicked: searchPopup.open()
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
                             contentItem: Item {
-                                implicitWidth: 16; implicitHeight: 16
-                                VectorIcon { anchors.centerIn: parent; width: 16; height: 16; name: "search"; size: 16; color: AppTheme.text }
+                                implicitWidth: 14; implicitHeight: 14
+                                VectorIcon { anchors.centerIn: parent; width: 14; height: 14; name: "search"; size: 14; color: AppTheme.text }
                             }
                         }
                         Rectangle { visible: platformButton.visible; implicitWidth: 1; Layout.preferredHeight: 16; color: AppTheme.border }
                         Button {
                             id: platformButton
-                            Layout.preferredWidth: 39; Layout.minimumWidth: 0; Layout.fillHeight: true
+                            Layout.preferredWidth: 35; Layout.minimumWidth: 0; Layout.fillHeight: true
                             padding: 0
                             visible: window.navigationArea === "discover" || window.navigationArea === "personal"
                             Accessible.name: Language.text("Switch platform", "切换平台")
                             // Reserved icon only; platform behavior will be defined later.
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
                             contentItem: Item {
-                                implicitWidth: 16; implicitHeight: 16
-                                VectorIcon { anchors.centerIn: parent; width: 16; height: 16; name: "repeat"; size: 16; color: AppTheme.text }
+                                implicitWidth: 14; implicitHeight: 14
+                                VectorIcon { anchors.centerIn: parent; width: 14; height: 14; name: "repeat"; size: 14; color: AppTheme.text }
                             }
 
                         }
@@ -371,7 +371,7 @@ ApplicationWindow {
                 Button {
                     id: headerAvatar
                     padding: 0
-                    Layout.preferredWidth: 32; Layout.preferredHeight: 32
+                    Layout.preferredWidth: 28; Layout.preferredHeight: 28
                     Layout.leftMargin: -12
                     visible: window.navigationArea === "discover" || window.navigationArea === "personal"
                     readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
@@ -382,7 +382,7 @@ ApplicationWindow {
                     }
                     background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
                     contentItem: Item {
-                        Image { anchors.centerIn: parent; width: 18; height: 18; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
+                        Image { anchors.centerIn: parent; width: 16; height: 16; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
                         Image {
                             id: avatarImage
                             anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
