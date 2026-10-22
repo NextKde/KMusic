@@ -169,7 +169,7 @@ ApplicationWindow {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
             Item {
-                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 0 : floatingHeader.visible ? 98 : 30
+                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 0 : floatingHeader.visible ? 51 : 30
                 NavigationHomePage {
                     anchors.fill: parent
                     visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
@@ -194,7 +194,7 @@ ApplicationWindow {
                 }
                 DiscoveryPage {
                     id: discover
-                    showHeading: false; topContentInset: 98
+                    showHeading: false; topContentInset: 51
                     bottomContentInset: window.playerContentInset
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
@@ -315,7 +315,7 @@ ApplicationWindow {
         }
         Item {
             id: floatingHeader
-            x: 236; y: 30; width: parent.width - x; height: 52
+            x: 236; y: 0; width: parent.width - x; height: 35
             visible: window.destination !== "now" && window.destination !== "onlineAlbum" && window.destination !== "online"
             readonly property string heading: window.destination === "new" ? Language.text("Discover", "发现")
                 : window.destination === "personalHome" ? Language.text("Personal", "个人")
@@ -327,7 +327,7 @@ ApplicationWindow {
                 : window.destination === "albums" ? Language.text("Albums", "专辑")
                 : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
             Item {
-                x: 0; y: -30; width: parent.width; height: parent.height + 30
+                anchors.fill: parent
                 clip: true
                 // One continuous material behind the window chrome and toolbar.
                 // Crop the sampled surface's antialiased edge at this flush seam.
@@ -343,7 +343,12 @@ ApplicationWindow {
                 }
             }
             RowLayout {
-                anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; spacing: 24
+                parent: appCanvas
+                z: 10
+                x: floatingHeader.x + 32; y: 0
+                width: floatingHeader.width - 180; height: floatingHeader.height
+                visible: floatingHeader.visible
+                spacing: 24
                 LiquidActionButton {
                     id: headerActions
                     Layout.preferredWidth: platformButton.visible ? 72 : 36
@@ -513,7 +518,7 @@ ApplicationWindow {
                     padding: 0
                     width: 24; height: 24
                     anchors.right: parent.right; anchors.rightMargin: 106
-                    y: 4
+                    y: 5.5
                     visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
                     readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
                     Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
