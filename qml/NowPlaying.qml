@@ -168,14 +168,85 @@ Item {
                 Label { anchors.centerIn: parent; visible: page.music.queueModel.count <= page.music.queueIndex + 1; width: parent.width - 32; text: qsTr("No more songs queued. Add music from an album or search."); wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; color: page.secondary }
             }
             ListView {
+                id: lyricsView
                 Layout.fillWidth: true; Layout.fillHeight: true; visible: page.presentationMode === 1
                 clip: true; model: page.music.lyrics; currentIndex: page.music.currentLyricIndex
-                highlightRangeMode: ListView.ApplyRange; preferredHighlightBegin: height * .4; preferredHighlightEnd: height * .6
-                delegate: Label {
+                spacing: 8
+                cacheBuffer: 120
+                // Fixed line metrics keep emphasis from reflowing the lyric layout.
+                header: Item { height: lyricsView.height * .42; width: 1 }
+                footer: Item { height: lyricsView.height * .58; width: 1 }
+                property bool browsing: false
+                function followCurrent() {
+                    if (!visible || !page.visible || browsing || !currentItem) return
+                    const target = currentItem.y + currentItem.height / 2 - height * .44
+                    followAnimation.stop()
+                    if (AppTheme.reduceMotion) contentY = target
+                    else { followAnimation.to = target; followAnimation.start() }
+                }
+                onCurrentIndexChanged: Qt.callLater(followCurrent)
+                onCurrentItemChanged: Qt.callLater(followCurrent)
+                onHeightChanged: Qt.callLater(followCurrent)
+                onVisibleChanged: if (visible) Qt.callLater(followCurrent)
+                onMovementStarted: {
+                    browsing = true
+                    followAnimation.stop()
+                    resumeFollowing.stop()
+                }
+                onMovementEnded: resumeFollowing.restart()
+                Connections {
+                    target: page
+                    function onVisibleChanged() {
+                        if (page.visible) {
+                            lyricsView.browsing = false
+                            Qt.callLater(lyricsView.followCurrent)
+                        }
+                    }
+                }
+                Timer {
+                    id: resumeFollowing; interval: 3000
+                    onTriggered: { lyricsView.browsing = false; lyricsView.followCurrent() }
+                }
+                NumberAnimation {
+                    id: followAnimation; target: lyricsView; property: "contentY"
+                    duration: 680; easing.type: Easing.OutCubic
+                }
+                delegate: Item {
+                    id: lyricLine
                     required property var modelData; required property int index
-                    width: ListView.view.width; padding: 12
-                    text: modelData.text || ""; wrapMode: Text.WordWrap; font.pixelSize: index === page.music.currentLyricIndex ? 25 : 20
-                    color: index === page.music.currentLyricIndex ? page.foreground : page.secondary; font.weight: Font.DemiBold
+                    width: lyricsView.width
+                    height: lyricText.implicitHeight + 24
+                    readonly property int distance: Math.abs(index - lyricsView.currentIndex)
+                    readonly property bool active: index === lyricsView.currentIndex
+                    // Each line trails the common scroll slightly, without changing its layout slot.
+                    property real followedY: lyricsView.contentY
+                    Behavior on followedY {
+                        enabled: !AppTheme.reduceMotion && !lyricsView.browsing && page.visible
+                        NumberAnimation { duration: 70 + Math.min(lyricLine.distance, 5) * 35; easing.type: Easing.OutCubic }
+                    }
+                    readonly property real lag: lyricsView.browsing ? 0 : lyricsView.contentY - followedY
+                    readonly property real screenCenter: y + height / 2 - lyricsView.contentY + lag
+                    readonly property real edgeFade: Math.max(0, Math.min(1, screenCenter / 48, (lyricsView.height - screenCenter) / 48))
+                    property real emphasis: active ? 1 : .82
+                    property real lineOpacity: active ? 1 : Math.max(.27, .64 - distance * .07)
+                    property real softness: active || lyricsView.browsing ? 0 : Math.min(.42, distance * .085)
+                    Behavior on emphasis { NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 380; easing.type: Easing.OutCubic } }
+                    Behavior on lineOpacity { NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 380 } }
+                    Behavior on softness { NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 450 } }
+                    transform: Translate { y: lyricLine.lag }
+                    opacity: edgeFade * lineOpacity
+                    Label {
+                        id: lyricText
+                        x: 12; y: 12; width: parent.width - 24
+                        text: lyricLine.modelData.text || ""
+                        wrapMode: Text.WordWrap; font.pixelSize: 25; font.weight: Font.DemiBold
+                        color: page.foreground
+                        scale: lyricLine.emphasis; transformOrigin: Item.Left
+                        layer.enabled: lyricLine.softness > .001
+                        layer.effect: MultiEffect {
+                            blurEnabled: true; blurMax: 16; blur: lyricLine.softness
+                        }
+                    }
                 }
                 ColumnLayout {
                     anchors.centerIn: parent; width: parent.width - 32; visible: parent.count === 0; spacing: 12
