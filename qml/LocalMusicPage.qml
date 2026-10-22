@@ -47,6 +47,12 @@ ColumnLayout {
             delegate: MusicActionButton {
                 required property var modelData
                 text: modelData.label
+                materialForm: true
+                flat: !checked
+                accentColor: AppTheme.dark ? "#48484a" : "#e8e8ed"
+                surfaceColor: AppTheme.dark ? "#303032" : "#f2f2f5"
+                textColor: checked ? AppTheme.text : AppTheme.mutedText
+                font.weight: checked ? Font.DemiBold : Font.Normal
                 checked: page.section === modelData.id || (page.section === "detail" && page.returnSection === modelData.id) || (["playlist", "favorites", "recent"].indexOf(page.section) >= 0 && modelData.id === "playlists")
                 onClicked: page.openSection(modelData.id)
             }
