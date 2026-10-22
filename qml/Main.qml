@@ -370,6 +370,7 @@ ApplicationWindow {
                 radius: height / 2
                 // Start the outer shadow at the glass silhouette, without a gap.
                 outwardOffset: 0
+                shadowColor: AppTheme.dark ? "#909094" : "#000000"
                 shadowOpacity: .13
                 softness: 12; spread: 32
                 offset: Qt.vector2d(0, 0)
