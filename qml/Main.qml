@@ -540,7 +540,7 @@ ApplicationWindow {
             visible: window.destination === "now"; music: window.music
             onCloseRequested: window.closeNowPlaying()
         }
-        WindowChrome { width: parent.width; targetWindow: window }
+        WindowChrome { width: parent.width; y: floatingHeader.visible ? floatingHeader.height / 2 - 17.5 : 0; targetWindow: window }
 
     }
     SourceConnectionDialog {
