@@ -150,7 +150,9 @@ ScrollView {
             FeedState { state: page.feed("playlists") }
             Flickable {
                 id: featuredPlaylists
-                Layout.fillWidth: true; Layout.preferredHeight: 250
+                readonly property real cardWidth: (width - 40) / 2.5
+                readonly property real cardHeight: cardWidth * 0.75
+                Layout.fillWidth: true; Layout.preferredHeight: cardHeight
                 visible: page.feed("playlists").items.length > 0
                 contentWidth: featuredRow.width; contentHeight: height
                 clip: true; boundsBehavior: Flickable.StopAtBounds
@@ -164,7 +166,7 @@ ScrollView {
                         id: feature
                         required property var modelData
                         required property int index
-                        width: (featuredPlaylists.width - 2 * featuredRow.spacing) / 2.5; height: 250
+                        width: featuredPlaylists.cardWidth; height: featuredPlaylists.cardHeight
                         hoverEnabled: true
                         Accessible.name: modelData.title || ""
                         onClicked: page.collectionRequested("playlists", index)

@@ -328,7 +328,7 @@ ApplicationWindow {
                 : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
             Rectangle {
                 anchors.fill: parent
-                color: window.contentColor
+                color: AppTheme.withAlpha(window.contentColor, .90)
             }
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; spacing: 24
