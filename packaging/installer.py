@@ -95,7 +95,7 @@ def dependencies(work):
             qmake = qf.read_text()
             qml = pathlib.Path(run([qmake,'-query','QT_INSTALL_QML']))
             plugins = pathlib.Path(run([qmake,'-query','QT_INSTALL_PLUGINS']))
-            for module in ['QtQuick/Effects','Qt5Compat/GraphicalEffects','QtQuick/Controls','QtQuick/Dialogs','QtCore']:
+            for module in ['QtQuick','QtQuick/Effects','Qt5Compat/GraphicalEffects','QtQuick/Controls','QtQuick/Dialogs','QtQuick/Layouts','QtQuick/Window','QtQuick/Templates','QtQml/WorkerScript','QtCore']:
                 if not (qml/module/'qmldir').is_file(): add('QML:'+module, 'present')
             for pattern in ['sqldrivers/libqsqlite.so','imageformats/libqsvg.so']:
                 if not (plugins/pattern).exists(): add('Qt plugin:'+pattern,'present')
@@ -197,7 +197,7 @@ def main():
             raise
         emit(success=True,code='INSTALLED',version=revision,changed=True,desktopId='kmusic.desktop',logPath=log_path)
 
-if __name__ == '__main__':
+def entrypoint():
     def interrupted(signum, frame):
         raise KeyboardInterrupt()
     signal.signal(signal.SIGTERM, interrupted)
@@ -210,3 +210,6 @@ if __name__ == '__main__':
         code = 'PERMISSION_DENIED' if isinstance(e, PermissionError) else ('UNINSTALL_FAILED' if action=='uninstall' else 'INSTALL_FAILED' if stage=='install' else 'INTERNAL_ERROR')
         if log: log.write(repr(e)+'\n'); log.flush()
         emit(success=False,code=code,stage=stage,message='Operation failed; see the log.',logPath=log_path); sys.exit(CODES[code])
+
+if __name__ == '__main__':
+    entrypoint()
