@@ -1,0 +1,50 @@
+# 音源导航与能力调研
+
+2026-10-22；本轮用户要求：先调研，完成简单菜单与可切换demo，10个小批次，约一小时后用户看效果。无截图、无自动视觉验收；保留Gallery共享材质。接口存在≠当前App已接通≠在线服务可用。
+
+## 信息架构
+
+左侧先选择来源：在线音乐（网易云/B站）、本地音乐、媒体源（具体服务器）。选定来源后才显示该来源的浏览和账号目录。页面标题、搜索占位符、空态都注明当前来源；不提供默认跨源搜索。队列和本机管理收藏/历史可跨源，但与来源账号内的收藏/历史分离。
+
+## 能力矩阵
+
+| 来源 | 浏览 | 账号内容 | 搜索边界 | KMusic现状 |
+|---|---|---|---|---|
+| 网易云 | 发现、歌曲/专辑/歌手/歌单 | 每日推荐、喜欢的歌曲、创建/收藏歌单、收藏专辑/歌手、最近播放 | 当前网易云账号/目录 | 发现新碟、搜索详情、URL歌词、二维码会话已接；账号内容接口尚未接 |
+| B站 | 视频、UP主、合集 | 收藏夹、历史等为设计目标，不能等同网易云歌单/歌手 | B站内容 | 未接入；本轮只做标明状态的交互示意 |
+| 本地 | 歌曲、文件夹、专辑、艺术家 | 无平台账号；标签/内嵌封面可存在，缺失时降级 | 本地导入文件 | 已接source=local歌曲/专辑/艺术家；文件夹浏览需按现有能力整理 |
+| Navidrome/OpenSubsonic | 专辑、艺术家、歌曲、歌单；目录API可能为虚拟目录 | 服务器账号收藏/歌单 | 单个服务器实例 | 未接入；demo不连接用户服务器 |
+| Jellyfin | 服务器音乐库及其音乐实体 | 服务器用户收藏等依接口 | 单个服务器音乐库 | 未接入 |
+| WebDAV | 文件夹与音频文件 | 连接凭据，不等于音乐平台账号；默认无专辑目录接口 | 单个目录，索引前不声称完整全文搜索 | 未接入 |
+
+## 网易云一手依据
+
+- 当前本地归因参考SPlayer-Next 05a4e592：.task/reference/electron/main/apis/netease/index.ts列出likelist、record_recent_song、user_playlist、recommend_songs。现有helper是独立allowlist，不能把参考项目支持当作App已支持。
+- [每日推荐模块](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/blob/main/module/recommend_songs.js)：每日歌曲，不等于匿名新碟。
+- [用户歌单模块](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/blob/main/module/user_playlist.js)：用户歌单；创建/收藏需按返回归属划分。
+- [喜欢歌曲模块](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/blob/main/module/likelist.js)：返回喜欢的歌曲ID，不是完整歌曲详情。
+- [最近播放模块](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/blob/main/module/record_recent_song.js)：recent songs，与[user_record](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/blob/main/module/user_record.js)的周/累计听歌排行不是同一个概念。
+- [库接口声明](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/blob/main/interface.d.ts)含album_sublist/artist_sublist等；本轮不调用未接入账号接口、不冒称扫码已完成。
+
+## B站调研边界
+
+[SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)当前为deprecated且删除接口文档；[Nemo2011/bilibili-api](https://github.com/Nemo2011/bilibili-api)当前也已关停。搜索缓存中的旧函数不能作为当前接口可用证据。仅保留视频/UP主/合集/账号收藏夹等明确标识的导航设计，不能写成已实现音乐破解或可播放。后续应单独确认可维护的适配来源。
+
+## 媒体源一手依据
+
+- [OpenSubsonic端点](https://opensubsonic.netlify.app/docs/endpoints/)定义search3、getAlbum/getArtist、getPlaylists、getStarred2等；是否提供须按具体服务器能力显示。
+- [Navidrome API说明](https://github.com/navidrome/website/blob/master/content/en/docs/developers/subsonic-api.md)：目录接口可能模拟Artist/Album树，不保证物理目录；stream请求不等于已记录播放，需播放上报。
+- [Jellyfin音乐库](https://jellyfin.org/docs/general/server/media/music.html/)说明标签和内嵌封面；API站此次403未读到，不据此补全操作承诺。
+
+## 十轮工作单
+
+1. 已完成：在线查证、当前helper能力盘点、记录证据与不确定项。
+2. 已完成：音源与能力声明模型；区分真实接入、需登录、示意、未连接，搜索由来源决定。
+3. 来源选择菜单：三类清晰，来源实例与叶子目录分开，避免把账号目录塞满常驻侧栏。
+4. 当前来源搜索：保留query和来源边界，不跨网易云/B站/本地/服务器串用结果。
+5. 网易云目录：浏览/我的音乐分开；账号未接入功能以明确空态展示，真实登录入口保留。
+6. B站demo：视频/UP主/合集/收藏夹语义，不伪造专辑/歌手或播放。
+7. 媒体源demo：服务器/文件服务分开，连接配置仅示意不收集真实凭据。
+8. 本地和本机管理：文件音乐库与跨来源收藏/历史/歌单说明明确，保留现有操作。
+9. 收敛标题、空态、入口与键盘可达性源代码；说明需要用户检查的部分，不做自动交互验收。
+10. 构建、打开最终demo，记录二进制版本，停止本次唤醒，交用户验收。构建成功不算视觉通过。
