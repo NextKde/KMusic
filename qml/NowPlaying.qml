@@ -167,25 +167,26 @@ Item {
                 }
                 Label { anchors.centerIn: parent; visible: page.music.queueModel.count <= page.music.queueIndex + 1; width: parent.width - 32; text: qsTr("No more songs queued. Add music from an album or search."); wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; color: page.secondary }
             }
-            ListView {
+            Flickable {
                 id: lyricsView
                 Layout.fillWidth: true; Layout.fillHeight: true; visible: page.presentationMode === 1
-                clip: true; model: page.music.lyrics; currentIndex: page.music.currentLyricIndex
-                spacing: 8
-                cacheBuffer: 120
-                // Fixed line metrics keep emphasis from reflowing the lyric layout.
-                header: Item { height: lyricsView.height * .42; width: 1 }
-                footer: Item { height: lyricsView.height * .58; width: 1 }
+                clip: true
+                contentWidth: width
+                contentHeight: lyricColumn.height
+                boundsBehavior: Flickable.StopAtBounds
+                readonly property int currentIndex: page.music.currentLyricIndex
+                readonly property int count: lyricRepeater.count
                 property bool browsing: false
                 function followCurrent() {
-                    if (!visible || !page.visible || browsing || !currentItem) return
-                    const target = currentItem.y + currentItem.height / 2 - height * .44
-                    followAnimation.stop()
-                    if (AppTheme.reduceMotion) contentY = target
-                    else { followAnimation.to = target; followAnimation.start() }
+                    if (!visible || !page.visible || browsing) return
+                    const line = lyricRepeater.itemAt(currentIndex)
+                    if (!line) return
+                    const target = Math.max(0, Math.min(contentHeight - height,
+                        line.y + line.height / 2 - height * .44))
+                    if (AppTheme.reduceMotion) { followAnimation.stop(); contentY = target }
+                    else { followAnimation.to = target; followAnimation.running = true }
                 }
                 onCurrentIndexChanged: Qt.callLater(followCurrent)
-                onCurrentItemChanged: Qt.callLater(followCurrent)
                 onHeightChanged: Qt.callLater(followCurrent)
                 onVisibleChanged: if (visible) Qt.callLater(followCurrent)
                 onMovementStarted: {
@@ -207,11 +208,21 @@ Item {
                     id: resumeFollowing; interval: 3000
                     onTriggered: { lyricsView.browsing = false; lyricsView.followCurrent() }
                 }
-                NumberAnimation {
+                // One scroll owner; retargeting preserves velocity instead of restarting each line.
+                SmoothedAnimation {
                     id: followAnimation; target: lyricsView; property: "contentY"
-                    duration: 680; easing.type: Easing.OutCubic
+                    duration: 900; velocity: -1
                 }
-                delegate: Item {
+                Column {
+                    id: lyricColumn
+                    width: lyricsView.width; spacing: 8
+                    onHeightChanged: Qt.callLater(lyricsView.followCurrent)
+                    Item { width: 1; height: lyricsView.height * .44 }
+                    Repeater {
+                        id: lyricRepeater
+                        model: page.music.lyrics
+                        onItemAdded: Qt.callLater(lyricsView.followCurrent)
+                        delegate: Item {
                     id: lyricLine
                     required property var modelData; required property int index
                     width: lyricsView.width
@@ -222,7 +233,7 @@ Item {
                     property real followedY: lyricsView.contentY
                     Behavior on followedY {
                         enabled: !AppTheme.reduceMotion && !lyricsView.browsing && page.visible
-                        NumberAnimation { duration: 70 + Math.min(lyricLine.distance, 5) * 35; easing.type: Easing.OutCubic }
+                        SmoothedAnimation { duration: 90 + Math.min(lyricLine.distance, 5) * 30; velocity: -1 }
                     }
                     readonly property real lag: lyricsView.browsing ? 0 : lyricsView.contentY - followedY
                     readonly property real screenCenter: y + height / 2 - lyricsView.contentY + lag
@@ -242,11 +253,14 @@ Item {
                         wrapMode: Text.WordWrap; font.pixelSize: 25; font.weight: Font.DemiBold
                         color: page.foreground
                         scale: lyricLine.emphasis; transformOrigin: Item.Left
-                        layer.enabled: lyricLine.softness > .001
+                        layer.enabled: lyricLine.softness > .001 && lyricLine.screenCenter > -lyricLine.height && lyricLine.screenCenter < lyricsView.height + lyricLine.height
                         layer.effect: MultiEffect {
                             blurEnabled: true; blurMax: 16; blur: lyricLine.softness
                         }
                     }
+                }
+                    }
+                    Item { width: 1; height: lyricsView.height * .56 }
                 }
                 ColumnLayout {
                     anchors.centerIn: parent; width: parent.width - 32; visible: parent.count === 0; spacing: 12
