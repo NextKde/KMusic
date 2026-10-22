@@ -8,6 +8,8 @@ ScrollView {
     property string sourceId: ""
     property string entryId: ""
     property string sourceName: ""
+    property string instanceName: ""
+    readonly property bool mediaSource: ["navidrome", "jellyfin", "webdav"].indexOf(sourceId) >= 0
     property string entryName: ""
     property string connectionStatus: "prototype"
     property bool requiresLogin: false
@@ -19,6 +21,7 @@ ScrollView {
     onSourceIdChanged: { prototypeQuery = ""; submittedPrototypeQuery = ""; prototypeContentKind = "video" }
     onEntryIdChanged: { prototypeQuery = ""; submittedPrototypeQuery = "" }
     signal accountRequested()
+    signal connectionRequested()
     contentWidth: availableWidth
     clip: true
     function neteaseDescription() {
@@ -44,6 +47,11 @@ ScrollView {
         default: return ""
         }
     }
+    function mediaDescription() {
+        if (sourceId === "webdav") return qsTr("WebDAV exposes folders and files. It does not provide artist, album, recommendation or account-favorite categories by itself.")
+        if (sourceId === "navidrome") return qsTr("Navidrome / OpenSubsonic is a personal music server. Albums, artists, playlists and favorites belong to that server and its user; available categories depend on the connection.")
+        return qsTr("Jellyfin provides server media libraries. KMusic would select a music library within that server, with its own account and library scope.")
+    }
     ColumnLayout {
         width: page.availableWidth - 64; x: 32; spacing: 16
         Item { implicitHeight: 24 }
@@ -58,8 +66,24 @@ ScrollView {
         }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap
-            text: page.sourceId === "netease" ? page.neteaseDescription() : page.sourceId === "bilibili" ? page.biliDescription() : qsTr("This source has its own library and account scope.")
+            text: page.sourceId === "netease" ? page.neteaseDescription() : page.sourceId === "bilibili" ? page.biliDescription() : page.mediaSource ? page.mediaDescription() : qsTr("This source has its own library and account scope.")
             color: AppTheme.mutedText; font.pixelSize: 14
+        }
+        ColumnLayout {
+            visible: page.mediaSource
+            Layout.fillWidth: true; spacing: 12
+            Label { text: qsTr("Source connection"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
+            Label {
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                text: page.instanceName.length > 0 ? qsTr("%1 · example only, not connected").arg(page.instanceName) : qsTr("No server is connected. Select an example to preview the connection menu.")
+                color: AppTheme.mutedText
+            }
+            MusicActionButton { text: qsTr("Preview connection"); onClicked: page.connectionRequested() }
+            Label {
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                text: page.sourceId === "webdav" ? qsTr("Browse: folders → files. Search would stay in this file source after indexing.") : qsTr("Browse: server → music library → albums / artists / playlists. Search would stay inside this server.")
+                color: AppTheme.mutedText
+            }
         }
         ColumnLayout {
             visible: page.sourceId === "bilibili" && page.entryId === "search"
@@ -106,6 +130,7 @@ ScrollView {
             Layout.fillWidth: true; wrapMode: Text.WordWrap
             text: page.sourceId === "bilibili"
                 ? qsTr("Bilibili integration is not available in this build. No Bilibili session, favorites, history or video playback is being simulated; NetEase sign-in cannot sign you into Bilibili.")
+                : page.mediaSource ? qsTr("Media source adapters are not connected in this build. Example connections do not contain a real server, account or music library.")
                 : qsTr("Menu preview only. Account collections have not been fetched, and no recommendations, playlists or playback results are being fabricated. Signing in does not yet connect these collection pages.")
             color: AppTheme.mutedText; font.pixelSize: 13
         }

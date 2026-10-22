@@ -44,3 +44,8 @@ Round6 adds Bilibili-specific descriptions and scoped video/uploader/collection
 search preview without network requests or fake results. Its footer entry remains
 Bilibili-only and never opens NetEase login or shows a NetEase avatar. Local/media
 sources hide the online account entry. No Bilibili adapter or credentials added.
+
+Round7 adds a media connection preview. Music servers expose server libraries;
+WebDAV exposes folders/files, not an album API. The dialog accepts only a session
+example label and shows a read-only .invalid address. No server requests, saved
+credentials or fabricated library. Real multi-instance adapters remain absent.

@@ -35,6 +35,7 @@ ApplicationWindow {
         }
     }
     property var sourcePrototypeEntry: ({})
+    property var demoMediaAliases: ({})
     readonly property bool chineseNavigation: Qt.locale().name.startsWith("zh")
     readonly property var activeSource: SourceCatalog.source(selectedSource)
     function sourceLabel(item) { return SourceCatalog.label(item, chineseNavigation) }
@@ -215,6 +216,7 @@ ApplicationWindow {
                 SourceDemoPage {
                     anchors.fill: parent; visible: window.destination === "sourceDemo"
                     sourceId: window.selectedSource
+                    instanceName: window.demoMediaAliases[window.selectedSource] || ""
                     entryId: window.selectedSourceEntry
                     requiresLogin: window.sourcePrototypeEntry.login === true
                     authenticated: window.selectedSource === "netease" && music.account.authenticated
@@ -223,6 +225,11 @@ ApplicationWindow {
                     connectionStatus: window.activeSource.status
                     bottomContentInset: window.playerContentInset
                     onAccountRequested: accountDialog.open()
+                    onConnectionRequested: {
+                        sourceConnectionDialog.sourceId = window.selectedSource
+                        sourceConnectionDialog.sourceName = window.sourceLabel(window.activeSource)
+                        sourceConnectionDialog.open()
+                    }
                 }
                 OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row)
                     onQueryTextChanged: {
@@ -508,6 +515,14 @@ ApplicationWindow {
             onCloseRequested: window.closeNowPlaying()
         }
         WindowChrome { width: parent.width; targetWindow: window }
+    }
+    SourceConnectionDialog {
+        id: sourceConnectionDialog
+        onUseExample: alias => {
+            const aliases = Object.assign({}, window.demoMediaAliases)
+            aliases[sourceId] = alias
+            window.demoMediaAliases = aliases
+        }
     }
     AccountDialog { id: accountDialog; account: music.account }
     KosWindowResizeHandles { targetWindow: window }
