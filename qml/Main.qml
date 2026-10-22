@@ -168,7 +168,7 @@ ApplicationWindow {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
             Item {
-                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 30 : floatingHeader.visible ? 118 : 30
+                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 30 : floatingHeader.visible ? 98 : 30
                 NavigationHomePage {
                     anchors.fill: parent
                     visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
@@ -193,7 +193,7 @@ ApplicationWindow {
                 }
                 DiscoveryPage {
                     id: discover
-                    showHeading: false; topContentInset: 88
+                    showHeading: false; topContentInset: 68
                     bottomContentInset: window.playerContentInset
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
@@ -310,7 +310,7 @@ ApplicationWindow {
         }
         Item {
             id: floatingHeader
-            x: 236; y: 30; width: parent.width - x; height: 72
+            x: 236; y: 30; width: parent.width - x; height: 52
             visible: window.destination !== "now" && window.destination !== "onlineAlbum" && window.destination !== "online"
             readonly property string heading: window.destination === "new" ? Language.text("Discover", "发现")
                 : window.destination === "personalHome" ? Language.text("Personal", "个人")
