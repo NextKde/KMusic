@@ -10,6 +10,12 @@ ScrollView {
     readonly property var server: music.mediaServer
     property real bottomContentInset: 0
     property string view: "albums"
+    readonly property bool canSubmitSearch: server.connected && !server.busy && query.text.trim().length > 0
+    function submitSearch() {
+        if (!canSubmitSearch) return
+        view = "search"
+        server.search(query.text.trim())
+    }
     contentWidth: availableWidth; clip: true
     ColumnLayout {
         x: 32; width: page.availableWidth - 64; spacing: 16
@@ -24,8 +30,8 @@ ScrollView {
         RowLayout {
             visible: page.server.connected; Layout.fillWidth: true
             MusicActionButton { text: Language.text("Albums", "专辑"); checked: page.view === "albums"; enabled: !page.server.busy; onClicked: { page.view = "albums"; page.server.browseAlbums() } }
-            MusicTextField { searchField: true; id: query; Layout.fillWidth: true; materialForm: true; placeholderText: Language.text("Search this server", "搜索当前服务器"); onAccepted: searchButton.clicked() }
-            MusicActionButton { id: searchButton; text: Language.text("Search", "搜索"); enabled: !page.server.busy; onClicked: { page.view = "search"; page.server.search(query.text) } }
+            MusicTextField { searchField: true; id: query; Layout.fillWidth: true; materialForm: true; placeholderText: Language.text("Search this server", "搜索当前服务器"); onAccepted: page.submitSearch() }
+            MusicActionButton { id: searchButton; text: Language.text("Search", "搜索"); enabled: page.canSubmitSearch; onClicked: page.submitSearch() }
         }
         Flow {
             visible: page.server.connected && page.view === "albums"; Layout.fillWidth: true; spacing: 16

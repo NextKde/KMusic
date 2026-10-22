@@ -11,6 +11,11 @@ Item {
     readonly property var reviewList: music.onlineSearchKind === "song" ? songContent.reviewList : collections
     property alias queryText: query.text
     function openQualityMenu() { qualitySelect.openMenu() }
+    readonly property bool canSubmitSearch: query.text.trim().length > 0 && !music.onlineSearching
+    function submitSearch() {
+        if (!canSubmitSearch) return
+        music.searchOnline(query.text.trim())
+    }
     Item {
         id: searchScrollScene
         anchors.fill: parent
@@ -61,9 +66,9 @@ Item {
                     id: query; objectName: "reviewOnlineQuery"
                     Layout.fillWidth: true; materialForm: true
                     placeholderText: qsTr("Search NetEase")
-                    onAccepted: page.music.searchOnline(text)
+                    onAccepted: page.submitSearch()
                 }
-                MusicActionButton { text: page.music.onlineSearching ? qsTr("Searching…") : qsTr("Search"); enabled: query.text.trim().length > 0 && !page.music.onlineSearching; onClicked: page.music.searchOnline(query.text) }
+                MusicActionButton { text: page.music.onlineSearching ? qsTr("Searching…") : qsTr("Search"); enabled: page.canSubmitSearch; onClicked: page.submitSearch() }
                 MusicSelect {
                     id: qualitySelect
                     visible: page.music.onlineSearchKind === "song"
