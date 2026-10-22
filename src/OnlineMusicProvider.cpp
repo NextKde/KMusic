@@ -241,6 +241,48 @@ void OnlineMusicProvider::loadDetail(const QString &songId) {
     });
 }
 
+void OnlineMusicProvider::loadPersonalSection(const QString &section, const QString &uid, int offset) {
+    const auto epoch = m_personalEpoch;
+    const auto sessionEpoch = m_sessionEpoch;
+    const auto generation = ++m_personalGenerations[section];
+    request("personal", {{"section", section}, {"uid", uid}, {"offset", offset}},
+        [this, section, offset, epoch, sessionEpoch, generation](const QJsonObject &response) {
+            if (epoch != m_personalEpoch || sessionEpoch != m_sessionEpoch
+                || generation != m_personalGenerations.value(section)) return;
+            if (!response.value("ok").toBool()) { emit personalSectionReady(section, offset, {}, {}, {}, failureText(response)); return; }
+            const auto body = response.value("body").toObject();
+            auto page = body.value("page").toObject().toVariantMap();
+            if (page.value("more").toBool() && page.value("nextOffset").toInt() <= offset) {
+                emit personalSectionReady(section, offset, {}, {}, {}, tr("NetEase returned a non-advancing page. Retry.")); return;
+            }
+            QVariantList items;
+            QList<TrackRecord> tracks;
+            if (section == "likedSongs" || section == "recentSongs") {
+                const auto addSong = [&items, &tracks](const TrackRecord &track, const QString &entryId, qint64 playedAt) {
+                    if (track.providerId == "0" || track.title.isEmpty()) return;
+                    tracks.append(track);
+                    items.append(QVariantMap{{"providerId", track.providerId}, {"title", track.title},
+                        {"artist", track.artist}, {"artwork", track.artworkUrl}, {"kind", "song"},
+                        {"source", "NetEase"}, {"album", track.album}, {"durationMs", track.durationMs},
+                        {"entryId", entryId.isEmpty() ? track.providerId : entryId}, {"playedAt", playedAt}});
+                };
+                if (section == "recentSongs") {
+                    for (const auto &value : body.value("records").toArray()) {
+                        const auto record = value.toObject();
+                        const QJsonObject adapted{{"code", 200}, {"result", QJsonObject{{"songs", QJsonArray{record.value("song")}}}}};
+                        const auto parsed = parseNeteaseSearch(QJsonDocument(adapted).toJson());
+                        if (!parsed.isEmpty()) addSong(parsed.first(), record.value("entryId").toString(), record.value("playedAt").toVariant().toLongLong());
+                    }
+                } else {
+                    const QJsonObject adapted{{"code", 200}, {"result", QJsonObject{{"songs", body.value("songs")}}}};
+                    const auto parsed = parseNeteaseSearch(QJsonDocument(adapted).toJson());
+                    for (const auto &track : parsed) addSong(track, {}, 0);
+                }
+            } else items = body.value("items").toArray().toVariantList();
+            emit personalSectionReady(section, offset, items, tracks, page, {});
+        });
+}
+
 void OnlineMusicProvider::loadDiscoverySection(const QString &section) {
     static const QHash<QString, QString> actions{{"playlists", "discoveryPlaylists"},
         {"newSongs", "discoveryNewSongs"}, {"charts", "discoveryCharts"},

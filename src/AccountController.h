@@ -25,6 +25,7 @@ public:
     QString storageMessage() const { return m_storageMessage; }
     bool cleanupRequired() const { return m_cleanupRequired; }
     bool authenticated() const { return m_state == "signedIn"; }
+    QString userId() const { return authenticated() ? m_userId : QString{}; } // C++ only, not a QML property
     Q_INVOKABLE void beginLogin();
     Q_INVOKABLE void cancelLogin();
     Q_INVOKABLE void logout();
@@ -44,5 +45,6 @@ private:
     QElapsedTimer m_expiry;
     quint64 m_generation = 0;
     bool m_cleanupRequired = false;
+    QString m_userId;
     QString m_state = "restoring", m_message, m_nickname, m_avatarUrl, m_image, m_key, m_storageMessage;
 };

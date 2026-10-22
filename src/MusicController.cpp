@@ -75,6 +75,10 @@ MusicController::MusicController(QObject *parent)
 {
     for (const auto &section : {"playlists", "newSongs", "charts", "dailySongs", "dailyPlaylists"})
         m_discoveryFeed.insert(section, QVariantMap{{"items", QVariantList{}}, {"loading", false}, {"error", QString{}}});
+    for (const auto &section : {"createdPlaylists", "savedPlaylists", "likedSongs", "recentSongs", "savedAlbums", "savedArtists"})
+        m_personalFeed.insert(section, QVariantMap{{"items", QVariantList{}}, {"loading", false},
+            {"error", tr("Sign in to NetEase to open Personal")}, {"more", false}, {"nextOffset", 0},
+            {"omittedCount", 0}, {"scopeLabel", QString::fromLatin1(section) == QLatin1String("recentSongs") ? tr("NetEase recent plays · latest up to 100") : tr("NetEase account")}});
     m_recentModel.setMode(QStringLiteral("queue"));
     m_favoritesModel.setMode(QStringLiteral("queue"));
     connect(this, &MusicController::currentTrackChanged, this, &MusicController::favoritesChanged);
@@ -223,6 +227,7 @@ void MusicController::initialize()
         QDir(cachePath).filePath(QStringLiteral("audio")));
     m_engine.setDownloadDirectory(m_audioCache->downloadDirectory());
     connect(&m_account, &AccountController::sessionChanged, this, [this] {
+        resetPersonal(); // Before UI's deferred refresh; invalidates old-account replies.
         // Clear private discovery data before refreshing on login, restore,
         // logout or expiry. The provider epoch rejects old-account replies.
         m_onlineProvider.cancelDiscoveryFeed();
@@ -255,6 +260,32 @@ void MusicController::initialize()
     connect(&m_onlineProvider, &OnlineMusicProvider::collectionsReady, this, [this](const QVariantList &rows) {
         m_onlineCollections = rows; emit onlineCollectionsChanged();
     });
+    connect(&m_onlineProvider, &OnlineMusicProvider::personalSectionReady, this,
+        [this](const QString &section, int offset, const QVariantList &items, const QList<TrackRecord> &tracks,
+               const QVariantMap &page, const QString &error) {
+            if (!m_account.authenticated() || !m_personalFeed.contains(section)) return;
+            auto state = m_personalFeed.value(section).toMap();
+            state.insert("loading", false); state.insert("error", error);
+            if (error.isEmpty()) {
+                QVariantList merged = offset > 0 ? state.value("items").toList() : QVariantList{};
+                QList<TrackRecord> songTracks = offset > 0 ? m_personalTracks.value(section) : QList<TrackRecord>{};
+                QSet<QString> seen;
+                for (const auto &value : std::as_const(merged)) seen.insert(value.toMap().value("entryId", value.toMap().value("providerId")).toString());
+                for (int i = 0; i < items.size(); ++i) {
+                    const auto item = items.at(i).toMap();
+                    const QString key = item.value("entryId", item.value("providerId")).toString();
+                    if (key.isEmpty() || seen.contains(key)) continue;
+                    seen.insert(key); merged.append(item);
+                    if (i < tracks.size()) songTracks.append(tracks.at(i));
+                }
+                const int omitted = (offset > 0 ? state.value("omittedCount").toInt() : 0) + page.value("omittedCount").toInt();
+                for (auto it = page.cbegin(); it != page.cend(); ++it) state.insert(it.key(), it.value());
+                state.insert("omittedCount", omitted); state.insert("items", merged); state.insert("loaded", merged.size());
+                m_personalTracks.insert(section, songTracks);
+            }
+            // Failed load-more preserves list, cursor, more and omitted count.
+            m_personalFeed.insert(section, state); emit personalChanged();
+        });
     connect(&m_onlineProvider, &OnlineMusicProvider::discoverySectionReady, this,
         [this](const QString &section, const QVariantList &items, const QList<TrackRecord> &tracks, const QString &error) {
             if (!m_discoveryFeed.contains(section)) return;
@@ -2189,6 +2220,73 @@ QVariantMap MusicController::playbackSessionInfo() const
             {"shuffleRemainingCount", m_queueIds.size() - m_shuffleVisited.size()}};
 }
 
+void MusicController::resetPersonal()
+{
+    m_onlineProvider.cancelPersonal();
+    m_personalTracks.clear();
+    for (const auto &section : {"createdPlaylists", "savedPlaylists", "likedSongs", "recentSongs", "savedAlbums", "savedArtists"})
+        m_personalFeed.insert(section, QVariantMap{{"items", QVariantList{}}, {"loading", false}, {"more", false},
+            {"error", m_account.authenticated() ? QString{} : tr("Sign in to NetEase to open Personal")},
+            {"nextOffset", 0}, {"omittedCount", 0}, {"scopeLabel", QString::fromLatin1(section) == QLatin1String("recentSongs") ? tr("NetEase recent plays · latest up to 100") : tr("NetEase account")}});
+    if (m_personalCollectionOpen) {
+        m_onlineProvider.cancelCollectionRequests(); resetArtistBrowse();
+        m_onlineAlbum.clear(); m_albumTracks.clear(); m_albumTracksModel.setTracks({});
+        m_albumLoading = false; m_albumLoadingMore = false; m_albumError.clear(); m_albumLoadMoreError.clear(); m_albumMessage.clear();
+        m_pendingDiscoveryAlbum.clear(); m_personalCollectionOpen = false; emit onlineAlbumChanged();
+    }
+    emit personalChanged();
+}
+void MusicController::reloadPersonal()
+{
+    if (!m_ready) return;
+    if (!m_account.authenticated()) { resetPersonal(); return; }
+    for (auto it = m_personalFeed.cbegin(); it != m_personalFeed.cend(); ++it)
+        if (it.value().toMap().value("loading").toBool()) return;
+    resetPersonal();
+    for (auto it = m_personalFeed.begin(); it != m_personalFeed.end(); ++it) {
+        auto state = it.value().toMap(); state.insert("loading", true); it.value() = state;
+    }
+    emit personalChanged();
+    const auto sections = m_personalFeed.keys();
+    for (const auto &section : sections) m_onlineProvider.loadPersonalSection(section, m_account.userId());
+}
+void MusicController::loadMorePersonal(const QString &section)
+{
+    if (!m_ready || !m_account.authenticated() || !m_personalFeed.contains(section)) return;
+    auto state = m_personalFeed.value(section).toMap();
+    if (state.value("loading").toBool() || !state.value("more").toBool()) return;
+    state.insert("loading", true); state.insert("error", QString{});
+    m_personalFeed.insert(section, state); emit personalChanged();
+    m_onlineProvider.loadPersonalSection(section, m_account.userId(), state.value("nextOffset").toInt());
+}
+void MusicController::openPersonalItem(const QString &section, int row)
+{
+    if (!m_account.authenticated() || !m_personalFeed.contains(section)
+        || section == QLatin1String("likedSongs") || section == QLatin1String("recentSongs")) return;
+    const auto items = m_personalFeed.value(section).toMap().value("items").toList();
+    if (row < 0 || row >= items.size()) return;
+    const auto entry = items.at(row).toMap();
+    if (entry.value("providerId").toString().isEmpty()) return;
+    m_onlineProvider.cancelCollectionRequests(); resetArtistBrowse();
+    m_discoveryCollectionSection.clear(); m_personalCollectionOpen = true;
+    m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
+    m_onlineAlbum = entry;
+    if (entry.value("kind").toString() == QLatin1String("artist")) m_artistId = entry.value("providerId").toString();
+    m_albumLoading = false; m_albumLoadingMore = false; m_albumLoadMoreError.clear();
+    m_albumTracks.clear(); m_albumTracksModel.setSearch({}); retryOnlineAlbum();
+    emit personalCollectionOpened();
+}
+void MusicController::playPersonalSong(const QString &section, int row)
+{
+    if (!m_ready || !m_account.authenticated() || (section != QLatin1String("likedSongs") && section != QLatin1String("recentSongs"))) return;
+    const auto tracks = m_personalTracks.value(section);
+    if (row < 0 || row >= tracks.size()) return;
+    QString error;
+    const auto id = m_database.addExternalTrack(tracks.at(row), &error);
+    if (id < 0) { setError(error); return; }
+    refreshLibrary(); setQueue({id}, 0); startCurrentTrack();
+}
+
 void MusicController::reloadDiscovery()
 {
     if (!m_ready) return;
@@ -2218,6 +2316,7 @@ void MusicController::openDiscoveryItem(const QString &section, int row)
     if (entry.value("providerId").toString().isEmpty()) return;
     m_onlineProvider.cancelCollectionRequests();
     resetArtistBrowse();
+    m_personalCollectionOpen = false;
     m_discoveryCollectionSection = section;
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
     m_onlineAlbum = entry; m_onlineAlbum.insert("kind", "playlist");
@@ -2243,6 +2342,7 @@ void MusicController::openDiscoveryAlbum(int row)
 {
     if (row < 0 || row >= m_discoveryAlbums.size()) return;
     const auto album = m_discoveryAlbums.at(row).toMap();
+    m_personalCollectionOpen = false;
     m_discoveryCollectionSection.clear();
     resetArtistBrowse();
     if (album.value("providerId").toString().isEmpty()) return;
@@ -2337,6 +2437,7 @@ void MusicController::setOnlineSearchKind(const QString &kind)
 void MusicController::openOnlineCollection(int row)
 {
     if (row < 0 || row >= m_onlineCollections.size()) return;
+    m_personalCollectionOpen = false;
     m_discoveryCollectionSection.clear();
     m_pendingDiscoveryAlbum.clear(); emit discoveryChanged();
     resetArtistBrowse();

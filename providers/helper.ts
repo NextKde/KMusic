@@ -21,6 +21,7 @@ import qrKey from "./netease/modules/login_qr_key.ts";
 import qrCheck from "./netease/modules/login_qr_check.ts";
 import loginStatus from "./netease/modules/login_status.ts";
 import logout from "./netease/modules/logout.ts";
+import { loadPersonal, clearPersonalSnapshots } from "./personal.ts";
 import { cookieToJson } from "./netease/core/cookie.ts";
 
 // Credentials stay in memory here and cross only the private parent/child pipe.
@@ -43,9 +44,11 @@ input.on("line", async (line) => {
   let discoveryRequest = false;
   let dailyDiscoveryRequest = false;
   let requestHadSession = false;
+  let personalRequest = false;
   try {
     const req = JSON.parse(line);
     id = req.id;
+    personalRequest = req.action === "personal";
     const params = { ...(req.params ?? {}), cookie: { ...session } };
     discoveryRequest = Object.hasOwn(discoveryModules, req.action);
     dailyDiscoveryRequest = req.action === "discoveryDailySongs" || req.action === "discoveryDailyPlaylists";
@@ -55,11 +58,11 @@ input.on("line", async (line) => {
       emit({ id, ok: false, category: "auth", message: "Sign in to NetEase for daily recommendations" }); return;
     }
     if (req.action === "sessionRestore") {
-      ++authEpoch; playlistSnapshots.clear(); session = cookieToJson(String(req.params?.cookie || ""));
+      ++authEpoch; playlistSnapshots.clear(); clearPersonalSnapshots(); session = cookieToJson(String(req.params?.cookie || ""));
       emit({ id, ok: true }); return;
     }
     if (req.action === "logout") {
-      ++authEpoch; playlistSnapshots.clear(); session = {};
+      ++authEpoch; playlistSnapshots.clear(); clearPersonalSnapshots(); session = {};
       // Local logout is immediate even when the remote endpoint is unavailable.
       try { await logout(params, createRequest); } catch {}
       emit({ id, ok: true }); return;
@@ -88,6 +91,12 @@ input.on("line", async (line) => {
       const profile = body.data?.profile ?? body.profile;
       const account = body.data?.account ?? body.account;
       emit({ id, ok: true, body: { authenticated: Boolean(account?.id && profile?.userId), nickname: profile?.nickname || "", avatarUrl: profile?.avatarUrl || "", userId: String(profile?.userId || "") } }); return;
+    }
+    if (personalRequest) {
+      if (!session.MUSIC_U) { emit({ id, ok: false, category: "auth", message: "Sign in to NetEase to open Personal" }); return; }
+      const body = await loadPersonal(params, () => requestAuthEpoch === authEpoch);
+      if (requestAuthEpoch !== authEpoch) { emit({ id, ok: false, category: "cancelled", message: "Account changed" }); return; }
+      emit({ id, ok: true, body }); return;
     }
     if (req.action === "artistTracks") {
       const response = await artists(params, createRequest);
@@ -153,7 +162,7 @@ input.on("line", async (line) => {
     if (!mod) throw new Error("Unsupported provider action");
     const response = await mod(params, createRequest);
     const body: any = response.body;
-    if (dailyDiscoveryRequest && requestAuthEpoch !== authEpoch) {
+    if ((dailyDiscoveryRequest || personalRequest) && requestAuthEpoch !== authEpoch) {
       emit({ id, ok: false, category: "cancelled", message: "Account changed" }); return;
     }
     if (body.code === 301 || body.code === 401 || body.code === -460) {
@@ -162,7 +171,7 @@ input.on("line", async (line) => {
       emit({ id, ok: false, category: "provider", message: body.msg || body.message || "NetEase request failed", code: body.code });
     } else emit({ id, ok: true, body });
   } catch (error: any) {
-    if (dailyDiscoveryRequest && requestAuthEpoch !== authEpoch) {
+    if ((dailyDiscoveryRequest || personalRequest) && requestAuthEpoch !== authEpoch) {
       emit({ id, ok: false, category: "cancelled", message: "Account changed" }); return;
     }
     const status = error?.response?.status;

@@ -37,6 +37,8 @@ public:
     void loadDetail(const QString &songId);
     void loadNewAlbums();
     void loadDiscoverySection(const QString &section);
+    void loadPersonalSection(const QString &section, const QString &uid, int offset = 0);
+    void cancelPersonal() { ++m_personalEpoch; }
     void cancelDiscoveryFeed() { ++m_discoveryFeedEpoch; }
     void loadAlbumTracks(const QString &albumId);
     static QList<TrackRecord> parseNeteaseSearch(const QByteArray &payload,
@@ -54,6 +56,8 @@ signals:
     void detailReady(const QVariantMap &detail);
     void discoverySectionReady(const QString &section, const QVariantList &items,
         const QList<TrackRecord> &tracks, const QString &error);
+    void personalSectionReady(const QString &section, int offset, const QVariantList &items,
+        const QList<TrackRecord> &tracks, const QVariantMap &page, const QString &error);
     void newAlbumsReady(const QVariantList &albums, const QString &error);
     void albumTracksReady(const QString &albumId, const QList<TrackRecord> &tracks, const QString &error, const QVariantMap &album);
 private:
@@ -74,6 +78,8 @@ private:
     quint64 m_discoveryGeneration = 0;
     quint64 m_discoveryFeedEpoch = 0;
     quint64 m_sessionEpoch = 0;
+    quint64 m_personalEpoch = 0;
+    QHash<QString, quint64> m_personalGenerations;
     quint64 m_albumGeneration = 0;
     quint64 m_artistAlbumGeneration = 0;
     bool m_searching = false;

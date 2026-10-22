@@ -53,6 +53,7 @@ class MusicController : public QObject {
     Q_PROPERTY(bool artistParentAvailable READ artistParentAvailable NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QVariantList onlineCollections READ onlineCollections NOTIFY onlineCollectionsChanged)
     Q_PROPERTY(QString onlineSearchKind READ onlineSearchKind WRITE setOnlineSearchKind NOTIFY onlineCollectionsChanged)
+    Q_PROPERTY(QVariantMap personalFeed READ personalFeed NOTIFY personalChanged)
     Q_PROPERTY(QVariantMap discoveryFeed READ discoveryFeed NOTIFY discoveryChanged)
     Q_PROPERTY(QVariantList discoveryAlbums READ discoveryAlbums NOTIFY discoveryChanged)
     Q_PROPERTY(bool discoveryLoading READ discoveryLoading NOTIFY discoveryChanged)
@@ -165,6 +166,11 @@ public:
     Q_INVOKABLE void playOnlineAlbumRow(int row);
     Q_INVOKABLE void enqueueOnlineAlbum();
     Q_INVOKABLE void enqueueAlbumRow(int row);
+    QVariantMap personalFeed() const { return m_personalFeed; }
+    Q_INVOKABLE void reloadPersonal();
+    Q_INVOKABLE void loadMorePersonal(const QString &section);
+    Q_INVOKABLE void openPersonalItem(const QString &section, int row);
+    Q_INVOKABLE void playPersonalSong(const QString &section, int row);
     QVariantMap discoveryFeed() const { return m_discoveryFeed; }
     Q_INVOKABLE void openDiscoveryItem(const QString &section, int row);
     Q_INVOKABLE void playDiscoverySong(const QString &section, int row);
@@ -306,6 +312,8 @@ signals:
     void onlineAlbumChanged();
     void discoveryChanged();
     void discoveryCollectionOpened();
+    void personalChanged();
+    void personalCollectionOpened();
     void playlistsChanged();
     void preparedPlaylistTrackChanged();
     void preparedPlaylistTrackSaved();
@@ -370,6 +378,7 @@ private:
     void finishFailedTrack(const QString &message);
     void advanceAfterFailure();
     void resetShuffleRound();
+    void resetPersonal();
     int nextShuffleIndex(bool afterFailure);
     void cancelRecovery();
     void persistPlaybackPosition();
@@ -435,6 +444,9 @@ private:
     qint64 m_engineLoadRequests = 0;
     qint64 m_lyricRequestCount = 0;
     QVariantMap m_onlineDetail;
+    QVariantMap m_personalFeed;
+    QHash<QString, QList<TrackRecord>> m_personalTracks;
+    bool m_personalCollectionOpen = false;
     QVariantMap m_discoveryFeed;
     QHash<QString, QList<TrackRecord>> m_discoveryTracks;
     QString m_discoveryCollectionSection;

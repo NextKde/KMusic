@@ -42,3 +42,14 @@ against NeteaseCloudMusicApiEnhanced/api-enhanced module/top_song.js and toplist
 no third-party implementation text is copied for those wrappers. Public discovery
 requests explicitly omit the account cookie; daily requests require an authenticated
 session. Feed lifecycle, normalization and old-account cancellation are KMusic code.
+
+Personal library reads add user_playlist, likelist, album_sublist and artist_sublist
+from SPlayer Next 05a4e5929030df21a8448ddb24c77dbd353f974e, adapting only .ts
+relative import suffixes. Original AGPL license/authorship remains. The same
+revision's record_recent_song endpoint is adapted to native createOption(weapi)
+instead of its Electron-only createWebOption; transport shape was cross-checked
+against the primary API-enhanced module/record_recent_song.js. It reads actual
+chronological service records, not user_record listening ranks. This transport
+adaptation is untested with an authenticated account. KMusic's personal.ts adds
+session-scoped ID snapshots, paging, normalization and explicit limits; it does
+not mutate likes/subscriptions or copy account content to the local database.

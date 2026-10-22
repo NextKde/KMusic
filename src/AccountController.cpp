@@ -30,7 +30,7 @@ AccountController::AccountController(OnlineMusicProvider *provider, QObject *par
     connect(&m_poll, &QTimer::timeout, this, &AccountController::poll);
     connect(provider, &OnlineMusicProvider::sessionExpired, this, [this] {
         if (m_state != "signedIn") return;
-        ++m_generation; m_poll.stop(); m_key.clear(); m_image.clear(); m_nickname.clear(); m_avatarUrl.clear();
+        ++m_generation; m_poll.stop(); m_key.clear(); m_image.clear(); m_userId.clear(); m_nickname.clear(); m_avatarUrl.clear();
         m_provider->accountRequest("sessionRestore", {{"cookie", ""}}, [](const QJsonObject &) {});
         clearStored(); setState("expired", tr("Your NetEase session expired. Sign in again.")); emit sessionChanged();
     });
@@ -103,7 +103,7 @@ void AccountController::checkSession(quint64 generation, const QString &cookie) 
         if (generation != m_generation) return;
         if (!response.value("ok").toBool()) {
             if (response.value("sessionExpired").toBool() || response.value("category").toString() == "auth") {
-                m_nickname.clear(); m_avatarUrl.clear(); clearStored();
+                m_userId.clear(); m_nickname.clear(); m_avatarUrl.clear(); clearStored();
                 m_provider->accountRequest("sessionRestore", {{"cookie", ""}}, [](const QJsonObject &) {});
                 setState("expired", tr("Your NetEase session expired. Sign in again.")); emit sessionChanged();
             } else setState("error", tr("Unable to verify your session. Check the connection and retry."));
@@ -111,10 +111,11 @@ void AccountController::checkSession(quint64 generation, const QString &cookie) 
         }
         const auto body = response.value("body").toObject();
         if (!body.value("authenticated").toBool()) {
-            m_nickname.clear(); m_avatarUrl.clear(); clearStored();
+            m_userId.clear(); m_nickname.clear(); m_avatarUrl.clear(); clearStored();
             m_provider->accountRequest("sessionRestore", {{"cookie", ""}}, [](const QJsonObject &) {});
             setState("expired", tr("Your NetEase session expired. Sign in again.")); emit sessionChanged(); return;
         }
+        m_userId = body.value("userId").toString();
         m_nickname = body.value("nickname").toString();
         const QUrl avatar(body.value("avatarUrl").toString());
         m_avatarUrl = avatar.isValid() && avatar.scheme() == QStringLiteral("https")
@@ -149,6 +150,6 @@ void AccountController::clearStored() {
     });job->start();
 }
 void AccountController::logout() {
-    ++m_generation; m_poll.stop(); m_key.clear(); m_image.clear(); m_nickname.clear(); m_avatarUrl.clear(); m_storageMessage.clear();
+    ++m_generation; m_poll.stop(); m_key.clear(); m_image.clear(); m_userId.clear(); m_nickname.clear(); m_avatarUrl.clear(); m_storageMessage.clear();
     m_provider->accountRequest("logout", {}, [](const QJsonObject &) {}); clearStored(); setState("signedOut", tr("Signed out on this device.")); emit sessionChanged();
 }
