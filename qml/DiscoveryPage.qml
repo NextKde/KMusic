@@ -148,16 +148,23 @@ ScrollView {
                 subtitle: Language.text("Explore playlists from NetEase Cloud Music.", "探索网易云音乐的歌单精选。")
             }
             FeedState { state: page.feed("playlists") }
-            RowLayout {
-                Layout.fillWidth: true; spacing: 20
+            Flickable {
+                id: featuredPlaylists
+                Layout.fillWidth: true; Layout.preferredHeight: 250
                 visible: page.feed("playlists").items.length > 0
+                contentWidth: featuredRow.width; contentHeight: height
+                clip: true; boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.HorizontalFlick
+                ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                Row {
+                    id: featuredRow; spacing: 20
                 Repeater {
-                    model: page.feed("playlists").items.slice(0, 2)
+                    model: page.feed("playlists").items
                     delegate: AbstractButton {
                         id: feature
                         required property var modelData
                         required property int index
-                        Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: 250
+                        width: (featuredPlaylists.width - 2 * featuredRow.spacing) / 2.5; height: 250
                         hoverEnabled: true
                         Accessible.name: modelData.title || ""
                         onClicked: page.collectionRequested("playlists", index)
@@ -183,9 +190,9 @@ ScrollView {
                         padding: 0
                     }
                 }
+                }
             }
         }
-        CoverShelf { heading: Language.text("More to explore", "更多值得一听"); startIndex: 2; section: "playlists"; state: page.feed("playlists"); visible: page.feed("playlists").items.length > 2 }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: AppTheme.border }
         SongSection { heading: Language.text("New songs", "新歌速递"); section: "newSongs" }
         CoverShelf { heading: Language.text("New releases", "新碟上架"); albums: true; state: ({items: page.music.discoveryAlbums, loading: page.music.discoveryLoading, error: page.music.discoveryError}) }
