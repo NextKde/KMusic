@@ -51,11 +51,12 @@ LiquidDialog {
                 id: query
                 Layout.fillWidth: true; implicitHeight: 36
                 materialForm: false; liquidFinish: true; liquidIntensity: "strong"
+                backdrop: dialog.contentBackdrop
                 placeholderText: Language.text("Songs, artists or albums", "歌曲、艺术家或专辑")
                 maximumLength: 200; font.pixelSize: 13
                 onAccepted: dialog.submit(text)
             }
-            MusicActionButton { text: Language.text("Search", "搜索"); enabled: query.text.trim().length > 0; onClicked: dialog.submit(query.text) }
+            MusicActionButton { materialForm: false; liquidIntensity: "strong"; backdrop: dialog.contentBackdrop; text: Language.text("Search", "搜索"); enabled: query.text.trim().length > 0; onClicked: dialog.submit(query.text) }
         }
         RowLayout {
             Layout.fillWidth: true
