@@ -71,6 +71,7 @@ MusicController::MusicController(QObject *parent)
     , m_albumTracksModel(this)
     , m_onlineProvider(this)
     , m_account(&m_onlineProvider, this)
+    , m_mediaServer(this)
     , m_scanWatcher(this)
 {
     for (const auto &section : {"playlists", "newSongs", "charts", "dailySongs", "dailyPlaylists"})
@@ -227,6 +228,17 @@ void MusicController::initialize()
     m_audioCache = std::make_unique<AudioCache>(
         QDir(cachePath).filePath(QStringLiteral("audio")));
     m_engine.setDownloadDirectory(m_audioCache->downloadDirectory());
+    m_mediaServer.initialize(m_audioCache->downloadDirectory());
+    connect(&m_mediaServer, &SubsonicProvider::resolved, this, [this](qint64 id, const QUrl &url) {
+        if (id == m_resolvingTrackId) loadPreparedTrack(url);
+    });
+    connect(&m_mediaServer, &SubsonicProvider::failed, this, [this](qint64 id, const QString &message) {
+        if (id == m_resolvingTrackId) finishFailedTrack(message);
+    });
+    connect(&m_mediaServer, &SubsonicProvider::disconnected, this, [this] {
+        const auto track = findTrack(currentTrackId());
+        if (track && track->source == "subsonic" && (m_loadedTrackId >= 0 || m_resolvingTrackId >= 0)) stop();
+    });
     connect(&m_account, &AccountController::sessionChanged, this, [this] {
         resetPersonal(); // Before UI's deferred refresh; invalidates old-account replies.
         // Clear private discovery data before refreshing on login, restore,
@@ -506,8 +518,20 @@ void MusicController::initialize()
     emit readyChanged();
     reloadDiscovery();
     rescanLibrary();
-    if (m_restorePlayback && m_startupAutoplay && currentTrackId() > 0)
-        QTimer::singleShot(0, this, [this] { if (m_restorePlayback && m_startupAutoplay) play(); });
+    if (m_restorePlayback && m_startupAutoplay && currentTrackId() > 0) {
+        const auto restored = findTrack(currentTrackId());
+        if (restored && restored->source == "subsonic") {
+            const auto id = currentTrackId();
+            auto pending = std::make_shared<bool>(true);
+            connect(&m_mediaServer, &SubsonicProvider::changed, this, [this, id, pending] {
+                if (*pending && m_mediaServer.connected()) {
+                    *pending = false;
+                    if (m_restorePlayback && m_startupAutoplay && currentTrackId() == id && m_loadedTrackId < 0)
+                        play();
+                }
+            });
+        } else QTimer::singleShot(0, this, [this] { if (m_restorePlayback && m_startupAutoplay) play(); });
+    }
 }
 
 MusicController::~MusicController()
@@ -1934,6 +1958,12 @@ void MusicController::startCurrentTrack(qint64 startPositionMs, bool autoPlay)
         m_onlineProvider.resolve(track->id, track->providerId, m_onlineQuality);
         return;
     }
+    if (track->source == QLatin1String("subsonic")) {
+        m_providerStatus = tr("Media server · loading audio…");
+        emit playbackStatusChanged();
+        m_mediaServer.prepare(track->id, track->sourceData, track->providerId);
+        return;
+    }
     if (track->source != QLatin1String("local")) {
         m_pendingCacheKey = audioCacheKey(*track);
         const QString preferred = m_sourceService->activeSourceId();
@@ -1958,6 +1988,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs, bool autoPlay)
 
 void MusicController::cancelRecovery()
 {
+    m_mediaServer.cancelPlayback();
     m_activeEngineGeneration = 0;
     m_onlineProvider.cancelResolve();
     ++m_attemptGeneration;
@@ -2526,4 +2557,16 @@ void MusicController::clearAudioCache()
     const bool complete = m_audioCache->clearCompleted(active, m_engineCacheKey);
     m_cacheCleanupMessage = complete ? tr("Completed audio cache cleared.") : tr("Some cache files were kept because they are in use or could not be removed.");
     emit audioCacheChanged();
+}
+
+void MusicController::playMediaSong(int row, bool enqueue)
+{
+    const auto tracks = m_mediaServer.tracks();
+    if (row < 0 || row >= tracks.size() || !m_mediaServer.connected()) return;
+    QString error;
+    const auto id = m_database.addExternalTrack(tracks.at(row), &error);
+    if (id < 0) { setError(error); return; }
+    refreshLibrary();
+    if (enqueue) enqueueTrack(id);
+    else { setQueue({id}, 0); startCurrentTrack(); }
 }

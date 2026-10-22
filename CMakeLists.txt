@@ -19,11 +19,11 @@ qt_add_executable(kmusic src/main.cpp
     src/MusicDatabase.cpp src/MusicDatabase.h src/MusicTypes.h src/MprisService.cpp src/MprisService.h
     src/PlaybackEngine.cpp src/PlaybackEngine.h src/Transcoder.cpp src/Transcoder.h
     src/LxSourceService.cpp src/LxSourceService.h src/LyricsService.cpp src/LyricsService.h
-    src/OnlineMusicProvider.cpp src/OnlineMusicProvider.h src/AccountController.cpp src/AccountController.h)
+    src/OnlineMusicProvider.cpp src/OnlineMusicProvider.h src/AccountController.cpp src/AccountController.h src/SubsonicProvider.cpp src/SubsonicProvider.h)
 set_source_files_properties(qml/MusicColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(kmusic URI NextKde.Music VERSION 1.0 RESOURCE_PREFIX /qt/qml
     SOURCES src/MusicController.cpp src/MusicController.h src/TrackListModel.cpp src/TrackListModel.h
-    QML_FILES qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
+    QML_FILES qml/MediaSourcesPage.qml qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
 target_include_directories(kmusic PRIVATE src)
 target_link_libraries(kmusic PRIVATE Qt6Keychain::Qt6Keychain PkgConfig::MUSIC_QRENCODE Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickDialogs2 Qt6::Concurrent Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
 target_compile_definitions(kmusic PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
@@ -44,11 +44,31 @@ if(KMUSIC_BUILD_LOCAL_TESTS)
         src/MusicController.cpp src/TrackListModel.cpp src/AudioCache.cpp
         src/MetadataScanner.cpp src/MusicDatabase.cpp src/MprisService.cpp
         src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
-        src/LyricsService.cpp src/OnlineMusicProvider.cpp src/AccountController.cpp)
+        src/LyricsService.cpp src/OnlineMusicProvider.cpp src/AccountController.cpp src/SubsonicProvider.cpp)
     target_include_directories(kmusic_local_tests PRIVATE src)
     target_link_libraries(kmusic_local_tests PRIVATE Qt6Keychain::Qt6Keychain
         PkgConfig::MUSIC_QRENCODE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Concurrent
         Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
     target_compile_definitions(kmusic_local_tests PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
     add_dependencies(kmusic_local_tests kmusic_providers)
+endif()
+
+option(KMUSIC_BUILD_SUBSONIC_TESTS "Build isolated media-server integration runner" OFF)
+if(KMUSIC_BUILD_SUBSONIC_TESTS)
+    qt_add_executable(kmusic_subsonic_tests tests/subsonic_integration.cpp
+        src/MusicController.cpp src/TrackListModel.cpp src/AudioCache.cpp
+        src/MetadataScanner.cpp src/MusicDatabase.cpp src/MprisService.cpp
+        src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
+        src/LyricsService.cpp src/OnlineMusicProvider.cpp src/AccountController.cpp src/SubsonicProvider.cpp)
+    target_include_directories(kmusic_subsonic_tests PRIVATE src)
+    target_link_libraries(kmusic_subsonic_tests PRIVATE Qt6Keychain::Qt6Keychain
+        PkgConfig::MUSIC_QRENCODE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Concurrent
+        Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
+    target_compile_definitions(kmusic_subsonic_tests PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
+    add_dependencies(kmusic_subsonic_tests kmusic_providers)
+endif()
+option(KMUSIC_TEST_ASAN "Enable address sanitizer for media integration runner" OFF)
+if(KMUSIC_BUILD_SUBSONIC_TESTS AND KMUSIC_TEST_ASAN)
+    target_compile_options(kmusic_subsonic_tests PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)
+    target_link_options(kmusic_subsonic_tests PRIVATE -fsanitize=address)
 endif()

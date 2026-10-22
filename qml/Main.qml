@@ -210,22 +210,9 @@ ApplicationWindow {
             color: window.contentColor
             Item {
                 anchors.fill: parent; anchors.topMargin: window.contentDestination === "new" ? 0 : floatingHeader.visible ? 68 : 30
-                NavigationHomePage {
-                    anchors.fill: parent
-                    visible: window.contentDestination === "mediaHome"
-                    showHeading: false
-                    title: window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐") : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
-                    bottomContentInset: window.playerContentInset
-                    groups: window.contentDestination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
-                        : [{title:Language.text("Appearance", "外观"), entries:[{id:"system", zh:Language.text("System", "跟随系统")}, {id:"light", zh:Language.text("Light", "浅色")}, {id:"dark", zh:Language.text("Dark", "深色")}]}]
-                    onEntryRequested: entry => {
-                        if (window.contentDestination === "mediaHome") window.selectSource(entry.id)
-                        else if (window.contentDestination === "settingsHome") AppTheme.appearanceMode = entry.id
-                        else if (entry.id === "newPlaylist") playlistDialog.open()
-                        else if (entry.id === "playlist") { window.selectedPlaylist = entry.playlistId; music.selectPlaylist(entry.playlistId); window.destination = "playlist"; window.pageTitle = entry.zh }
-                        else if (entry.route) window.openSourceEntry(entry)
-                        else window.navigate(entry.id, entry.zh)
-                    }
+                MediaSourcesPage {
+                    anchors.fill: parent; visible: window.contentDestination === "mediaHome"
+                    music: window.music; bottomContentInset: window.playerContentInset
                 }
                 SettingsPage {
                     anchors.fill: parent; visible: window.contentDestination === "settingsHome"
@@ -234,6 +221,7 @@ ApplicationWindow {
                     onFoldersRequested: { window.openPrimary("local"); localPage.openSection("folders") }
                     onAccountRequested: accountDialog.open()
                     onClearSearchRequested: searchPopup.clearAllHistory()
+                    onMediaRequested: window.openPrimary("media")
                 }
                 LocalMusicPage {
                     id: localPage

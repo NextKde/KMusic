@@ -12,6 +12,7 @@ ScrollView {
     signal importRequested()
     signal foldersRequested()
     signal accountRequested()
+    signal mediaRequested()
     signal clearSearchRequested()
     onVisibleChanged: if (visible) music.refreshAudioCache()
     contentWidth: availableWidth
@@ -125,7 +126,11 @@ ScrollView {
             description: page.music.account.authenticated ? page.music.account.nickname : Language.text("Not signed in", "未登录")
             MusicActionButton { text: page.music.account.authenticated ? Language.text("Manage account", "管理账号") : Language.text("Sign in", "登录"); onClicked: page.accountRequested() }
         }
-        Note { text: Language.text("Bilibili and media servers are not connected yet.", "B站和媒体服务器尚未接入。") }
+        SettingRow {
+            label: "Navidrome / OpenSubsonic"
+            description: page.music.mediaServer.connected ? page.music.mediaServer.server : Language.text("Not connected", "未连接")
+            MusicActionButton { text: Language.text("Manage", "管理"); onClicked: page.mediaRequested() }
+        }
         Heading { text: Language.text("Storage", "存储") }
         SettingRow {
             label: Language.text("Search history", "搜索历史")

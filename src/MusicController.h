@@ -3,6 +3,7 @@
 #include "MusicDatabase.h"
 #include "OnlineMusicProvider.h"
 #include "AccountController.h"
+#include "SubsonicProvider.h"
 #include "PlaybackEngine.h"
 #include "TrackListModel.h"
 #include "Transcoder.h"
@@ -31,6 +32,7 @@ class MusicController : public QObject {
     Q_PROPERTY(bool startupAutoplay READ startupAutoplay WRITE setStartupAutoplay NOTIFY startupPreferencesChanged)
     Q_PROPERTY(qlonglong audioCacheBytes READ audioCacheBytes NOTIFY audioCacheChanged)
     Q_PROPERTY(QString cacheCleanupMessage READ cacheCleanupMessage NOTIFY audioCacheChanged)
+    Q_PROPERTY(SubsonicProvider *mediaServer READ mediaServer CONSTANT)
     Q_PROPERTY(AccountController *account READ account CONSTANT)
     Q_PROPERTY(TrackListModel *recentModel READ recentModel CONSTANT)
     Q_PROPERTY(TrackListModel *favoritesModel READ favoritesModel CONSTANT)
@@ -308,6 +310,8 @@ public:
     Q_INVOKABLE void requestRaise();
     Q_INVOKABLE void clearError();
 
+    SubsonicProvider *mediaServer() { return &m_mediaServer; }
+    Q_INVOKABLE void playMediaSong(int row, bool enqueue = false);
     bool restorePlayback() const { return m_restorePlayback; }
     bool startupAutoplay() const { return m_startupAutoplay; }
     void setRestorePlayback(bool enabled);
@@ -435,6 +439,7 @@ private:
     QString m_albumError, m_albumMessage;
     OnlineMusicProvider m_onlineProvider;
     AccountController m_account;
+    SubsonicProvider m_mediaServer;
     QString m_onlineQuality = QStringLiteral("128k");
     std::unique_ptr<LxSourceService> m_sourceService;
     std::unique_ptr<LyricsService> m_lyricsService;

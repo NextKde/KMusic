@@ -35,7 +35,15 @@ OnlineMusicProvider::OnlineMusicProvider(QObject *parent) : QObject(parent) {
     });
     connect(&m_process, &QProcess::finished, this, [this](int, QProcess::ExitStatus) { failPending(tr("NetEase helper exited; retry the request.")); });
 }
-OnlineMusicProvider::~OnlineMusicProvider() { m_process.kill(); m_process.waitForFinished(500); }
+OnlineMusicProvider::~OnlineMusicProvider() {
+    // Shutdown must not deliver pending requests into partially destroyed owners.
+    QObject::disconnect(&m_process, nullptr, this, nullptr);
+    m_pending.clear();
+    if (m_process.state() != QProcess::NotRunning) {
+        m_process.kill();
+        m_process.waitForFinished(500);
+    }
+}
 bool OnlineMusicProvider::searching() const { return m_searching; }
 QString OnlineMusicProvider::errorMessage() const { return m_errorMessage; }
 void OnlineMusicProvider::setSearching(bool searching) { if (m_searching == searching) return; m_searching = searching; emit searchingChanged(); }
