@@ -10,11 +10,21 @@ ScrollView {
     readonly property var server: music.mediaServer
     property real bottomContentInset: 0
     property string view: "albums"
+    property string submittedQuery: ""
     readonly property bool canSubmitSearch: server.connected && !server.busy && query.text.trim().length > 0
     function submitSearch() {
         if (!canSubmitSearch) return
+        submittedQuery = query.text.trim()
         view = "search"
-        server.search(query.text.trim())
+        server.search(submittedQuery)
+    }
+    Connections {
+        target: page.server
+        function onDisconnected() {
+            page.submittedQuery = ""
+            query.text = ""
+            page.view = "albums"
+        }
     }
     contentWidth: availableWidth; clip: true
     ColumnLayout {
@@ -32,6 +42,14 @@ ScrollView {
             MusicActionButton { text: Language.text("Albums", "专辑"); checked: page.view === "albums"; enabled: !page.server.busy; onClicked: { page.view = "albums"; page.server.browseAlbums() } }
             MusicTextField { searchField: true; id: query; Layout.fillWidth: true; materialForm: true; placeholderText: Language.text("Search this server", "搜索当前服务器"); onAccepted: page.submitSearch() }
             MusicActionButton { id: searchButton; text: Language.text("Search", "搜索"); enabled: page.canSubmitSearch; onClicked: page.submitSearch() }
+        }
+        Label {
+            visible: page.server.connected && page.view === "search" && page.submittedQuery.length > 0
+            Layout.fillWidth: true
+            text: Language.text("Results for “", "搜索结果：“") + page.submittedQuery + "”"
+            color: AppTheme.mutedText
+            font.pixelSize: 13
+            elide: Text.ElideRight
         }
         Flow {
             visible: page.server.connected && page.view === "albums"; Layout.fillWidth: true; spacing: 16
@@ -68,7 +86,7 @@ ScrollView {
             }
         }
         Label { visible: page.server.connected && !page.server.busy && !page.server.message.length && (page.view === "albums" ? page.server.albums.length === 0 : page.server.songs.length === 0); text: Language.text("No music found.", "未找到音乐。"); color: AppTheme.mutedText }
-        MusicActionButton { visible: page.server.connected && page.server.more; enabled: !page.server.busy; text: Language.text("Load more", "加载更多"); onClicked: page.view === "albums" ? page.server.browseAlbums(true) : page.server.search(query.text, true) }
+        MusicActionButton { visible: page.server.connected && page.server.more; enabled: !page.server.busy; text: Language.text("Load more", "加载更多"); onClicked: page.view === "albums" ? page.server.browseAlbums(true) : page.server.search(page.submittedQuery, true) }
         Item { Layout.preferredHeight: page.bottomContentInset + 24 }
     }
     LiquidDialog {
