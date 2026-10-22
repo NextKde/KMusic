@@ -12,7 +12,9 @@
 
 <p align="center"><code>Linux</code> &nbsp; <code>Qt 6.8+</code> &nbsp; <code>GStreamer</code></p>
 
-![KMusic Discover — playlists, new songs and floating player](docs/images/kmusic-discover.png)
+![KMusic Discover — playlists, new songs and floating player](docs/images/kmusic-ipad.png)
+
+Device-frame mockup · KMusic is a Linux application · [Original screenshot](docs/images/kmusic-discover.png)
 
 Development preview; no stable release has been published. Functional and installer tests do not establish visual acceptance.
 
