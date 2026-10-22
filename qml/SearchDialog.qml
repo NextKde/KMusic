@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtCore
 import Kos.Ui
 import "UiLanguage.mjs" as Language
+import "SearchHistory.mjs" as SearchHistory
 
 LiquidDialog {
     id: dialog
@@ -25,12 +26,7 @@ LiquidDialog {
         property string entriesJson: "{}"
     }
     function clearAllHistory() { saved.entriesJson = "{}"; saved.sync() }
-    function readHistory() {
-        try {
-            const value = JSON.parse(saved.entriesJson)
-            return value && typeof value === "object" && !Array.isArray(value) ? value : {}
-        } catch (_) { return {} }
-    }
+    function readHistory() { return SearchHistory.read(saved.entriesJson) }
     function storeHistory(items) {
         const all = readHistory()
         all[sourceId] = items

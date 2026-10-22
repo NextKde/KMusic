@@ -15,7 +15,8 @@ QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
 ```
 
 The checks exercise keyboard entry, the actual clear button and focus restoration,
-and opaque light/dark plain-field colors. Offscreen software rendering provides
+opaque light/dark plain-field colors, and recovery of malformed persistent search
+history (invalid JSON/list types, invalid entries, duplicates and size limits). Offscreen software rendering provides
 interaction evidence only; it does not validate liquid optics, final appearance,
 whole-app imports, playback, or native desktop integration. No account data is
 loaded by this fixture.
