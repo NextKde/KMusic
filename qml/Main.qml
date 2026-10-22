@@ -459,41 +459,19 @@ ApplicationWindow {
                     }
                 }
             }
-            Popup {
+            SearchDialog {
                 id: searchPopup
-                x: 32; y: floatingHeader.height + 6
-                width: Math.min(340, floatingHeader.width - 32); padding: 10
-                closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                onOpened: { floatingSearch.forceActiveFocus(); floatingSearch.selectAll() }
-                background: Rectangle { radius: 18; color: window.contentColor; border.width: 1; border.color: AppTheme.border }
-                contentItem: Item {
-                    implicitHeight: 36
-                LiquidTextField {
-                    id: floatingSearch
-                    width: parent.width
-                    implicitHeight: 36; cornerRadius: 18
-                    backdrop: sidebarBackdrop; unfilteredBackdrop: true
-                    materialForm: false; liquidFinish: true; liquidIntensity: "strong"
-                    enabled: window.selectedSource === "netease" || window.selectedSource === "local"
-                    placeholderText: window.selectedSource === "local" ? Language.text("Search local music", "搜索本地音乐") : Language.text("Search music", "搜索音乐")
-                    font.pixelSize: 13; leftPadding: 34
-                    text: window.savedSourceSearch(window.selectedSource)
-                    onTextEdited: {
-                        window.rememberSourceSearch(window.selectedSource, text)
-                        if (window.selectedSource === "local") {
-                            music.setSearch(text); localPage.searchLibrary()
-                            window.destination = "localHome"
-                        }
+                sourceId: window.selectedSource
+                initialQuery: window.savedSourceSearch(window.selectedSource)
+                onSearchRequested: query => {
+                    window.rememberSourceSearch(window.selectedSource, query)
+                    if (window.selectedSource === "local") {
+                        music.setSearch(query); localPage.searchLibrary()
+                        window.destination = "localHome"
+                    } else if (window.selectedSource === "netease") {
+                        onlinePage.queryText = query; music.searchOnline(query)
+                        window.destination = "online"; window.selectedSourceEntry = "search"
                     }
-                    onAccepted: {
-                        if (window.selectedSource === "netease" && text.trim().length) {
-                            onlinePage.queryText = text; music.searchOnline(text)
-                            window.destination = "online"; window.selectedSourceEntry = "search"
-                            searchPopup.close()
-                        }
-                    }
-                    VectorIcon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 14; color: AppTheme.mutedText }
-                }
                 }
             }
 
