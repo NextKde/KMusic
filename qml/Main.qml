@@ -343,6 +343,7 @@ ApplicationWindow {
                 }
             }
             RowLayout {
+                id: headerActionRow
                 parent: appCanvas
                 z: 10
                 x: floatingHeader.x + 32; y: 0
@@ -518,7 +519,7 @@ ApplicationWindow {
                     padding: 0
                     width: 24; height: 24
                     anchors.right: parent.right; anchors.rightMargin: 106
-                    y: 14
+                    y: headerActionRow.y + headerActions.y + (headerActions.height - height) / 2
                     visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
                     readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
                     Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
