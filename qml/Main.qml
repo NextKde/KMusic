@@ -328,13 +328,93 @@ ApplicationWindow {
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; spacing: 24
                 Label { text: floatingHeader.heading; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
+                LiquidActionButton {
+                    id: headerActions
+                    Layout.preferredWidth: platformButton.visible ? 218 : 40
+                    implicitHeight: 36; materialForm: false
+                    backdrop: sidebarBackdrop; liquidIntensity: "strong"
+                    scale: 1; hoverEnabled: false
+                    leftPadding: 0; rightPadding: 0
+                    visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
+                    contentItem: RowLayout {
+                        spacing: 0
+                        Button {
+                            id: headerSearchButton
+                            Layout.preferredWidth: 40; Layout.fillHeight: true
+                            enabled: window.selectedSource === "netease" || window.selectedSource === "local"
+                            Accessible.name: Language.text("Search", "搜索")
+                            onClicked: searchPopup.open()
+                            background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
+                            contentItem: VectorIcon { name: "search"; size: 16; color: AppTheme.text }
+                        }
+                        Rectangle { visible: platformButton.visible; implicitWidth: 1; Layout.preferredHeight: 16; color: AppTheme.border }
+                        Button {
+                            id: platformButton
+                            Layout.fillWidth: true; Layout.fillHeight: true
+                            visible: window.navigationArea === "discover" || window.navigationArea === "personal"
+                            Accessible.name: Language.text("Choose platform", "选择平台")
+                            onClicked: platformMenu.popup()
+                            background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
+                            contentItem: Label {
+                                text: (window.onlineProvider === "netease" ? Language.text("NetEase Music", "网易云音乐") : "Bilibili") + "  ▾"
+                                color: AppTheme.text; font.pixelSize: 13
+                                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+                            }
+                            Menu {
+                                id: platformMenu
+                                MenuItem {
+                                    text: Language.text("NetEase Cloud Music", "网易云音乐"); checkable: true; checked: window.onlineProvider === "netease"
+                                    onTriggered: { const area = window.navigationArea; window.onlineProvider = "netease"; window.openPrimary(area) }
+                                }
+                                MenuItem {
+                                    text: Language.text("Bilibili · not connected", "哔哩哔哩 · 尚未接入"); checkable: true; checked: window.onlineProvider === "bilibili"
+                                    onTriggered: { const area = window.navigationArea; window.onlineProvider = "bilibili"; window.openPrimary(area) }
+                                }
+                            }
+                        }
+                    }
+                }
+                Button {
+                    id: headerAvatar
+                    Layout.preferredWidth: 32; Layout.preferredHeight: 32
+                    Layout.leftMargin: -12
+                    visible: window.navigationArea === "discover" || window.navigationArea === "personal"
+                    readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
+                    Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
+                    onClicked: {
+                        if (window.onlineProvider === "netease") accountDialog.open()
+                        else window.openSourceEntry(SourceCatalog.sections("bilibili")[1].entries[0])
+                    }
+                    background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
+                    contentItem: Item {
+                        VectorIcon { anchors.centerIn: parent; name: "person"; size: 18; color: AppTheme.mutedText; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
+                        Image {
+                            id: avatarImage
+                            anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
+                            visible: headerAvatar.signedIn && source.toString().length > 0
+                            fillMode: Image.PreserveAspectCrop; asynchronous: true
+                            layer.enabled: true
+                            layer.effect: OpacityMask { maskSource: Rectangle { width: avatarImage.width; height: avatarImage.height; radius: width / 2 } }
+                        }
+                    }
+                }
+
+            }
+            Popup {
+                id: searchPopup
+                x: Math.max(16, floatingHeader.width - width - 32); y: floatingHeader.height + 6
+                width: Math.min(340, floatingHeader.width - 32); padding: 10
+                closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                onOpened: { floatingSearch.forceActiveFocus(); floatingSearch.selectAll() }
+                background: Rectangle { radius: 18; color: window.contentColor; border.width: 1; border.color: AppTheme.border }
+                contentItem: Item {
+                    implicitHeight: 36
                 LiquidTextField {
                     id: floatingSearch
-                    Layout.preferredWidth: Math.min(280, floatingHeader.width * .46)
+                    width: parent.width
                     implicitHeight: 36; cornerRadius: 18
                     backdrop: sidebarBackdrop; unfilteredBackdrop: true
                     materialForm: false; liquidFinish: true; liquidIntensity: "strong"
-                    visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
                     enabled: window.selectedSource === "netease" || window.selectedSource === "local"
                     placeholderText: window.selectedSource === "local" ? Language.text("Search local music", "搜索本地音乐") : Language.text("Search music", "搜索音乐")
                     font.pixelSize: 13; leftPadding: 34
@@ -350,11 +430,14 @@ ApplicationWindow {
                         if (window.selectedSource === "netease" && text.trim().length) {
                             onlinePage.queryText = text; music.searchOnline(text)
                             window.destination = "online"; window.selectedSourceEntry = "search"
+                            searchPopup.close()
                         }
                     }
                     VectorIcon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 14; color: AppTheme.mutedText }
                 }
+                }
             }
+
         }
         // Back only the antialiased joining pixel so it cannot expose desktop.
         Rectangle {
