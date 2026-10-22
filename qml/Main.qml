@@ -433,10 +433,16 @@ ApplicationWindow {
                     Button {
                         id: accountButton
                         objectName: "reviewAccountButton"
+                        readonly property bool neteaseAccount: window.selectedSource === "netease"
+                        readonly property bool signedIn: neteaseAccount && music.account.authenticated
+                        visible: window.activeSource.category === "online"
                         Layout.fillWidth: true; implicitHeight: 44
                         hoverEnabled: true
-                        Accessible.name: music.account.authenticated ? qsTr("Account: %1").arg(music.account.nickname) : qsTr("Sign in to NetEase")
-                        onClicked: accountDialog.open()
+                        Accessible.name: neteaseAccount ? signedIn ? qsTr("Account: %1").arg(music.account.nickname) : qsTr("Sign in to NetEase") : qsTr("Bilibili account · demo")
+                        onClicked: {
+                            if (neteaseAccount) accountDialog.open()
+                            else window.openSourceEntry(SourceCatalog.sections("bilibili")[1].entries[0])
+                        }
                         background: Rectangle {
                             radius: 8
                             color: accountButton.down ? AppTheme.withAlpha(MusicColors.text, .10) : accountButton.hovered ? MusicColors.hoverFill : "transparent"
@@ -457,8 +463,8 @@ ApplicationWindow {
                                 Image {
                                     id: profileAvatar
                                     anchors.fill: parent
-                                    visible: music.account.authenticated && source.toString().length > 0
-                                    source: music.account.authenticated ? music.account.avatarUrl : ""
+                                    visible: accountButton.signedIn && source.toString().length > 0
+                                    source: accountButton.signedIn ? music.account.avatarUrl : ""
                                     asynchronous: true; fillMode: Image.PreserveAspectCrop
                                     layer.enabled: true
                                     layer.effect: OpacityMask { maskSource: Rectangle { width: avatar.width; height: avatar.height; radius: width / 2 } }
@@ -466,7 +472,7 @@ ApplicationWindow {
                             }
                             Label {
                                 Layout.fillWidth: true
-                                text: music.account.authenticated ? music.account.nickname || qsTr("NetEase account") : qsTr("Sign In")
+                                text: accountButton.neteaseAccount ? accountButton.signedIn ? music.account.nickname || qsTr("NetEase account") : qsTr("Sign In") : qsTr("Bilibili · demo")
                                 color: MusicColors.sidebarLabelPrimary; font.pixelSize: 13
                                 elide: Text.ElideRight
                             }

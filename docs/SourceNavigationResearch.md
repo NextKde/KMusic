@@ -39,3 +39,8 @@ likes, created/collected playlists, collected albums, followed artists and recen
 plays. Real sign-in remains available; signed-in collection pages explicitly stay
 unintegrated. Session changes clear NetEase drafts without clearing local drafts.
 No account collections were fetched or fabricated, and no user scan was performed.
+
+Round6 adds Bilibili-specific descriptions and scoped video/uploader/collection
+search preview without network requests or fake results. Its footer entry remains
+Bilibili-only and never opens NetEase login or shows a NetEase avatar. Local/media
+sources hide the online account entry. No Bilibili adapter or credentials added.

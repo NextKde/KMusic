@@ -23,7 +23,7 @@ export function sections(id) {
             entry("history", "Recently played", "最近播放", "demo", "prototype", true)]}
     ]
     if (id === "bilibili") return [
-        {en: "Browse", zh: "浏览", entries: [entry("recommend", "Recommended videos", "推荐视频", "demo", "prototype"), entry("search", "Search videos and uploaders", "搜索视频与UP主", "demo", "prototype"), entry("collections", "Collections", "合集", "demo", "prototype")]},
+        {en: "Browse", zh: "浏览", entries: [entry("recommend", "Recommended videos", "推荐视频", "demo", "prototype"), entry("search", "Search", "搜索", "demo", "prototype"), entry("uploaders", "Uploaders", "UP主", "demo", "prototype"), entry("collections", "Collections", "合集", "demo", "prototype")]},
         {en: "My Bilibili", zh: "我的B站", entries: [entry("favorites", "Favorite folders", "收藏夹", "demo", "prototype", true), entry("history", "Watch history", "观看历史", "demo", "prototype", true)]}
     ]
     if (id === "local") return [
