@@ -65,8 +65,8 @@ LiquidCard {
             Rectangle {
                 visible: bar.music.playbackSession.availability === "preview"
                 Layout.preferredWidth: 40; Layout.preferredHeight: 20; radius: 10
-                color: AppTheme.withAlpha(AppTheme.text, .45)
-                Label { anchors.centerIn: parent; text: qsTr("Preview"); color: AppTheme.dark ? "#202326" : "#ffffff"; font.pixelSize: 9; font.weight: Font.DemiBold }
+                color: MusicColors.previewBadgeSurface
+                Label { anchors.centerIn: parent; text: qsTr("Preview"); color: MusicColors.previewBadgeText; font.pixelSize: 9; font.weight: Font.DemiBold }
                 ToolTip.text: bar.music.providerStatus; ToolTip.visible: badgeHover.hovered
                 HoverHandler { id: badgeHover }
             }
