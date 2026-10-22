@@ -350,8 +350,8 @@ ApplicationWindow {
                 y: headerActionRow.y + headerActions.y
                 width: headerActions.width; height: headerActions.height
                 radius: height / 2
-                // Leave a small clear gap between the glass and its outer shadow.
-                outwardOffset: 1.5
+                // Start the outer shadow at the glass silhouette, without a gap.
+                outwardOffset: 0
                 shadowOpacity: .08
                 softness: 9; spread: 24
                 offset: Qt.vector2d(0, 3)
