@@ -440,6 +440,13 @@ ApplicationWindow {
                             padding: 0
                             enabled: window.selectedSource === "netease" || window.selectedSource === "local"
                             Accessible.name: Language.text("Search", "搜索")
+                            ToolTip.text: Language.text("Search · Ctrl+F", "搜索 · Ctrl+F")
+                            ToolTip.visible: hovered
+                            Shortcut {
+                                sequence: StandardKey.Find
+                                enabled: headerSearchButton.visible && headerSearchButton.enabled
+                                onActivated: headerSearchButton.clicked()
+                            }
                             onClicked: searchPopup.open()
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
                             contentItem: Item {
