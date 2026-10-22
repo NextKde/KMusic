@@ -326,9 +326,14 @@ ApplicationWindow {
                 : window.destination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
                 : window.destination === "albums" ? Language.text("Albums", "专辑")
                 : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
-            Rectangle {
-                anchors.fill: parent
-                color: AppTheme.withAlpha(window.contentColor, .90)
+            LiquidSurface {
+                anchors.fill: parent; radius: 0
+                backdrop: sidebarBackdrop
+                tintColor: window.contentColor; tintStrength: .90
+                readability: 0; diffuseStrength: 0
+                blurStrength: .3; refractionStrength: 5; magnification: 1.025
+                reflectionStrength: 0; edgeShadeStrength: 0
+                rimColor: "transparent"
             }
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 32; anchors.rightMargin: 32; spacing: 24
