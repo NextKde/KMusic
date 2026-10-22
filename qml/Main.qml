@@ -352,6 +352,8 @@ ApplicationWindow {
                 spacing: 24
                 LiquidActionButton {
                     id: headerActions
+                    shadowEnabled: true
+                    shadowLevel: 1
                     Layout.preferredWidth: platformButton.visible ? 72 : 36
                     implicitHeight: 32; materialForm: false
                     Layout.preferredHeight: 32; Layout.alignment: Qt.AlignVCenter
