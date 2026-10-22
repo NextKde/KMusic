@@ -128,6 +128,7 @@ ApplicationWindow {
         target: music
         function onRaiseRequested() { window.showNormal(); window.raise(); window.requestActivate() }
         function onPreparedPlaylistTrackSaved() { addDialog.close() }
+        function onDiscoveryCollectionOpened() { window.collectionReturnDestination = "new"; window.destination = "onlineAlbum" }
     }
     Connections {
         target: music.account
@@ -201,6 +202,10 @@ ApplicationWindow {
                     onImportRequested: { window.selectSource("local"); folderDialog.open() }
                     onOnlineRequested: { window.selectSource("netease"); window.openSourceEntry(SourceCatalog.sections("netease")[0].entries[1]) }
                     onOnlineAlbumRequested: row => window.reviewOnlineAlbum(row)
+                    onCollectionRequested: (section, row) => {
+                        window.collectionReturnDestination = "new"
+                        music.openDiscoveryItem(section, row)
+                    }
                     onNowPlayingRequested: window.destination = "now"
                     onAlbumRequested: (filter, title) => { window.music.setLibraryView("album", filter); window.pageTitle = title; window.destination = "detail" }
                 }

@@ -1,8 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
 import Kos.Ui
+import "UiLanguage.mjs" as Language
+
 ScrollView {
     id: page
     required property var music
@@ -10,145 +11,185 @@ ScrollView {
     property real topContentInset: 0
     property real bottomContentInset: 0
     property real sidebarUnderlap: 0
+    readonly property bool signedIn: music.account.authenticated
     signal importRequested()
     signal onlineRequested()
     signal onlineAlbumRequested(int row)
     signal nowPlayingRequested()
     signal albumRequested(string filter, string title)
-    contentWidth: availableWidth; clip: true
-    function scrollReleaseReview(fraction) {
-        releases.contentX = Math.max(0, releases.contentWidth - releases.width) * Math.max(0, Math.min(1, fraction))
-        return JSON.stringify({ contentX: releases.contentX, contentWidth: releases.contentWidth,
-            viewportWidth: releases.width, originalModel: "music.discoveryAlbums" })
-    }
-    function homeOpticalState() {
-        return { hovered: heroPlay.hovered, down: heroPlay.down, contentScale: heroPlay.scale,
-            lensExpansion: heroPlay.opticalExpansion, refraction: heroPlay.opticalRefraction,
-            magnification: heroPlay.opticalMagnification, reflection: heroPlay.opticalReflection,
-            sampling: heroPlay.sampling, backdropAvailable: featureBackdrop.available }
-    }
-    ColumnLayout {
-        width: page.availableWidth - page.sidebarUnderlap - 56; x: page.sidebarUnderlap + 28; spacing: 18
-        Item { Layout.preferredHeight: page.topContentInset; visible: page.topContentInset > 0 }
-        RowLayout {
-            visible: page.showHeading
-            Layout.fillWidth: true; Layout.topMargin: 14
-            Label { text: qsTr("Discover"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true }
-            MusicActionButton { text: qsTr("Search music"); implicitHeight: 30; onClicked: page.onlineRequested() }
-        }
+    signal collectionRequested(string section, int row)
+    contentWidth: availableWidth
+    clip: true
+    function feed(key) { return music.discoveryFeed[key] || {items: [], loading: false, error: ""} }
+    function homeOpticalState() { return { content: "real NetEase discovery", personalized: signedIn } }
+    function scrollReleaseReview(fraction) { return "{}" }
+
+    component SectionTitle: RowLayout {
+        property string title: ""
+        property string subtitle: ""
+        property string actionText: ""
+        signal actionRequested()
+        Layout.fillWidth: true
         ColumnLayout {
-            Layout.fillWidth: true; spacing: 6
-            Label { text: page.music.currentTrackId > 0 ? qsTr("CONTINUE LISTENING") : qsTr("YOUR MUSIC"); color: AppTheme.mutedText; font.pixelSize: 10; font.weight: Font.DemiBold }
-            Rectangle {
-                Layout.fillWidth: true; Layout.preferredHeight: 164; radius: 12
-                color: "transparent"
-                Item {
-                    id: featureUnderlay
-                    anchors.fill: parent
-                    Rectangle { anchors.fill: parent; radius: 12; color: AppTheme.dark ? "#34383e" : "#f3f4f5" }
-                    // Bound the artwork scale so embedded cover lettering cannot
-                    // become a second headline. Only real cover colours enter glass.
-                    Image {
-                        id: featureArtwork
-                        width: Math.min(parent.width * .52, 420); height: parent.height
-                        source: page.music.currentArtworkUrl; sourceSize: Qt.size(640, 640)
-                        fillMode: Image.PreserveAspectCrop; asynchronous: true; visible: false
-                    }
-                    Rectangle {
-                        id: featureMask
-                        width: featureArtwork.width; height: parent.height; radius: 12
-                        visible: false; layer.enabled: true
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: "white" }
-                            GradientStop { position: .32; color: "white" }
-                            GradientStop { position: 1; color: "transparent" }
-                        }
-                    }
-                    MultiEffect {
-                        width: featureArtwork.width; height: parent.height
-                        source: featureArtwork; maskEnabled: true; maskSource: featureMask
-                        // MultiEffect defaults to thresholding nonzero mask alpha;
-                        // span the complete alpha range for a continuous fade.
-                        maskThresholdMin: .5; maskSpreadAtMin: 1
-                        blurEnabled: true; blurMax: 48; blur: .65; autoPaddingEnabled: false
-                        opacity: AppTheme.dark ? .16 : .10
-                    }
-                }
-                LiquidBackdrop { id: featureBackdrop; sourceItem: featureUnderlay; registerAsDefault: false }
-                RowLayout {
-                    anchors.fill: parent; anchors.margins: 20; spacing: 20
-                    Artwork { source: page.music.currentArtworkUrl; title: page.music.currentTitle; Layout.preferredWidth: 124; Layout.preferredHeight: 124; radius: 8 }
-                    ColumnLayout {
-                        Layout.fillWidth: true; spacing: 7
-                        Label { text: page.music.currentTitle || qsTr("Make room for music"); color: AppTheme.text; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
-                        Label { text: page.music.currentArtist || qsTr("Find a song online or import your collection."); color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
-                        Label { text: page.music.providerStatus || page.music.currentAlbum; color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight; ToolTip.text: text; ToolTip.visible: statusHover.hovered; HoverHandler { id: statusHover } }
-                        Item { Layout.fillHeight: true }
-                        RowLayout {
-                            MusicActionButton { id: heroPlay; objectName: "reviewHeroPlay"; text: page.music.currentTrackId > 0 ? qsTr("Listen now") : qsTr("Find music"); implicitHeight: 30; onClicked: page.music.currentTrackId > 0 ? page.music.togglePlayPause() : page.onlineRequested() }
-                            MusicActionButton { visible: page.music.currentTrackId > 0; iconOnly: true; iconName: "more"; implicitWidth: 30; implicitHeight: 30; flat: true; onClicked: page.nowPlayingRequested(); Accessible.name: qsTr("Now playing details") }
-                        }
-                    }
-                }
-            }
+            spacing: 4; Layout.fillWidth: true
+            Label { text: parent.parent.title; color: AppTheme.text; font.pixelSize: 21; font.weight: Font.Bold }
+            Label { visible: text.length > 0; text: parent.parent.subtitle; color: AppTheme.mutedText; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         }
-        RowLayout {
-            Layout.fillWidth: true
-            ColumnLayout {
-                spacing: 3
-                Label { text: qsTr("New releases"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
-                Label { text: qsTr("NetEase · public new albums, not personalized"); color: AppTheme.mutedText; font.pixelSize: 11 }
-            }
-            Item { Layout.fillWidth: true }
-            MusicActionButton { text: page.music.discoveryLoading ? qsTr("Loading…") : page.music.discoveryError.length ? qsTr("Retry") : qsTr("Refresh"); implicitHeight: 30; enabled: !page.music.discoveryLoading; onClicked: page.music.reloadDiscovery() }
+        MusicActionButton { visible: parent.actionText.length > 0; text: parent.actionText; implicitHeight: 28; onClicked: parent.actionRequested() }
+    }
+    component FeedState: RowLayout {
+        property var state: ({})
+        Layout.fillWidth: true
+        visible: state.loading || (state.error || "").length > 0 || !(state.items || []).length
+        Label {
+            Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText; font.pixelSize: 13
+            text: parent.state.loading ? Language.text("Loading music…", "正在加载音乐…")
+                : parent.state.error ? Language.text("Could not load this section.", "暂时无法加载此栏目。")
+                : Language.text("No music available right now.", "暂时没有可展示的音乐。")
         }
-        Label { visible: page.music.discoveryLoading || page.music.discoveryError.length > 0; text: page.music.discoveryLoading ? qsTr("Loading new albums from NetEase…") : page.music.discoveryError; color: page.music.discoveryError.length ? AppTheme.destructive : AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        MusicActionButton {
+            visible: (parent.state.error || "").length > 0
+            text: Language.text("Retry", "重试"); implicitHeight: 28
+            onClicked: page.music.reloadDiscovery()
+        }
+    }
+    component CoverShelf: ColumnLayout {
+        id: shelf
+        property string heading: ""
+        property string section: ""
+        property var state: ({items: []})
+        property bool albums: false
+        property int startIndex: 0
+        Layout.fillWidth: true; spacing: 16
+        SectionTitle { title: shelf.heading }
+        FeedState { state: shelf.state }
         Flickable {
-            id: releases
-            Layout.fillWidth: true; Layout.preferredHeight: 178
-            visible: page.music.discoveryAlbums.length > 0
-            // The outer full-window viewport is the clip. Real tiles can pass
-            // beneath the sidebar, without a duplicated model or fake background.
-            clip: false; contentWidth: releaseRow.width; contentHeight: height
+            id: shelfView
+            Layout.fillWidth: true; Layout.preferredHeight: 204
+            visible: (shelf.state.items || []).length > 0
+            contentWidth: covers.width; contentHeight: height; clip: false
             boundsBehavior: Flickable.StopAtBounds; flickableDirection: Flickable.HorizontalFlick
             ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
             Row {
-                id: releaseRow; spacing: 18
+                id: covers; spacing: 18
                 Repeater {
-                    model: page.music.discoveryAlbums
+                    model: (shelf.state.items || []).slice(shelf.startIndex)
                     delegate: AlbumTile {
                         required property var modelData
                         required property int index
-                        actionObjectName: index === 0 ? "reviewDiscoveryFirst" : index === 1 ? "reviewDiscoverySecond" : ""
-                        width: 128; title: modelData.title; subtitle: modelData.artist; artwork: modelData.artwork
-                        showPlayAction: true
-                        onClicked: page.onlineAlbumRequested(index)
-                        onPlayRequested: page.music.playDiscoveryAlbum(index)
+                        width: 152; title: modelData.title || ""; subtitle: modelData.artist || ""
+                        artwork: modelData.artwork || ""
+                        onClicked: shelf.albums ? page.onlineAlbumRequested(index + shelf.startIndex) : page.collectionRequested(shelf.section, index + shelf.startIndex)
                     }
                 }
             }
         }
-        Label { visible: page.music.discoveryAlbums.length > 0; text: page.music.discoveryPlaying ? qsTr("Loading album tracks…") : qsTr("Open an album to browse its songs. Playback restrictions may apply."); color: AppTheme.mutedText; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap }
-        RowLayout {
-            Layout.fillWidth: true
-            Label { text: qsTr("Albums from your library"); color: AppTheme.text; font.pixelSize: 17; font.weight: Font.DemiBold; Layout.fillWidth: true }
-            MusicActionButton { text: qsTr("Import music"); implicitHeight: 30; onClicked: page.importRequested() }
+    }
+    component SongSection: ColumnLayout {
+        id: songSection
+        property string heading: ""
+        property string section: ""
+        property int limit: 8
+        property bool expanded: false
+        readonly property var state: page.feed(section)
+        Layout.fillWidth: true; spacing: 14
+        SectionTitle {
+            title: songSection.heading
+            actionText: (songSection.state.items || []).length <= songSection.limit ? "" : songSection.expanded ? Language.text("Show less", "收起") : Language.text("See all", "查看全部")
+            onActionRequested: songSection.expanded = !songSection.expanded
         }
-        RowLayout {
-            Layout.fillWidth: true; spacing: 18
+        FeedState { state: songSection.state }
+        GridLayout {
+            Layout.fillWidth: true; columns: width >= 620 ? 2 : 1
+            columnSpacing: 28; rowSpacing: 0
             Repeater {
-                model: page.music.albums.slice(0, 4)
-                delegate: AlbumTile {
+                model: (songSection.state.items || []).slice(0, songSection.expanded ? undefined : songSection.limit)
+                delegate: AbstractButton {
                     required property var modelData
-                    Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.maximumWidth: 144
-                    title: modelData.name; subtitle: modelData.subtitle; artwork: modelData.artworkUrl
-                    onClicked: page.albumRequested(modelData.filterValue, modelData.name)
+                    required property int index
+                    Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: 66
+                    hoverEnabled: true
+                    Accessible.name: Language.text("Play ", "播放 ") + (modelData.title || "")
+                    onClicked: page.music.playDiscoverySong(songSection.section, index)
+                    background: Rectangle { radius: 8; color: parent.hovered ? MusicColors.hoverFill : "transparent"; border.width: parent.visualFocus ? 1 : 0; border.color: MusicColors.sidebarAccent }
+                    contentItem: RowLayout {
+                        spacing: 12
+                        Artwork { Layout.preferredWidth: 46; Layout.preferredHeight: 46; source: modelData.artwork || ""; title: modelData.title || ""; radius: 6 }
+                        ColumnLayout {
+                            Layout.fillWidth: true; spacing: 4
+                            Label { Layout.fillWidth: true; text: modelData.title || ""; elide: Text.ElideRight; font.pixelSize: 13; font.weight: Font.Medium; color: AppTheme.text }
+                            Label { Layout.fillWidth: true; text: modelData.artist || ""; elide: Text.ElideRight; font.pixelSize: 11; color: AppTheme.mutedText }
+                        }
+                        VectorIcon { name: "mediaPlay"; filled: true; size: 12; color: MusicColors.sidebarAccent }
+                    }
                 }
             }
-            Item { Layout.fillWidth: true; visible: page.music.albums.length < 4 }
         }
-        Label { visible: page.music.albums.length === 0; text: qsTr("No albums yet. Add a music folder to build your library."); color: AppTheme.mutedText; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-        Item { implicitHeight: 16 + page.bottomContentInset }
+    }
+
+    ColumnLayout {
+        width: page.availableWidth - page.sidebarUnderlap - 64
+        x: page.sidebarUnderlap + 32; spacing: 28
+        Item { Layout.preferredHeight: Math.max(0, page.topContentInset - 20); visible: page.topContentInset > 0 }
+        Label { visible: page.showHeading; text: Language.text("Discover", "发现"); color: AppTheme.text; font.pixelSize: 28; font.weight: Font.Bold }
+        ColumnLayout {
+            Layout.fillWidth: true; spacing: 10; visible: page.signedIn
+            SectionTitle {
+                title: Language.text("Made for you", "为你推荐")
+                subtitle: Language.text("A fresh daily selection for your NetEase account.", "来自你网易云账号的每日新推荐。")
+            }
+            SongSection { heading: Language.text("Your daily mix", "每日推荐歌曲"); section: "dailySongs"; limit: 4 }
+            CoverShelf { Layout.topMargin: 18; heading: Language.text("Playlists for you", "为你推荐的歌单"); section: "dailyPlaylists"; state: page.feed("dailyPlaylists") }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true; spacing: 18
+            SectionTitle {
+                title: Language.text("Find your next favorite", "遇见下一首心动")
+                subtitle: Language.text("Explore playlists from NetEase Cloud Music.", "探索网易云音乐的歌单精选。")
+            }
+            FeedState { state: page.feed("playlists") }
+            RowLayout {
+                Layout.fillWidth: true; spacing: 20
+                visible: page.feed("playlists").items.length > 0
+                Repeater {
+                    model: page.feed("playlists").items.slice(0, 2)
+                    delegate: AbstractButton {
+                        id: feature
+                        required property var modelData
+                        required property int index
+                        Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: 250
+                        hoverEnabled: true
+                        Accessible.name: modelData.title || ""
+                        onClicked: page.collectionRequested("playlists", index)
+                        background: Rectangle { radius: 12; color: MusicColors.placeholder }
+                        contentItem: Item {
+                            Artwork { anchors.fill: parent; source: modelData.artwork || ""; title: modelData.title || ""; radius: 12 }
+                            Rectangle {
+                                anchors.fill: parent; radius: 12
+                                gradient: Gradient {
+                                    GradientStop { position: 0; color: "#08000000" }
+                                    GradientStop { position: .4; color: "#18000000" }
+                                    GradientStop { position: 1; color: "#dd000000" }
+                                }
+                            }
+                            Column {
+                                anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 20; spacing: 8
+                                Label { text: Language.text("PLAYLIST SPOTLIGHT", "歌单精选"); color: "#dddddd"; font.pixelSize: 10; font.weight: Font.DemiBold; font.letterSpacing: 1 }
+                                Label { width: parent.width; text: modelData.title || ""; color: "white"; font.pixelSize: 22; font.weight: Font.Bold; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
+                                Label { width: parent.width; text: modelData.artist || Language.text("NetEase Cloud Music", "网易云音乐"); color: "#dddddd"; font.pixelSize: 11; elide: Text.ElideRight }
+                            }
+                            Rectangle { anchors.fill: parent; radius: 12; color: feature.hovered ? "#0cffffff" : "transparent"; border.width: feature.visualFocus ? 2 : 0; border.color: MusicColors.sidebarAccent }
+                        }
+                        padding: 0
+                    }
+                }
+            }
+        }
+        CoverShelf { heading: Language.text("More to explore", "更多值得一听"); startIndex: 2; section: "playlists"; state: page.feed("playlists"); visible: page.feed("playlists").items.length > 2 }
+        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: AppTheme.border }
+        SongSection { heading: Language.text("New songs", "新歌速递"); section: "newSongs" }
+        CoverShelf { heading: Language.text("New releases", "新碟上架"); albums: true; state: ({items: page.music.discoveryAlbums, loading: page.music.discoveryLoading, error: page.music.discoveryError}) }
+        CoverShelf { heading: Language.text("On the charts", "排行榜"); section: "charts"; state: page.feed("charts") }
+        Item { Layout.preferredHeight: page.bottomContentInset + 16 }
     }
 }
