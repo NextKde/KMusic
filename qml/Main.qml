@@ -350,8 +350,8 @@ ApplicationWindow {
                 y: headerActionRow.y + headerActions.y
                 width: headerActions.width; height: headerActions.height
                 radius: height / 2
-                // Mask against the exact button silhouette, independent of the glass.
-                outwardOffset: 0
+                // Leave a small clear gap between the glass and its outer shadow.
+                outwardOffset: 1.5
                 shadowOpacity: .08
                 softness: 9; spread: 24
                 offset: Qt.vector2d(0, 3)
