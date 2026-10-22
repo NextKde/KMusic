@@ -57,6 +57,11 @@ ApplicationWindow {
     }
     property string destination: "new"
     property string lastContentDestination: "new"
+    readonly property string contentDestination: destination === "now" ? lastContentDestination : destination
+    property real nowPlayingProgress: destination === "now" ? 1 : 0
+    Behavior on nowPlayingProgress {
+        NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 320; easing.type: Easing.OutCubic }
+    }
     property string collectionReturnDestination: "new"
     property Item focusBeforeNow: null
     onDestinationChanged: {
@@ -153,7 +158,8 @@ ApplicationWindow {
         Item {
             id: pageScene
             objectName: "musicPageScene"
-            visible: window.destination !== "now"
+            visible: window.nowPlayingProgress < 1
+            enabled: window.destination !== "now"
             anchors.fill: parent
         Item {
             id: contentScene
@@ -171,21 +177,21 @@ ApplicationWindow {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
             Item {
-                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 0 : floatingHeader.visible ? 68 : 30
+                anchors.fill: parent; anchors.topMargin: window.contentDestination === "new" ? 0 : floatingHeader.visible ? 68 : 30
                 NavigationHomePage {
                     anchors.fill: parent
-                    visible: ["localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
+                    visible: ["localHome", "mediaHome", "settingsHome"].indexOf(window.contentDestination) >= 0
                     showHeading: false
-                    title: window.destination === "localHome" ? Language.text("Local Music", "本地音乐") : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
+                    title: window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐") : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
                     bottomContentInset: window.playerContentInset
-                    groups: window.destination === "localHome" ? [
+                    groups: window.contentDestination === "localHome" ? [
                             {title: Language.text("Music Library", "音乐库"), entries: SourceCatalog.sections("local")[0].entries.concat([{id:"folders", zh:Language.text("Music folders", "音乐文件夹"), en:"Music folders", route:"folders", status:"connected"}])},
                             {title: Language.text("On This Device", "本机收藏"), entries: [{id:"favorites", zh:Language.text("Favorites", "喜欢的音乐")}, {id:"recent", zh:Language.text("Recently Played", "最近播放")}, {id:"newPlaylist", zh:Language.text("New Playlist", "新建歌单")}].concat(music.playlists.map(p => ({id:"playlist", playlistId:p.id, zh:p.name}))) }]
-                        : window.destination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
+                        : window.contentDestination === "mediaHome" ? [{title: Language.text("Add Media Source", "添加媒体源"), entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
                         : [{title:Language.text("Appearance", "外观"), entries:[{id:"system", zh:Language.text("System", "跟随系统")}, {id:"light", zh:Language.text("Light", "浅色")}, {id:"dark", zh:Language.text("Dark", "深色")}]}]
                     onEntryRequested: entry => {
-                        if (window.destination === "mediaHome") window.selectSource(entry.id)
-                        else if (window.destination === "settingsHome") AppTheme.appearanceMode = entry.id
+                        if (window.contentDestination === "mediaHome") window.selectSource(entry.id)
+                        else if (window.contentDestination === "settingsHome") AppTheme.appearanceMode = entry.id
                         else if (entry.id === "newPlaylist") playlistDialog.open()
                         else if (entry.id === "playlist") { window.selectedPlaylist = entry.playlistId; music.selectPlaylist(entry.playlistId); window.destination = "playlist"; window.pageTitle = entry.zh }
                         else if (entry.route) window.openSourceEntry(entry)
@@ -194,7 +200,7 @@ ApplicationWindow {
                 }
                 PersonalPage {
                     anchors.fill: parent
-                    visible: window.destination === "personalHome"
+                    visible: window.contentDestination === "personalHome"
                     music: window.music; provider: window.onlineProvider
                     bottomContentInset: window.playerContentInset
                     onSignInRequested: accountDialog.open()
@@ -205,7 +211,7 @@ ApplicationWindow {
                     bottomContentInset: window.playerContentInset
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
-                    visible: window.destination === "new"; music: window.music
+                    visible: window.contentDestination === "new"; music: window.music
                     onImportRequested: { window.selectSource("local"); folderDialog.open() }
                     onOnlineRequested: { window.selectSource("netease"); window.openSourceEntry(SourceCatalog.sections("netease")[0].entries[1]) }
                     onOnlineAlbumRequested: row => window.reviewOnlineAlbum(row)
@@ -219,7 +225,7 @@ ApplicationWindow {
                 SongsPage {
                     id: songsPage
                     anchors.fill: parent
-                    visible: ["songs", "search", "detail", "queue", "playlist", "favorites", "recent"].indexOf(window.destination) >= 0
+                    visible: ["songs", "search", "detail", "queue", "playlist", "favorites", "recent"].indexOf(window.contentDestination) >= 0
                     showHeading: !floatingHeader.visible
                     music: window.music; bottomContentInset: window.playerContentInset; heading: window.pageTitle
                     scopeDescription: recentView ? Language.text("Playback recorded by KMusic on this device, across sources. This is separate from platform account history.", "KMusic 在本机记录的播放历史，与平台账号历史分别保存。")
@@ -228,39 +234,39 @@ ApplicationWindow {
                         : queueView ? Language.text("The current playback queue can contain tracks from different sources.", "当前播放队列可包含不同来源的歌曲。")
                         : Language.text("Imported local audio files. Albums, artists and artwork come from file metadata when available.", "已导入的本地音频，专辑、艺术家和封面信息来自文件标签。")
                     emptyMessage: recentView ? Language.text("Your playback history on this device is empty. Played songs will appear here.", "暂无本机播放历史，播放过的歌曲会出现在这里。") : favoritesView ? Language.text("Your favorites on this device are empty. Add songs using the heart button.", "暂无本机喜欢的歌曲，可通过爱心按钮添加。") : queueView ? Language.text("Your queue is empty", "播放队列为空") : playlistView ? Language.text("This device playlist is empty. Add tracks from a song list.", "歌单为空，可从歌曲列表添加。") : Language.text("No local songs match. Import a music folder or change the local search.", "暂无本地歌曲，请导入音乐文件夹。")
-                    queueView: window.destination === "queue"; recentView: window.destination === "recent"; favoritesView: window.destination === "favorites"; playlistView: window.destination === "playlist"; playlistId: window.selectedPlaylist
+                    queueView: window.contentDestination === "queue"; recentView: window.contentDestination === "recent"; favoritesView: window.contentDestination === "favorites"; playlistView: window.contentDestination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
                     onImportRequested: { window.selectSource("local"); folderDialog.open() }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
                 ScrollView {
                     id: groupScroll
-                    anchors.fill: parent; visible: window.destination === "albums" || window.destination === "artists"; contentWidth: availableWidth; clip: true
+                    anchors.fill: parent; visible: window.contentDestination === "albums" || window.contentDestination === "artists"; contentWidth: availableWidth; clip: true
                     ColumnLayout {
                         width: groupScroll.availableWidth - 64; x: 32; spacing: 18
-                        Label { visible: !floatingHeader.visible; text: window.destination === "artists" ? Language.text("Artists", "艺术家") : Language.text("Albums", "专辑"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 24 }
+                        Label { visible: !floatingHeader.visible; text: window.contentDestination === "artists" ? Language.text("Artists", "艺术家") : Language.text("Albums", "专辑"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 24 }
                         Repeater {
-                            model: window.destination === "artists" ? music.artists : music.albums
+                            model: window.contentDestination === "artists" ? music.artists : music.albums
                             delegate: MusicNavigationButton {
                                 required property var modelData
                                 Layout.fillWidth: true; text: modelData.name + " · " + modelData.count + Language.text(" songs", " 首歌曲")
-                                onClicked: { music.setLibraryView(window.destination === "artists" ? "artist" : "album", modelData.filterValue); window.pageTitle = modelData.name; window.destination = "detail" }
+                                onClicked: { music.setLibraryView(window.contentDestination === "artists" ? "artist" : "album", modelData.filterValue); window.pageTitle = modelData.name; window.destination = "detail" }
                             }
                         }
-                        Label { visible: (window.destination === "artists" ? music.artists : music.albums).length === 0; text: Language.text("Import a music folder to get started.", "导入音乐文件夹以开始使用。"); color: AppTheme.mutedText }
+                        Label { visible: (window.contentDestination === "artists" ? music.artists : music.albums).length === 0; text: Language.text("Import a music folder to get started.", "导入音乐文件夹以开始使用。"); color: AppTheme.mutedText }
                         Item { Layout.preferredHeight: window.playerContentInset; Layout.fillWidth: true }
                     }
                 }
-                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
+                OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.contentDestination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
                 LocalFoldersPage {
                     showHeading: !floatingHeader.visible
-                    anchors.fill: parent; visible: window.destination === "folders"
+                    anchors.fill: parent; visible: window.contentDestination === "folders"
                     music: window.music; bottomContentInset: window.playerContentInset
                     onImportRequested: folderDialog.open()
                 }
                 SourceDemoPage {
                     showHeading: !floatingHeader.visible
-                    anchors.fill: parent; visible: window.destination === "sourceDemo"
+                    anchors.fill: parent; visible: window.contentDestination === "sourceDemo"
                     sourceId: window.selectedSource
                     instanceName: window.demoMediaAliases[window.selectedSource] || ""
                     entryId: window.selectedSourceEntry
@@ -277,7 +283,7 @@ ApplicationWindow {
                         sourceConnectionDialog.open()
                     }
                 }
-                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.destination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row)
+                OnlinePage { id: onlinePage; bottomContentInset: window.playerContentInset; anchors.fill: parent; visible: window.contentDestination === "online"; music: window.music; onCollectionRequested: row => window.openCollection(row); onSaveToPlaylistRequested: row => window.openPlaylistPicker("online", row)
                     onQueryTextChanged: {
                         if (window.selectedSource === "netease" && !window.restoringSourceSearch) {
                             window.rememberSourceSearch("netease", queryText)
@@ -323,16 +329,16 @@ ApplicationWindow {
         Item {
             id: floatingHeader
             x: 236; y: 0; width: parent.width - x; height: 52
-            visible: window.destination !== "now" && window.destination !== "onlineAlbum" && window.destination !== "online"
-            readonly property string heading: window.destination === "new" ? Language.text("Discover", "发现")
-                : window.destination === "personalHome" ? Language.text("Personal", "个人")
-                : window.destination === "localHome" ? Language.text("Local Music", "本地音乐")
-                : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源")
-                : window.destination === "settingsHome" ? Language.text("Settings", "设置")
-                : window.destination === "folders" ? Language.text("Music folders", "音乐文件夹")
-                : window.destination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
-                : window.destination === "albums" ? Language.text("Albums", "专辑")
-                : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
+            visible: window.contentDestination !== "now" && window.contentDestination !== "onlineAlbum" && window.contentDestination !== "online"
+            readonly property string heading: window.contentDestination === "new" ? Language.text("Discover", "发现")
+                : window.contentDestination === "personalHome" ? Language.text("Personal", "个人")
+                : window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐")
+                : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源")
+                : window.contentDestination === "settingsHome" ? Language.text("Settings", "设置")
+                : window.contentDestination === "folders" ? Language.text("Music folders", "音乐文件夹")
+                : window.contentDestination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
+                : window.contentDestination === "albums" ? Language.text("Albums", "专辑")
+                : window.contentDestination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
             Item {
                 anchors.fill: parent
                 clip: true
@@ -369,7 +375,8 @@ ApplicationWindow {
                 z: 10
                 x: floatingHeader.x + 32; y: 0
                 width: appCanvas.width - x - 106; height: floatingHeader.height
-                visible: floatingHeader.visible
+                visible: pageScene.visible && floatingHeader.visible
+                enabled: window.destination !== "now"
                 spacing: 24
                 LiquidActionButton {
                     id: headerActions
@@ -414,7 +421,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                Label { visible: window.destination !== "new"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
+                Label { visible: window.contentDestination !== "new"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
                 Item { Layout.fillWidth: true }
                 Button {
                     id: headerAvatar
@@ -555,15 +562,22 @@ ApplicationWindow {
 
         }
         LiquidBackdrop { id: playerBackdrop; sourceItem: pageScene; registerAsDefault: false; blur: .19; maximumTextureSize: 2560 }
-        PlayerBar { id: player; visible: window.destination !== "now"; anchors.bottom: parent.bottom; anchors.bottomMargin: 16
+        PlayerBar { id: player; visible: window.nowPlayingProgress < 1; opacity: 1 - window.nowPlayingProgress; enabled: window.destination !== "now"; anchors.bottom: parent.bottom; anchors.bottomMargin: 16
             width: Math.min(820, parent.width - 236 - 32); x: 236 + (parent.width - 236 - width) / 2
             backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", Language.text("Play queue", "播放队列")); onNowPlayingRequested: window.destination = "now" }
         NowPlaying {
             id: nowPlaying; anchors.fill: parent
-            visible: window.destination === "now"; music: window.music
+            z: 20
+            visible: window.destination === "now" || window.nowPlayingProgress > 0
+            enabled: window.destination === "now"
+            opacity: window.nowPlayingProgress
+            transformOrigin: Item.Bottom
+            scale: .94 + .06 * window.nowPlayingProgress
+            transform: Translate { y: (1 - window.nowPlayingProgress) * nowPlaying.height * .12 }
+            music: window.music
             onCloseRequested: window.closeNowPlaying()
         }
-        WindowChrome { width: parent.width; targetWindow: window }
+        WindowChrome { z: nowPlaying.visible ? 30 : 0; width: parent.width; targetWindow: window }
 
     }
     SourceConnectionDialog {
