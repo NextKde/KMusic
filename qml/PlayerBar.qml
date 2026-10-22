@@ -11,7 +11,7 @@ LiquidCard {
     height: 52; radius: height / 2; padding: 8
     shadowEnabled: true; shadowOpacity: AppTheme.dark ? .22 : .14
     tintColor: AppTheme.dark ? "#282c32" : "#f8f9fa"
-    tintStrength: AppTheme.dark ? .20 : .22
+    tintStrength: AppTheme.dark ? .30 : .32
     readability: .12; blurStrength: 0
     refractionStrength: 5; magnification: 1.035; reflectionStrength: .55
     function reviewState() {
