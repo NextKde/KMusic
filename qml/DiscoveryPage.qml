@@ -60,7 +60,7 @@ ScrollView {
         property var state: ({items: []})
         property bool albums: false
         property int startIndex: 0
-        Layout.fillWidth: true; spacing: 16
+        Layout.fillWidth: true; spacing: 10
         SectionTitle { title: shelf.heading }
         FeedState { state: shelf.state }
         Flickable {
@@ -71,7 +71,7 @@ ScrollView {
             boundsBehavior: Flickable.StopAtBounds; flickableDirection: Flickable.HorizontalFlick
             ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
             Row {
-                id: covers; spacing: 18
+                id: covers; spacing: 14
                 Repeater {
                     model: (shelf.state.items || []).slice(shelf.startIndex)
                     delegate: AlbumTile {
@@ -92,7 +92,7 @@ ScrollView {
         property int limit: 8
         property bool expanded: false
         readonly property var state: page.feed(section)
-        Layout.fillWidth: true; spacing: 14
+        Layout.fillWidth: true; spacing: 10
         SectionTitle {
             title: songSection.heading
             actionText: (songSection.state.items || []).length <= songSection.limit ? "" : songSection.expanded ? Language.text("Show less", "收起") : Language.text("See all", "查看全部")
@@ -101,13 +101,13 @@ ScrollView {
         FeedState { state: songSection.state }
         GridLayout {
             Layout.fillWidth: true; columns: width >= 620 ? 2 : 1
-            columnSpacing: 28; rowSpacing: 0
+            columnSpacing: 20; rowSpacing: 0
             Repeater {
                 model: (songSection.state.items || []).slice(0, songSection.expanded ? undefined : songSection.limit)
                 delegate: AbstractButton {
                     required property var modelData
                     required property int index
-                    Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: 66
+                    Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: 58
                     hoverEnabled: true
                     Accessible.name: Language.text("Play ", "播放 ") + (modelData.title || "")
                     onClicked: page.music.playDiscoverySong(songSection.section, index)
@@ -128,8 +128,8 @@ ScrollView {
     }
 
     ColumnLayout {
-        width: page.availableWidth - page.sidebarUnderlap - 64
-        x: page.sidebarUnderlap + 32; spacing: 28
+        width: page.availableWidth - page.sidebarUnderlap - 48
+        x: page.sidebarUnderlap + 24; spacing: 20
         Item { Layout.preferredHeight: Math.max(0, page.topContentInset - 20); visible: page.topContentInset > 0 }
         Label { visible: page.showHeading; text: Language.text("Discover", "发现"); color: AppTheme.text; font.pixelSize: 28; font.weight: Font.Bold }
         ColumnLayout {
@@ -139,10 +139,10 @@ ScrollView {
                 subtitle: Language.text("A fresh daily selection for your NetEase account.", "来自你网易云账号的每日新推荐。")
             }
             SongSection { heading: Language.text("Your daily mix", "每日推荐歌曲"); section: "dailySongs"; limit: 4 }
-            CoverShelf { Layout.topMargin: 18; heading: Language.text("Playlists for you", "为你推荐的歌单"); section: "dailyPlaylists"; state: page.feed("dailyPlaylists") }
+            CoverShelf { Layout.topMargin: 10; heading: Language.text("Playlists for you", "为你推荐的歌单"); section: "dailyPlaylists"; state: page.feed("dailyPlaylists") }
         }
         ColumnLayout {
-            Layout.fillWidth: true; spacing: 18
+            Layout.fillWidth: true; spacing: 10
             SectionTitle {
                 title: Language.text("Find your next favorite", "遇见下一首心动")
                 subtitle: Language.text("Explore playlists from NetEase Cloud Music.", "探索网易云音乐的歌单精选。")
@@ -150,7 +150,7 @@ ScrollView {
             FeedState { state: page.feed("playlists") }
             Flickable {
                 id: featuredPlaylists
-                readonly property real cardWidth: (width - 40) / 2.5
+                readonly property real cardWidth: (width - 32) / 2.5
                 readonly property real cardHeight: cardWidth * 0.75
                 Layout.fillWidth: true; Layout.preferredHeight: cardHeight
                 visible: page.feed("playlists").items.length > 0
@@ -159,7 +159,7 @@ ScrollView {
                 flickableDirection: Flickable.HorizontalFlick
                 ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
                 Row {
-                    id: featuredRow; spacing: 20
+                    id: featuredRow; spacing: 16
                 Repeater {
                     model: page.feed("playlists").items
                     delegate: AbstractButton {
@@ -195,7 +195,6 @@ ScrollView {
                 }
             }
         }
-        Item { Layout.fillWidth: true; implicitHeight: 1 }
         SongSection { heading: Language.text("New songs", "新歌速递"); section: "newSongs" }
         CoverShelf { heading: Language.text("New releases", "新碟上架"); albums: true; state: ({items: page.music.discoveryAlbums, loading: page.music.discoveryLoading, error: page.music.discoveryError}) }
         CoverShelf { heading: Language.text("On the charts", "排行榜"); section: "charts"; state: page.feed("charts") }
