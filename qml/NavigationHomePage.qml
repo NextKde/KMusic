@@ -6,6 +6,7 @@ import "UiLanguage.mjs" as Language
 
 ScrollView {
     id: page
+    property bool showHeading: true
     property string title: ""
     property var groups: []
     property real bottomContentInset: 0
@@ -14,7 +15,7 @@ ScrollView {
     clip: true
     ColumnLayout {
         x: 32; width: page.availableWidth - 64; spacing: 20
-        Label { Layout.topMargin: 24; text: page.title; color: AppTheme.text; font.pixelSize: 28; font.weight: Font.Bold }
+        Label { visible: page.showHeading; Layout.topMargin: 24; text: page.title; color: AppTheme.text; font.pixelSize: 28; font.weight: Font.Bold }
         Repeater {
             model: page.groups
             delegate: ColumnLayout {

@@ -6,6 +6,8 @@ import Kos.Ui
 ScrollView {
     id: page
     required property var music
+    property bool showHeading: true
+    property real topContentInset: 0
     property real bottomContentInset: 0
     property real sidebarUnderlap: 0
     signal importRequested()
@@ -27,7 +29,9 @@ ScrollView {
     }
     ColumnLayout {
         width: page.availableWidth - page.sidebarUnderlap - 56; x: page.sidebarUnderlap + 28; spacing: 18
+        Item { Layout.preferredHeight: page.topContentInset; visible: page.topContentInset > 0 }
         RowLayout {
+            visible: page.showHeading
             Layout.fillWidth: true; Layout.topMargin: 14
             Label { text: qsTr("Discover"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.fillWidth: true }
             MusicActionButton { text: qsTr("Search music"); implicitHeight: 30; onClicked: page.onlineRequested() }

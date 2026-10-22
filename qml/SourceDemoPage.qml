@@ -6,6 +6,7 @@ import "UiLanguage.mjs" as Language
 
 ScrollView {
     id: page
+    property bool showHeading: true
     property string sourceId: ""
     property string entryId: ""
     property string sourceName: ""
@@ -57,7 +58,7 @@ ScrollView {
         width: page.availableWidth - 64; x: 32; spacing: 16
         Item { implicitHeight: 24 }
         Label { text: page.sourceName; color: AppTheme.mutedText; font.pixelSize: 13 }
-        Label { Layout.fillWidth: true; text: page.entryName; color: AppTheme.text; font.pixelSize: 24; font.weight: Font.Bold; wrapMode: Text.WordWrap }
+        Label { visible: page.showHeading; Layout.fillWidth: true; text: page.entryName; color: AppTheme.text; font.pixelSize: 24; font.weight: Font.Bold; wrapMode: Text.WordWrap }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap
             text: page.sourceId === "netease" && page.requiresLogin

@@ -6,6 +6,7 @@ import "UiLanguage.mjs" as Language
 
 ScrollView {
     id: page
+    property bool showHeading: true
     required property var music
     property real bottomContentInset: 0
     signal importRequested()
@@ -15,7 +16,7 @@ ScrollView {
         width: page.availableWidth - 64; x: 32; spacing: 16
         Item { implicitHeight: 24 }
         Label { text: Language.text("Local Music", "本地音乐"); color: AppTheme.mutedText; font.pixelSize: 13 }
-        Label { text: Language.text("Music folders", "音乐文件夹"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
+        Label { visible: page.showHeading; text: Language.text("Music folders", "音乐文件夹"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText
             text: Language.text("Folders registered on this computer. Importing indexes your audio files; it does not upload them to an online account.", "管理此电脑上的音乐文件夹。导入仅建立文件索引，不会上传到在线账号。")

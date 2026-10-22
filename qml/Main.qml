@@ -167,24 +167,12 @@ ApplicationWindow {
         Rectangle {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
-            RowLayout {
-                id: onlineHeader
-                visible: window.navigationArea === "discover" || window.navigationArea === "personal"
-                x: 32; y: 34; spacing: 10
-                Repeater {
-                    model: [{id:"netease", name:Language.text("NetEase Cloud Music", "网易云音乐")}, {id:"bilibili", name:Language.text("Bilibili", "哔哩哔哩")}]
-                    delegate: MusicActionButton {
-                        required property var modelData
-                        text: modelData.name; checkable: true; checked: window.onlineProvider === modelData.id
-                        onClicked: { const area = window.navigationArea; window.onlineProvider = modelData.id; window.openPrimary(area) }
-                    }
-                }
-            }
             Item {
-                anchors.fill: parent; anchors.topMargin: onlineHeader.visible ? 76 : 30
+                anchors.fill: parent; anchors.topMargin: window.destination === "new" ? 30 : floatingHeader.visible ? 108 : 30
                 NavigationHomePage {
                     anchors.fill: parent
                     visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
+                    showHeading: false
                     title: window.destination === "personalHome" ? Language.text("Personal", "个人") : window.destination === "localHome" ? Language.text("Local Music", "本地音乐") : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
                     bottomContentInset: window.playerContentInset
                     groups: window.destination === "personalHome" ? [{title: Language.text("My Music", "我的音乐"), entries: SourceCatalog.sections(window.onlineProvider)[1].entries}]
@@ -205,6 +193,7 @@ ApplicationWindow {
                 }
                 DiscoveryPage {
                     id: discover
+                    showHeading: false; topContentInset: 88
                     bottomContentInset: window.playerContentInset
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
@@ -219,6 +208,7 @@ ApplicationWindow {
                     id: songsPage
                     anchors.fill: parent
                     visible: ["songs", "search", "detail", "queue", "playlist", "favorites", "recent"].indexOf(window.destination) >= 0
+                    showHeading: !floatingHeader.visible
                     music: window.music; bottomContentInset: window.playerContentInset; heading: window.pageTitle
                     scopeDescription: recentView ? Language.text("Playback recorded by KMusic on this device, across sources. This is separate from platform account history.", "KMusic 在本机记录的播放历史，与平台账号历史分别保存。")
                         : favoritesView ? Language.text("Favorites saved by KMusic on this device, across sources. This does not change likes in a platform account.", "保存在本机的喜欢，不会修改平台账号的喜欢。")
@@ -236,7 +226,7 @@ ApplicationWindow {
                     anchors.fill: parent; visible: window.destination === "albums" || window.destination === "artists"; contentWidth: availableWidth; clip: true
                     ColumnLayout {
                         width: groupScroll.availableWidth - 64; x: 32; spacing: 18
-                        Label { text: window.destination === "artists" ? Language.text("Artists", "艺术家") : Language.text("Albums", "专辑"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 24 }
+                        Label { visible: !floatingHeader.visible; text: window.destination === "artists" ? Language.text("Artists", "艺术家") : Language.text("Albums", "专辑"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold; Layout.topMargin: 24 }
                         Repeater {
                             model: window.destination === "artists" ? music.artists : music.albums
                             delegate: MusicNavigationButton {
@@ -251,11 +241,13 @@ ApplicationWindow {
                 }
                 OnlineAlbumPage { id: albumPage; anchors.fill: parent; visible: window.destination === "onlineAlbum"; music: window.music; bottomContentInset: window.playerContentInset; onBackRequested: window.destination = window.collectionReturnDestination; onSaveToPlaylistRequested: row => window.openPlaylistPicker("album", row) }
                 LocalFoldersPage {
+                    showHeading: !floatingHeader.visible
                     anchors.fill: parent; visible: window.destination === "folders"
                     music: window.music; bottomContentInset: window.playerContentInset
                     onImportRequested: folderDialog.open()
                 }
                 SourceDemoPage {
+                    showHeading: !floatingHeader.visible
                     anchors.fill: parent; visible: window.destination === "sourceDemo"
                     sourceId: window.selectedSource
                     instanceName: window.demoMediaAliases[window.selectedSource] || ""
@@ -314,6 +306,55 @@ ApplicationWindow {
                 live: true
                 recursive: false
                 smooth: true
+            }
+        }
+        Item {
+            id: floatingHeader
+            x: 260; y: 42; width: parent.width - x - 24; height: 58
+            visible: window.destination !== "now" && window.destination !== "onlineAlbum" && window.destination !== "online"
+            readonly property string heading: window.destination === "new" ? Language.text("Discover", "发现")
+                : window.destination === "personalHome" ? Language.text("Personal", "个人")
+                : window.destination === "localHome" ? Language.text("Local Music", "本地音乐")
+                : window.destination === "mediaHome" ? Language.text("Media Sources", "媒体源")
+                : window.destination === "settingsHome" ? Language.text("Settings", "设置")
+                : window.destination === "folders" ? Language.text("Music folders", "音乐文件夹")
+                : window.destination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
+                : window.destination === "albums" ? Language.text("Albums", "专辑")
+                : window.destination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
+            LiquidSurface {
+                anchors.fill: parent; radius: 20; backdrop: sidebarBackdrop
+                tintColor: window.contentColor; tintStrength: .84; readability: 0
+                blurStrength: .3; refractionStrength: 2; reflectionStrength: .2
+            }
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 18; anchors.rightMargin: 10; spacing: 20
+                Label { text: floatingHeader.heading; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
+                LiquidTextField {
+                    id: floatingSearch
+                    Layout.preferredWidth: Math.min(280, floatingHeader.width * .46)
+                    implicitHeight: 36; cornerRadius: 18
+                    backdrop: sidebarBackdrop; unfilteredBackdrop: true
+                    materialForm: false; liquidFinish: true; liquidIntensity: "strong"
+                    visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
+                    enabled: window.selectedSource === "netease" || window.selectedSource === "local"
+                    placeholderText: window.selectedSource === "local" ? Language.text("Search local music", "搜索本地音乐") : Language.text("Search music", "搜索音乐")
+                    font.pixelSize: 13; leftPadding: 34
+                    text: window.savedSourceSearch(window.selectedSource)
+                    onTextEdited: {
+                        window.rememberSourceSearch(window.selectedSource, text)
+                        if (window.selectedSource === "local") {
+                            music.setSearch(text); music.setLibraryView("songs")
+                            window.pageTitle = Language.text("Songs", "歌曲"); window.destination = "search"
+                        }
+                    }
+                    onAccepted: {
+                        if (window.selectedSource === "netease" && text.trim().length) {
+                            onlinePage.queryText = text; music.searchOnline(text)
+                            window.destination = "online"; window.selectedSourceEntry = "search"
+                        }
+                    }
+                    VectorIcon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 14; color: AppTheme.mutedText }
+                }
             }
         }
         // Back only the antialiased joining pixel so it cannot expose desktop.
