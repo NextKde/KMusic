@@ -12,6 +12,17 @@ ApplicationWindow {
     width: 1100; height: 680; minimumWidth: 1024; minimumHeight: 640
     visible: true; title: "KMusic"; color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
+    property string navigationArea: "discover"
+    property string onlineProvider: "netease"
+    function openPrimary(area) {
+        if (area === "discover" || area === "personal") {
+            selectSource(onlineProvider)
+            navigationArea = area
+            if (area === "personal") destination = "personalHome"
+        } else if (area === "local") {
+            selectSource("local"); navigationArea = area; destination = "localHome"
+        } else { navigationArea = area; destination = area === "media" ? "mediaHome" : "settingsHome" }
+    }
     property string selectedSource: "netease"
     property string selectedSourceEntry: "discover"
     property var sourceSearchDrafts: ({})
@@ -48,6 +59,8 @@ ApplicationWindow {
         restoringSourceSearch = true
         if (selectedSource === "netease" || selectedSource === "local") rememberSourceSearch(selectedSource, search.text)
         selectedSource = id
+        if (id === "netease" || id === "bilibili") { onlineProvider = id; navigationArea = "discover" }
+        else navigationArea = id === "local" ? "local" : "media"
         const sections = SourceCatalog.sections(id)
         if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
         search.text = savedSourceSearch(id)
@@ -68,7 +81,7 @@ ApplicationWindow {
         destination = lastContentDestination
         if (focusBeforeNow && focusBeforeNow.visible && focusBeforeNow.enabled)
             focusBeforeNow.forceActiveFocus(Qt.OtherFocusReason)
-        else sourcePicker.forceActiveFocus(Qt.OtherFocusReason)
+        else discoverNav.forceActiveFocus(Qt.OtherFocusReason)
     }
     property string pageTitle: qsTr("Songs")
     property double selectedPlaylist: -1
@@ -169,8 +182,42 @@ ApplicationWindow {
         Rectangle {
             x: 236; y: 0; width: parent.width - x; height: parent.height
             color: window.contentColor
+            RowLayout {
+                id: onlineHeader
+                visible: window.navigationArea === "discover" || window.navigationArea === "personal"
+                x: 32; y: 34; spacing: 10
+                Repeater {
+                    model: [{id:"netease", name:"网易云音乐"}, {id:"bilibili", name:"哔哩哔哩"}]
+                    delegate: MusicActionButton {
+                        required property var modelData
+                        text: modelData.name; checkable: true; checked: window.onlineProvider === modelData.id
+                        onClicked: { const area = window.navigationArea; window.onlineProvider = modelData.id; window.openPrimary(area) }
+                    }
+                }
+            }
             Item {
-                anchors.fill: parent; anchors.topMargin: 30
+                anchors.fill: parent; anchors.topMargin: onlineHeader.visible ? 76 : 30
+                NavigationHomePage {
+                    anchors.fill: parent
+                    visible: ["personalHome", "localHome", "mediaHome", "settingsHome"].indexOf(window.destination) >= 0
+                    title: window.destination === "personalHome" ? "个人" : window.destination === "localHome" ? "本地音乐" : window.destination === "mediaHome" ? "媒体源" : "设置"
+                    bottomContentInset: window.playerContentInset
+                    groups: window.destination === "personalHome" ? [{title: "我的音乐", entries: SourceCatalog.sections(window.onlineProvider)[1].entries}]
+                        : window.destination === "localHome" ? [
+                            {title: "音乐库", entries: SourceCatalog.sections("local")[0].entries.concat([{id:"folders", zh:"音乐文件夹", en:"Music folders", route:"folders", status:"connected"}])},
+                            {title: "本机收藏", entries: [{id:"favorites", zh:"喜欢的音乐"}, {id:"recent", zh:"最近播放"}, {id:"newPlaylist", zh:"新建歌单"}].concat(music.playlists.map(p => ({id:"playlist", playlistId:p.id, zh:p.name}))) }]
+                        : window.destination === "mediaHome" ? [{title: "添加媒体源", entries: [{id:"navidrome", zh:"Navidrome / OpenSubsonic"}, {id:"jellyfin", zh:"Jellyfin"}, {id:"webdav", zh:"WebDAV"}]}]
+                        : [{title:"外观", entries:[{id:"system", zh:"跟随系统"}, {id:"light", zh:"浅色"}, {id:"dark", zh:"深色"}]}]
+                    onEntryRequested: entry => {
+                        if (window.destination === "personalHome") window.openSourceEntry(entry)
+                        else if (window.destination === "mediaHome") window.selectSource(entry.id)
+                        else if (window.destination === "settingsHome") AppTheme.appearanceMode = entry.id
+                        else if (entry.id === "newPlaylist") playlistDialog.open()
+                        else if (entry.id === "playlist") { window.selectedPlaylist = entry.playlistId; music.selectPlaylist(entry.playlistId); window.destination = "playlist"; window.pageTitle = entry.zh }
+                        else if (entry.route) window.openSourceEntry(entry)
+                        else window.navigate(entry.id, entry.zh)
+                    }
+                }
                 DiscoveryPage {
                     id: discover
                     bottomContentInset: window.playerContentInset
@@ -349,101 +396,13 @@ ApplicationWindow {
                             color: MusicColors.sidebarLabelSecondary
                         }
                     }
-                    RowLayout {
-                        Layout.fillWidth: true; spacing: 4
-                        MusicNavigationButton {
-                            id: sourcePicker
-                            Layout.fillWidth: true
-                            checkable: false; iconName: window.activeSource.category === "media" ? "folder" : "music"
-                            text: window.sourceLabel(window.activeSource) + "  ▾"
-                            Accessible.name: qsTr("Choose music source")
-                            onClicked: sourceMenu.popup()
-                            Menu {
-                                id: sourceMenu
-                                MenuItem { text: qsTr("Online Music"); enabled: false }
-                                MenuItem { text: "网易云音乐"; checkable: true; checked: window.selectedSource === "netease"; onTriggered: window.selectSource("netease") }
-                                MenuItem { text: "哔哩哔哩 · Demo"; checkable: true; checked: window.selectedSource === "bilibili"; onTriggered: window.selectSource("bilibili") }
-                                MenuSeparator {}
-                                MenuItem { text: qsTr("Local Music"); checkable: true; checked: window.selectedSource === "local"; onTriggered: window.selectSource("local") }
-                                MenuSeparator {}
-                                MenuItem { text: qsTr("Media Sources"); enabled: false }
-                                MenuItem { text: "Navidrome / OpenSubsonic · Demo"; checkable: true; checked: window.selectedSource === "navidrome"; onTriggered: window.selectSource("navidrome") }
-                                MenuItem { text: "Jellyfin · Demo"; checkable: true; checked: window.selectedSource === "jellyfin"; onTriggered: window.selectSource("jellyfin") }
-                                MenuItem { text: "WebDAV · Demo"; checkable: true; checked: window.selectedSource === "webdav"; onTriggered: window.selectSource("webdav") }
-                            }
-                        }
-                        MusicActionButton {
-                            visible: window.selectedSource === "local"
-                            iconOnly: true; iconName: "more"; implicitWidth: 28; implicitHeight: 28; flat: true
-                            Accessible.name: qsTr("Local music menu")
-                            onClicked: localMusicMenu.popup()
-                            Menu {
-                                id: localMusicMenu
-                                MenuItem { text: qsTr("Import music folder…"); enabled: !music.scanning; onTriggered: { window.selectSource("local"); folderDialog.open() } }
-                                MenuItem { text: music.scanning ? qsTr("Scanning…") : qsTr("Rescan music folders"); enabled: !music.scanning && music.libraryFolders.length > 0; onTriggered: music.rescanLibrary() }
-                            }
-                        }
-                    }
-                    Label {
-                        Layout.leftMargin: MusicColors.sidebarControlInset
-                        text: window.activeSource.status === "connected" ? window.selectedSource === "netease" ? qsTr("Browse available · account menus are demos") : qsTr("Local file library") : qsTr("Navigation demo · not connected")
-                        color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
-                    }
-                    Repeater {
-                        model: SourceCatalog.sections(window.selectedSource)
-                        delegate: ColumnLayout {
-                            id: sourceSection
-                            required property var modelData
-                            Layout.fillWidth: true; spacing: MusicColors.sidebarRowGap
-                            Label {
-                                Layout.leftMargin: MusicColors.sidebarControlInset
-                                Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4
-                                text: window.sourceLabel(sourceSection.modelData)
-                                color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold
-                            }
-                            Label {
-                                Layout.fillWidth: true; Layout.leftMargin: MusicColors.sidebarControlInset
-                                visible: window.selectedSource === "netease" && sourceSection.modelData.en === "My Music"
-                                text: music.account.authenticated ? qsTr("Account menus · demo") : qsTr("Sign in required · demo")
-                                color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
-                            }
-                            Repeater {
-                                model: sourceSection.modelData.entries
-                                delegate: MusicNavigationButton {
-                                    required property var modelData
-                                    Layout.fillWidth: true
-                                    objectName: modelData.id === "discover" ? "reviewDiscoverNav" : ""
-                                    text: window.sourceLabel(modelData)
-                                    iconName: modelData.id === "search" ? "search" : modelData.id === "albums" ? "album" : modelData.id === "artists" ? "artist" : modelData.id === "history" ? "repeat" : modelData.id === "liked" || modelData.id === "favorites" ? "heart" : modelData.id === "folders" ? "folder" : "music"
-                                    checked: window.selectedSourceEntry === modelData.id && ["favorites", "recent", "playlist", "queue", "now"].indexOf(window.destination) < 0
-                                    onClicked: window.openSourceEntry(modelData)
-                                }
-                            }
-                        }
-                    }
-                    Label { text: qsTr("On This Device"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.bottomMargin: 4; Layout.leftMargin: MusicColors.sidebarControlInset }
-                    MusicNavigationButton { objectName: "reviewFavoritesNav"; Layout.fillWidth: true; iconName: "heart"; iconSource: ""; text: qsTr("Favorites"); checked: window.destination === "favorites"; onClicked: window.navigate("favorites", qsTr("Favorites on this device")) }
-                    MusicNavigationButton { objectName: "reviewRecentNav"; Layout.fillWidth: true; iconName: "repeat"; iconSource: ""; text: qsTr("Recently played"); checked: window.destination === "recent"; onClicked: window.navigate("recent", qsTr("Recently played on this device")) }
-                    RowLayout {
-                        Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset
-                        Label { text: qsTr("On-device Playlists"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.fillWidth: true }
-                        MusicActionButton { iconOnly: true; iconName: "plus"; iconColor: MusicColors.sidebarAccent; implicitWidth: 28; implicitHeight: 28; flat: true; onClicked: playlistDialog.open(); Accessible.name: qsTr("New playlist") }
-                    }
-                    Repeater {
-                        model: music.playlists
-                        delegate: MusicNavigationButton {
-                            required property var modelData
-                            Layout.fillWidth: true; text: modelData.name; iconName: "playlist"
-                            checked: window.destination === "playlist" && window.selectedPlaylist === modelData.id
-                            onClicked: { window.selectedPlaylist = modelData.id; music.selectPlaylist(modelData.id); window.destination = "playlist"; window.pageTitle = modelData.name }
-                        }
-                    }
-                    Label {
-                        visible: music.playlists.length === 0
-                        Layout.fillWidth: true; Layout.leftMargin: MusicColors.sidebarControlInset
-                        text: qsTr("No device playlists yet")
-                        color: MusicColors.sidebarLabelTertiary; font.pixelSize: MusicColors.sidebarCaptionSize
-                    }
+                    Label { text: "Online Music"; color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
+                    MusicNavigationButton { id: discoverNav; Layout.fillWidth: true; text: "Discover"; iconName: "music"; checked: window.navigationArea === "discover"; onClicked: window.openPrimary("discover") }
+                    MusicNavigationButton { Layout.fillWidth: true; text: "个人"; iconName: "person"; checked: window.navigationArea === "personal"; onClicked: window.openPrimary("personal") }
+                    Label { text: "Local & Sources"; color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
+                    MusicNavigationButton { Layout.fillWidth: true; text: "本地音乐"; iconName: "folder"; checked: window.navigationArea === "local"; onClicked: window.openPrimary("local") }
+                    MusicNavigationButton { Layout.fillWidth: true; text: "媒体源"; iconName: "album"; checked: window.navigationArea === "media"; onClicked: window.openPrimary("media") }
+                    MusicNavigationButton { Layout.fillWidth: true; Layout.topMargin: MusicColors.sidebarGroupGap; text: "设置"; iconName: "settings"; checked: window.navigationArea === "settings"; onClicked: window.openPrimary("settings") }
                     Item { implicitHeight: MusicColors.sidebarGroupGap }
                 }
             }
@@ -451,7 +410,6 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.margins: MusicColors.sidebarPadding
                 spacing: 8
-                MusicNavigationButton { Layout.fillWidth: true; iconName: "queue"; text: qsTr("Play queue"); checked: window.destination === "queue"; onClicked: window.navigate("queue", qsTr("Play queue")) }
                 RowLayout {
                     Layout.fillWidth: true; spacing: 8
                     Button {
@@ -459,7 +417,7 @@ ApplicationWindow {
                         objectName: "reviewAccountButton"
                         readonly property bool neteaseAccount: window.selectedSource === "netease"
                         readonly property bool signedIn: neteaseAccount && music.account.authenticated
-                        visible: window.activeSource.category === "online"
+                        visible: window.navigationArea === "discover" || window.navigationArea === "personal"
                         Layout.fillWidth: true; implicitHeight: 44
                         hoverEnabled: true
                         Accessible.name: neteaseAccount ? signedIn ? qsTr("Account: %1").arg(music.account.nickname) : qsTr("Sign in to NetEase") : qsTr("Bilibili account · demo")
@@ -505,6 +463,7 @@ ApplicationWindow {
                     Item { visible: !accountButton.visible; Layout.fillWidth: true }
                     MusicActionButton {
                         id: settingsButton
+                        visible: false
                         iconOnly: true; iconName: "settings"; implicitWidth: 28; implicitHeight: 28; flat: true
                         Accessible.name: qsTr("Settings")
                         onClicked: settingsMenu.popup()
