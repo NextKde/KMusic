@@ -104,8 +104,9 @@ ScrollView {
         property string section: ""
         property int limit: 8
         property bool expanded: false
+        property bool compact: false
         readonly property var state: page.feed(section)
-        Layout.fillWidth: true; spacing: 10
+        Layout.fillWidth: true; spacing: compact ? 8 : 10
         SectionTitle {
             title: songSection.heading
             actionText: (songSection.state.items || []).length <= songSection.limit ? "" : songSection.expanded ? Language.text("Show less", "收起") : Language.text("See all", "查看全部")
@@ -120,16 +121,16 @@ ScrollView {
                 delegate: AbstractButton {
                     required property var modelData
                     required property int index
-                    Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: 58
+                    Layout.fillWidth: true; Layout.preferredWidth: 1; implicitHeight: songSection.compact ? 48 : 58
                     hoverEnabled: true
                     Accessible.name: Language.text("Play ", "播放 ") + (modelData.title || "")
                     onClicked: page.music.playDiscoverySong(songSection.section, index)
                     background: Rectangle { radius: 8; color: parent.hovered ? MusicColors.hoverFill : "transparent"; border.width: parent.visualFocus ? 1 : 0; border.color: MusicColors.sidebarAccent }
                     contentItem: RowLayout {
-                        spacing: 12
-                        Artwork { Layout.preferredWidth: 46; Layout.preferredHeight: 46; source: modelData.artwork || ""; title: modelData.title || ""; radius: 6 }
+                        spacing: songSection.compact ? 10 : 12
+                        Artwork { Layout.preferredWidth: songSection.compact ? 38 : 46; Layout.preferredHeight: songSection.compact ? 38 : 46; source: modelData.artwork || ""; title: modelData.title || ""; radius: 6 }
                         ColumnLayout {
-                            Layout.fillWidth: true; spacing: 4
+                            Layout.fillWidth: true; spacing: songSection.compact ? 2 : 4
                             Label { Layout.fillWidth: true; text: modelData.title || ""; elide: Text.ElideRight; font.pixelSize: 13; font.weight: Font.Medium; color: AppTheme.text }
                             Label { Layout.fillWidth: true; text: modelData.artist || ""; elide: Text.ElideRight; font.pixelSize: 11; color: AppTheme.mutedText }
                         }
@@ -208,7 +209,7 @@ ScrollView {
                 }
             }
         }
-        SongSection { heading: Language.text("New songs", "新歌速递"); section: "newSongs" }
+        SongSection { heading: Language.text("New songs", "新歌速递"); section: "newSongs"; compact: true }
         CoverShelf { heading: Language.text("New releases", "新碟上架"); albums: true; state: ({items: page.music.discoveryAlbums, loading: page.music.discoveryLoading, error: page.music.discoveryError}) }
         CoverShelf { heading: Language.text("On the charts", "排行榜"); section: "charts"; state: page.feed("charts") }
         Item { Layout.preferredHeight: page.bottomContentInset + 16 }
