@@ -512,7 +512,7 @@ ApplicationWindow {
             visible: window.destination === "now"; music: window.music
             onCloseRequested: window.closeNowPlaying()
         }
-        WindowChrome { width: parent.width; y: floatingHeader.visible ? 8.5 : 0; targetWindow: window }
+        WindowChrome { width: parent.width; targetWindow: window }
                 Button {
                     id: headerAvatar
                     padding: 0
