@@ -24,6 +24,7 @@ LiquidDialog {
         category: "SearchHistory"
         property string entriesJson: "{}"
     }
+    function clearAllHistory() { saved.entriesJson = "{}"; saved.sync() }
     function readHistory() {
         try {
             const value = JSON.parse(saved.entriesJson)

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtCore
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import Kos.Ui
@@ -126,7 +127,38 @@ ApplicationWindow {
         music.setSearch(selectedSource === "local" ? savedSourceSearch("local") : "")
         music.setLibraryView("songs")
     }
-    Component.onCompleted: { AppTheme.appearanceMode = "light" }
+    Settings {
+        id: userPreferences
+        category: "UserPreferences"
+        property string appearance: "system"
+        property bool reducedMotion: false
+        property bool rememberWindowSize: true
+        property int savedWidth: 1100
+        property int savedHeight: 680
+        property int lyricFontSize: 25
+        property bool centerLyrics: false
+        property bool lyricBlur: true
+        property bool smoothLyrics: true
+    }
+    Component.onCompleted: {
+        AppTheme.appearanceMode = userPreferences.appearance
+        AppTheme.reduceMotion = userPreferences.reducedMotion
+        if (userPreferences.rememberWindowSize) {
+            width = Math.max(minimumWidth, Math.min(userPreferences.savedWidth, Screen.width))
+            height = Math.max(minimumHeight, Math.min(userPreferences.savedHeight, Screen.height))
+        }
+    }
+    Connections {
+        target: AppTheme
+        function onAppearanceModeChanged() { userPreferences.appearance = AppTheme.appearanceMode }
+        function onReduceMotionChanged() { userPreferences.reducedMotion = AppTheme.reduceMotion }
+    }
+    onClosing: {
+        if (userPreferences.rememberWindowSize && visibility === Window.Windowed) {
+            userPreferences.savedWidth = width; userPreferences.savedHeight = height
+        }
+        userPreferences.sync()
+    }
     Shortcut { sequence: "Ctrl+O"; onActivated: { window.selectSource("local"); folderDialog.open() } }
     Shortcut { sequence: "Space"; enabled: !nowPlaying.ownsControlFocus(window.activeFocusItem) && !(window.activeFocusItem instanceof TextInput) && !(window.activeFocusItem instanceof TextEdit); onActivated: music.togglePlayPause() }
     Connections {
@@ -180,7 +212,7 @@ ApplicationWindow {
                 anchors.fill: parent; anchors.topMargin: window.contentDestination === "new" ? 0 : floatingHeader.visible ? 68 : 30
                 NavigationHomePage {
                     anchors.fill: parent
-                    visible: ["mediaHome", "settingsHome"].indexOf(window.contentDestination) >= 0
+                    visible: window.contentDestination === "mediaHome"
                     showHeading: false
                     title: window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐") : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源") : Language.text("Settings", "设置")
                     bottomContentInset: window.playerContentInset
@@ -194,6 +226,14 @@ ApplicationWindow {
                         else if (entry.route) window.openSourceEntry(entry)
                         else window.navigate(entry.id, entry.zh)
                     }
+                }
+                SettingsPage {
+                    anchors.fill: parent; visible: window.contentDestination === "settingsHome"
+                    music: window.music; preferences: userPreferences; bottomContentInset: window.playerContentInset
+                    onImportRequested: folderDialog.open()
+                    onFoldersRequested: { window.openPrimary("local"); localPage.openSection("folders") }
+                    onAccountRequested: accountDialog.open()
+                    onClearSearchRequested: searchPopup.clearAllHistory()
                 }
                 LocalMusicPage {
                     id: localPage
@@ -552,6 +592,10 @@ ApplicationWindow {
             width: Math.min(820, parent.width - 236 - 32); x: 236 + (parent.width - 236 - width) / 2
             backdrop: playerBackdrop; music: window.music; onQueueRequested: window.navigate("queue", Language.text("Play queue", "播放队列")); onNowPlayingRequested: window.destination = "now" }
         NowPlaying {
+            lyricFontSize: userPreferences.lyricFontSize
+            centerLyrics: userPreferences.centerLyrics
+            lyricBlur: userPreferences.lyricBlur
+            smoothLyrics: userPreferences.smoothLyrics
             id: nowPlaying; anchors.fill: parent
             z: 20
             visible: window.destination === "now" || window.nowPlayingProgress > 0

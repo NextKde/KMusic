@@ -7,6 +7,10 @@ import "UiLanguage.mjs" as Language
 Item {
     id: page
     required property var music
+    property int lyricFontSize: 25
+    property bool centerLyrics: false
+    property bool lyricBlur: true
+    property bool smoothLyrics: true
     signal closeRequested()
     onVisibleChanged: if (visible) {
         presentationMode = 1
@@ -183,7 +187,7 @@ Item {
                     if (!line) return
                     const target = Math.max(0, Math.min(contentHeight - height,
                         line.y + line.height / 2 - height * .44))
-                    if (AppTheme.reduceMotion) { followAnimation.stop(); contentY = target }
+                    if (AppTheme.reduceMotion || !page.smoothLyrics) { followAnimation.stop(); contentY = target }
                     else { followAnimation.to = target; followAnimation.running = true }
                 }
                 onCurrentIndexChanged: Qt.callLater(followCurrent)
@@ -232,7 +236,7 @@ Item {
                     // Each line trails the common scroll slightly, without changing its layout slot.
                     property real followedY: lyricsView.contentY
                     Behavior on followedY {
-                        enabled: !AppTheme.reduceMotion && !lyricsView.browsing && page.visible
+                        enabled: page.smoothLyrics && !AppTheme.reduceMotion && !lyricsView.browsing && page.visible
                         SmoothedAnimation { duration: 90 + Math.min(lyricLine.distance, 5) * 30; velocity: -1 }
                     }
                     readonly property real lag: lyricsView.browsing ? 0 : lyricsView.contentY - followedY
@@ -240,7 +244,7 @@ Item {
                     readonly property real edgeFade: Math.max(0, Math.min(1, screenCenter / 48, (lyricsView.height - screenCenter) / 48))
                     property real emphasis: active ? 1 : .82
                     property real lineOpacity: active ? 1 : Math.max(.27, .64 - distance * .07)
-                    property real softness: active || lyricsView.browsing ? 0 : Math.min(.42, distance * .085)
+                    property real softness: !page.lyricBlur || active || lyricsView.browsing ? 0 : Math.min(.42, distance * .085)
                     Behavior on emphasis { NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 380; easing.type: Easing.OutCubic } }
                     Behavior on lineOpacity { NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 380 } }
                     Behavior on softness { NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 450 } }
@@ -250,9 +254,10 @@ Item {
                         id: lyricText
                         x: 12; y: 12; width: parent.width - 24
                         text: lyricLine.modelData.text || ""
-                        wrapMode: Text.WordWrap; font.pixelSize: 25; font.weight: Font.DemiBold
+                        wrapMode: Text.WordWrap; font.pixelSize: page.lyricFontSize;
+                        horizontalAlignment: page.centerLyrics ? Text.AlignHCenter : Text.AlignLeft; font.weight: Font.DemiBold
                         color: page.foreground
-                        scale: lyricLine.emphasis; transformOrigin: Item.Left
+                        scale: lyricLine.emphasis; transformOrigin: page.centerLyrics ? Item.Center : Item.Left
                         layer.enabled: lyricLine.softness > .001 && lyricLine.screenCenter > -lyricLine.height && lyricLine.screenCenter < lyricsView.height + lyricLine.height
                         layer.effect: MultiEffect {
                             blurEnabled: true; blurMax: 16; blur: lyricLine.softness
