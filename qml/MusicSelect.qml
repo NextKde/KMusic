@@ -1,6 +1,7 @@
 import QtQuick
 import Kos.Ui
 LiquidSelect {
+    appearanceMode: AppTheme.dark ? "dark" : "light"
     accentColor: MusicColors.selectedTint
     selectedTextColor: MusicColors.text
     focusRingColor: MusicColors.focus

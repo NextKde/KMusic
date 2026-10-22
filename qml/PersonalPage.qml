@@ -87,7 +87,6 @@ Item {
                         required property var modelData
                         text: modelData.title; implicitHeight: 30
                         checked: page.section === modelData.key
-                        accentColor: MusicColors.selectedTint
                         onClicked: page.section = modelData.key
                     }
                 }
