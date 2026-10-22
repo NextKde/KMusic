@@ -21,6 +21,10 @@ ScrollView {
     contentWidth: availableWidth
     clip: true
     function feed(key) { return music.discoveryFeed[key] || {items: [], loading: false, error: ""} }
+    function hasFeedContentOrStatus(key) {
+        const state = feed(key)
+        return (state.items || []).length > 0 || state.loading === true || (state.error || "").length > 0
+    }
     function homeOpticalState() { return { content: "real NetEase discovery", personalized: signedIn } }
     function scrollReleaseReview(fraction) { return "{}" }
 
@@ -147,13 +151,14 @@ ScrollView {
         Item { Layout.preferredHeight: Math.max(0, page.topContentInset - 20); visible: page.topContentInset > 0 }
         Label { visible: page.showHeading; text: Language.text("Discover", "发现"); color: AppTheme.text; font.pixelSize: 28; font.weight: Font.Bold }
         ColumnLayout {
-            Layout.fillWidth: true; spacing: 10; visible: page.signedIn
+            Layout.fillWidth: true; spacing: 10
+            visible: page.signedIn && (page.hasFeedContentOrStatus("dailySongs") || page.hasFeedContentOrStatus("dailyPlaylists"))
             SectionTitle {
                 title: Language.text("Made for you", "为你推荐")
                 subtitle: Language.text("A fresh daily selection for your NetEase account.", "来自你网易云账号的每日新推荐。")
             }
-            SongSection { heading: Language.text("Your daily mix", "每日推荐歌曲"); section: "dailySongs"; limit: 4 }
-            CoverShelf { Layout.topMargin: 10; heading: Language.text("Playlists for you", "为你推荐的歌单"); section: "dailyPlaylists"; state: page.feed("dailyPlaylists") }
+            SongSection { visible: page.hasFeedContentOrStatus("dailySongs"); heading: Language.text("Your daily mix", "每日推荐歌曲"); section: "dailySongs"; limit: 4 }
+            CoverShelf { visible: page.hasFeedContentOrStatus("dailyPlaylists"); Layout.topMargin: page.hasFeedContentOrStatus("dailySongs") ? 10 : 0; heading: Language.text("Playlists for you", "为你推荐的歌单"); section: "dailyPlaylists"; state: page.feed("dailyPlaylists") }
         }
         ColumnLayout {
             Layout.fillWidth: true; spacing: 10
