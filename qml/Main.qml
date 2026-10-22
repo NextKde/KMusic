@@ -330,7 +330,7 @@ ApplicationWindow {
                 Label { text: floatingHeader.heading; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
                 LiquidActionButton {
                     id: headerActions
-                    Layout.preferredWidth: platformButton.visible ? 218 : 40
+                    Layout.preferredWidth: platformButton.visible ? 80 : 40
                     implicitHeight: 36; materialForm: false
                     backdrop: sidebarBackdrop; liquidIntensity: "strong"
                     scale: 1; hoverEnabled: false
@@ -352,25 +352,11 @@ ApplicationWindow {
                             id: platformButton
                             Layout.fillWidth: true; Layout.fillHeight: true
                             visible: window.navigationArea === "discover" || window.navigationArea === "personal"
-                            Accessible.name: Language.text("Choose platform", "选择平台")
-                            onClicked: platformMenu.popup()
+                            Accessible.name: Language.text("Switch platform", "切换平台")
+                            // Reserved icon only; platform behavior will be defined later.
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
-                            contentItem: Label {
-                                text: (window.onlineProvider === "netease" ? Language.text("NetEase Music", "网易云音乐") : "Bilibili") + "  ▾"
-                                color: AppTheme.text; font.pixelSize: 13
-                                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                            }
-                            Menu {
-                                id: platformMenu
-                                MenuItem {
-                                    text: Language.text("NetEase Cloud Music", "网易云音乐"); checkable: true; checked: window.onlineProvider === "netease"
-                                    onTriggered: { const area = window.navigationArea; window.onlineProvider = "netease"; window.openPrimary(area) }
-                                }
-                                MenuItem {
-                                    text: Language.text("Bilibili · not connected", "哔哩哔哩 · 尚未接入"); checkable: true; checked: window.onlineProvider === "bilibili"
-                                    onTriggered: { const area = window.navigationArea; window.onlineProvider = "bilibili"; window.openPrimary(area) }
-                                }
-                            }
+                            contentItem: VectorIcon { name: "repeat"; size: 16; color: AppTheme.text }
+
                         }
                     }
                 }
