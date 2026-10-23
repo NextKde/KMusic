@@ -627,12 +627,15 @@ ApplicationWindow {
     FolderDialog { id: folderDialog; title: Language.text("Import music folder", "导入音乐文件夹"); onAccepted: { window.openPrimary("local"); music.addLibraryFolder(selectedFolder.toString()) } }
     LiquidDialog {
         id: playlistDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("New Playlist", "新建歌单"); standardButtons: Dialog.Ok | Dialog.Cancel
+        onOpened: { playlistName.text = ""; playlistName.forceActiveFocus() }
+        onClosed: playlistName.text = ""
         contentItem: MusicTextField { id: playlistName; placeholderText: Language.text("Playlist name", "歌单名称"); materialForm: false; liquidFinish: true }
         onAccepted: { if (playlistName.text.trim()) music.createPlaylist(playlistName.text.trim()); playlistName.text = "" }
     }
     LiquidDialog {
         id: addDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("Save to local playlist", "保存到本机歌单"); standardButtons: Dialog.Close
-        onClosed: music.clearPreparedPlaylistTrack()
+        onOpened: { newPlaylistName.text = ""; newPlaylistName.forceActiveFocus() }
+        onClosed: { newPlaylistName.text = ""; music.clearPreparedPlaylistTrack() }
         contentItem: ColumnLayout {
             Label { text: music.preparedPlaylistTitle; color: AppTheme.text; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
             RowLayout {
