@@ -1,6 +1,6 @@
 # Install KMusic
 
-[简体中文](Installation.zh-CN.md) · [Back to KMusic](../README.md)
+[简体中文](Installation.zh-CN.md) · [Back to KMusic](../README.en.md)
 
 ## Supported environments
 
