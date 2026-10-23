@@ -71,5 +71,5 @@ This pins the revision that passed the installer matrix. The installer downloads
 - [Historical development notes](docs/DevelopmentNotes.md)
 
 <!-- progress-links:start -->
-[Latest progress and screenshots](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md) · [Component Gallery](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
+[Interface preview](docs/images/kmusic-ipad.png) · [Component Gallery](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
 <!-- progress-links:end -->

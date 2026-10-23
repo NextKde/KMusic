@@ -1,5 +1,16 @@
 # Contributor instructions
 
+## Current user overrides (2026-10-23)
+
+- Runtime validation, GUI interaction and tests are VM-only; do not run them on the host.
+- Do not automatically publish iteration screenshots. Historical screenshot objects
+  have been removed from remote history; keep only curated README images in docs/images.
+- Source refinement uses codex/player-ui-refinement. Main integration is explicitly
+  authorized for the current cleanup delivery; later automatic iterations must not merge main.
+- Older local-validation and screenshot-publication instructions below are historical
+  and superseded by these rules.
+
+
 - Latest design authority: read docs/DesignReset.zh-CN.md (English companion
   docs/DesignReset.md). The user requires pure QML transparency/blur and retained
   liquid effects; the previous KWin/KF6/native review route is retired. Whole-app

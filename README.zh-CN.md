@@ -71,5 +71,5 @@ cd KMusic
 - [历史开发记录](docs/DevelopmentNotes.zh-CN.md)
 
 <!-- progress-links:start -->
-[最新进展与截图](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md) · [组件示例库](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
+[界面预览](docs/images/kmusic-ipad.png) · [组件示例库](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
 <!-- progress-links:end -->

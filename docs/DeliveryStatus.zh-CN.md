@@ -19,8 +19,8 @@ Kos.Ui 固定为
 | 日志 | 本轮未观察到新增 QML／Shader／源反馈错误；原有 portal 桌面 ID 注册警告仍在。 |
 
 正常数据含本地测试收藏／最近／歌单和公开歌曲元数据；未截取二维码或账户身份。
-本地技术记录位于忽略目录 `.task/integration/`；协调者将选定证据发布到
-[最新进度](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md)。
+本地技术记录位于忽略目录 `.task/integration/`。历史迭代截图已从远端 Git 历史清理；
+当前展示图见 [README](../README.md)，上述历史检查记录不代表最新版本已验收。
 本轮实际依赖为 Node 22.23.1、GStreamer 1.28.8、TagLib 2.3.2、QtKeychain 0.17、
 libqrencode 4.1.1；启动方法见 [README](../README.zh-CN.md)。
 

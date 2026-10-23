@@ -20,8 +20,9 @@ Later documentation-only commits do not change that tested binary.
 
 The ordinary dataset contains local test favorites/recent/playlists and publicly
 fetched song metadata; no sign-in code or account identity was captured. The local
-review record is `.task/integration/` (ignored); selected evidence is published by
-the coordinator through [latest progress](https://github.com/NextKde/KMusic/blob/ui-evidence/README.md).
+review record is `.task/integration/` (ignored). Historical iteration captures have been
+removed from remote Git history; current showcase images remain in the [README](../README.en.md).
+The historical checks above do not establish acceptance of the latest candidate.
 The checked executable used Node 22.23.1, GStreamer 1.28.8, TagLib 2.3.2,
 QtKeychain 0.17 and libqrencode 4.1.1. See [build/run instructions](../README.md#build-and-run).
 
