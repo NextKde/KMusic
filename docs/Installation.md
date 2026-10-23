@@ -28,7 +28,7 @@ The bundled provider runs as ordinary JavaScript, including on distro Node build
 
 ## Install from an existing clone (no source download)
 
-Use a revision containing this feature, currently `codex/player-ui-refinement`; it is not yet merged into main.
+Use a revision of main containing this feature.
 
 ```sh
 cd /your/path/KMusic

@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
+from source_copy import copy_checkout
 
 spec = importlib.util.spec_from_file_location('local_installer', Path(__file__).resolve().parents[2] / 'packaging/installer.py')
 i = importlib.util.module_from_spec(spec)
@@ -133,6 +134,14 @@ install(FILES data/kmusic.svg DESTINATION share/icons/hicolor/scalable/apps)
         self.assertEqual(user_data.read_text(), 'keep')
         self.assertFalse(self.invoke('status')[1]['installed'])
         self.assertFalse(self.invoke('uninstall')[1]['changed'])
+
+    def test_ci_checkout_copy_preserves_tracked_symlinks_and_clean_status(self):
+        (self.source/'src/main-link.cpp').symlink_to('main.cpp')
+        self.commit()
+        copied = self.base/'copied source'
+        copy_checkout(self.source, copied)
+        self.assertTrue((copied/'src/main-link.cpp').is_symlink())
+        self.assertEqual(self.git(copied, 'status', '--porcelain', '--untracked-files=no'), '')
 
     def test_missing_path_and_conflicting_arguments(self):
         self.assertEqual(self.invoke('install', '--source-dir', str(self.base/'absent'))[0], 2)

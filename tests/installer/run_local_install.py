@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from source_copy import copy_checkout
 
 p = argparse.ArgumentParser()
 p.add_argument('--source', required=True)
@@ -19,7 +20,7 @@ with tempfile.TemporaryDirectory(prefix='kmusic-real-local-') as td:
     work = Path(td)
     # Installer never receives the remote URL; source was prepared by CI checkout.
     checkout = work/'source'
-    shutil.copytree(source, checkout, symlinks=True, ignore=shutil.ignore_patterns('results', 'kos-tests', 'build', '.task', '__pycache__'))
+    copy_checkout(source, checkout)
     shim = work/'tools'; shim.mkdir()
     real_git = shutil.which('git')
     (shim/'git').write_text('#!/usr/bin/env python3\nimport os,sys\na=sys.argv[1:]\n'

@@ -48,7 +48,7 @@ Report copyright, API-use or other rights concerns through [Issues](https://gith
 Prepare the dependencies in the [installation guide](docs/Installation.md), then run as a regular user:
 
 ```sh
-git clone --recurse-submodules --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
+git clone --recurse-submodules --branch main https://github.com/NextKde/KMusic.git
 cd KMusic
 ./install.sh check
 ./install.sh install --source-dir .

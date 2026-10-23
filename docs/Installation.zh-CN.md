@@ -28,7 +28,7 @@
 
 ## 从已克隆仓库安装（不重新下载）
 
-需要包含此功能的版本，当前位于 `codex/player-ui-refinement`；尚未合入 main。
+使用 main 分支中包含此功能的版本。
 
 ```sh
 cd /你的路径/KMusic
