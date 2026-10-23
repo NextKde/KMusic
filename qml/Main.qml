@@ -443,7 +443,7 @@ ApplicationWindow {
                             ToolTip.text: Language.text("Search · Ctrl+F", "搜索 · Ctrl+F")
                             ToolTip.visible: hovered
                             Shortcut {
-                                sequence: StandardKey.Find
+                                sequences: [StandardKey.Find]
                                 enabled: headerSearchButton.visible && headerSearchButton.enabled
                                 onActivated: headerSearchButton.clicked()
                             }
