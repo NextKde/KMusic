@@ -11,12 +11,12 @@ ColumnLayout {
     property bool showHeading: true
     readonly property alias reviewList: list
     property var trackModel: music.libraryModel
-    property string heading: qsTr("Songs")
+    property string heading: Language.text("Songs", "歌曲")
     property string scopeDescription: ""
     property bool onlineView: false
     property bool albumView: false
     property Component headerContent: null
-    property string emptyMessage: page.queueView ? qsTr("Your queue is empty") : qsTr("No songs here yet")
+    property string emptyMessage: page.queueView ? Language.text("Your queue is empty", "播放队列为空") : Language.text("No songs here yet", "暂无歌曲")
     signal detailsRequested(int row)
     signal saveToPlaylistRequested(int row)
     property bool queueView: false
@@ -31,10 +31,10 @@ ColumnLayout {
         visible: page.showHeading
         Layout.fillWidth: true; Layout.topMargin: 24; Layout.leftMargin: 32; Layout.rightMargin: 32
         Label { text: page.heading; color: AppTheme.text; font.pixelSize: 32; font.weight: Font.Bold; Layout.fillWidth: true }
-        MusicActionButton { visible: !page.queueView && !page.onlineView && !page.favoritesView && !page.recentView; text: qsTr("Import"); onClicked: page.importRequested() }
-        MusicActionButton { visible: page.queueView; text: qsTr("Clear queue"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
+        MusicActionButton { visible: !page.queueView && !page.onlineView && !page.favoritesView && !page.recentView; text: Language.text("Import", "导入"); onClicked: page.importRequested() }
+        MusicActionButton { visible: page.queueView; text: Language.text("Clear queue", "清空队列"); enabled: page.trackModel.count > 0; onClicked: page.music.clearQueue() }
     }
-    Label { visible: page.showHeading; Layout.leftMargin: 32; text: (page.recentView ? qsTr("On this device") + " · " : "") + (page.trackModel.count === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(page.trackModel.count)); color: AppTheme.mutedText }
+    Label { visible: page.showHeading; Layout.leftMargin: 32; text: (page.recentView ? Language.text("On this device", "此设备上") + " · " : "") + (page.trackModel.count === 1 ? Language.text("1 song", "1 首歌曲") : Language.text("%1 songs", "%1 首歌曲").arg(page.trackModel.count)); color: AppTheme.mutedText }
     Label { visible: page.showHeading && page.scopeDescription.length > 0; Layout.fillWidth: true; Layout.leftMargin: 32; Layout.rightMargin: 32; text: page.scopeDescription; color: AppTheme.mutedText; font.pixelSize: 13; wrapMode: Text.WordWrap }
     Rectangle { visible: page.showHeading; Layout.fillWidth: true; height: 1; color: AppTheme.border; Layout.leftMargin: 32; Layout.rightMargin: 32 }
     ListView {
@@ -89,21 +89,21 @@ ColumnLayout {
                     iconColor: row.localFavorite ? MusicColors.sidebarAccent : AppTheme.mutedText
                     implicitWidth: 30; implicitHeight: 30
                     objectName: row.index === 0 ? (page.onlineView ? "reviewFavoriteOnlineFirst" : page.albumView ? "reviewFavoriteAlbumFirst" : "reviewFavoriteLocalFirst") : ""
-                    Accessible.name: row.localFavorite ? qsTr("Remove local favorite") : qsTr("Add local favorite")
+                    Accessible.name: row.localFavorite ? Language.text("Remove local favorite", "取消本机收藏") : Language.text("Add local favorite", "加入本机收藏")
                     ToolTip.text: Accessible.name; ToolTip.visible: hovered
                     onClicked: page.music.toggleTrackFavorite(page.onlineView ? "online" : page.albumView ? "album" : "library", page.onlineView || page.albumView ? row.index : row.trackId)
                 }
                 MusicActionButton { iconOnly: true;
                     objectName: page.albumView && row.index === 0 ? "reviewAlbumEnqueueFirst" : ""
                     text: page.queueView ? "−" : "+"; implicitWidth: 34; implicitHeight: 30
-                    Accessible.name: page.queueView ? qsTr("Remove from queue") : qsTr("Add to queue")
+                    Accessible.name: page.queueView ? Language.text("Remove from queue", "移出队列") : Language.text("Add to queue", "加入队列")
                     onClicked: { if (page.queueView) page.music.removeQueueRow(row.index); else if (page.albumView) page.music.enqueueAlbumRow(row.index); else if (page.onlineView) page.music.enqueueOnlineRow(row.index); else page.music.enqueueTrack(row.trackId) }
                 }
                 MusicActionButton {
                     iconOnly: true; iconName: "playlist"; implicitWidth: 30; implicitHeight: 30
                     objectName: (page.albumView || page.onlineView) && row.index === 0 ? (page.albumView ? "reviewSaveAlbumFirst" : "reviewSaveOnlineFirst") : ""
                     visible: page.onlineView || page.albumView
-                    Accessible.name: qsTr("Save to local playlist")
+                    Accessible.name: Language.text("Save to local playlist", "保存到本机歌单")
                     onClicked: page.saveToPlaylistRequested(row.index)
                 }
                 MusicActionButton {
@@ -116,7 +116,7 @@ ColumnLayout {
                 MusicActionButton {
                     iconOnly: true
                     visible: !page.queueView && !page.albumView; text: "···"; implicitWidth: 34; implicitHeight: 30
-                    Accessible.name: page.onlineView ? qsTr("Song details") : qsTr("Add to playlist"); onClicked: { if (page.onlineView) page.detailsRequested(row.index); else page.addToPlaylistRequested(row.trackId) }
+                    Accessible.name: page.onlineView ? Language.text("Song details", "歌曲详情") : Language.text("Add to playlist", "加入歌单"); onClicked: { if (page.onlineView) page.detailsRequested(row.index); else page.addToPlaylistRequested(row.trackId) }
                 }
             }
         }
