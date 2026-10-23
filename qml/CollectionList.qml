@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Kos.Ui
+import "UiLanguage.mjs" as Language
 ListView {
     id: collections
     property var rows: []
@@ -30,9 +31,9 @@ ListView {
             ColumnLayout {
                 Layout.fillWidth: true; spacing: 6
                 Label { Layout.fillWidth: true; textFormat: Text.PlainText; text: resultRow.modelData.title; color: AppTheme.text; font.pixelSize: 14; elide: Text.ElideRight }
-                Label { Layout.fillWidth: true; textFormat: Text.PlainText; text: resultRow.modelData.kind === "playlist" ? qsTr("Playlist · %1").arg(resultRow.modelData.artist) : resultRow.modelData.kind === "artist" ? qsTr("Artist") + (resultRow.modelData.artist ? " · " + resultRow.modelData.artist : "") : qsTr("Album · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
+                Label { Layout.fillWidth: true; textFormat: Text.PlainText; text: resultRow.modelData.kind === "playlist" ? Language.text("Playlist · %1", "歌单 · %1").arg(resultRow.modelData.artist) : resultRow.modelData.kind === "artist" ? Language.text("Artist", "歌手") + (resultRow.modelData.artist ? " · " + resultRow.modelData.artist : "") : Language.text("Album · %1", "专辑 · %1").arg(resultRow.modelData.artist); color: AppTheme.mutedText; font.pixelSize: 12; elide: Text.ElideRight }
             }
-            Label { text: resultRow.modelData.totalCount > 0 ? (resultRow.modelData.totalCount === 1 ? qsTr("1 song") : qsTr("%1 songs").arg(resultRow.modelData.totalCount)) : ""; color: AppTheme.mutedText; font.pixelSize: 11 }
+            Label { text: resultRow.modelData.totalCount > 0 ? (resultRow.modelData.totalCount === 1 ? Language.text("1 song", "1 首歌曲") : Language.text("%1 songs", "%1 首歌曲").arg(resultRow.modelData.totalCount)) : ""; color: AppTheme.mutedText; font.pixelSize: 11 }
             VectorIcon { name: "back"; rotation: 180; color: AppTheme.mutedText; size: 16 }
         }
     }
