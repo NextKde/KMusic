@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix='kmusic-real-local-') as td:
     work = Path(td)
     # Installer never receives the remote URL; source was prepared by CI checkout.
     checkout = work/'source'
-    shutil.copytree(source, checkout, ignore=shutil.ignore_patterns('results', 'kos-tests', 'build', '.task', '__pycache__'))
+    shutil.copytree(source, checkout, symlinks=True, ignore=shutil.ignore_patterns('results', 'kos-tests', 'build', '.task', '__pycache__'))
     shim = work/'tools'; shim.mkdir()
     real_git = shutil.which('git')
     (shim/'git').write_text('#!/usr/bin/env python3\nimport os,sys\na=sys.argv[1:]\n'
