@@ -128,7 +128,7 @@ ScrollView {
         }
         RowLayout {
             MusicActionButton { text: Language.text("Project", "项目主页"); onClicked: Qt.openUrlExternally("https://github.com/NextKde/KMusic") }
-            MusicActionButton { text: Language.text("License", "许可证"); onClicked: Qt.openUrlExternally("https://github.com/NextKde/KMusic/blob/codex/music-development/LICENSE") }
+            MusicActionButton { text: Language.text("License", "许可证"); onClicked: Qt.openUrlExternally("https://github.com/NextKde/KMusic/blob/main/LICENSE") }
         }
         Item { Layout.preferredHeight: page.bottomContentInset + 24 }
     }
