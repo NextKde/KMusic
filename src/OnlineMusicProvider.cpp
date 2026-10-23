@@ -58,14 +58,14 @@ void OnlineMusicProvider::request(const QString &action, const QJsonObject &para
     if (m_process.state() == QProcess::NotRunning) {
         QString providerDir = qEnvironmentVariable("KMUSIC_PROVIDER_DIR");
         if (providerDir.isEmpty()) providerDir = QDir(QCoreApplication::applicationDirPath()).filePath("providers");
-        if (!QFileInfo::exists(QDir(providerDir).filePath("helper.ts")))
+        if (!QFileInfo::exists(QDir(providerDir).filePath("runtime/helper.js")))
             providerDir = QDir(QCoreApplication::applicationDirPath()).filePath("../share/kmusic/providers");
-        const QString helper = QDir(providerDir).filePath("helper.ts");
+        const QString helper = QDir(providerDir).filePath("runtime/helper.js");
         if (!QFileInfo::exists(helper)) { callback({{"ok", false}, {"message", tr("NetEase helper is missing from the installation.")}}); return; }
         const QString node = QStandardPaths::findExecutable(QStringLiteral("node"));
         if (node.isEmpty()) { callback({{"ok", false}, {"message", tr("Install Node.js 22.19 or newer for the NetEase provider.")}}); return; }
         m_process.setProgram(node);
-        m_process.setArguments({QStringLiteral("--experimental-strip-types"), helper});
+        m_process.setArguments({helper});
         m_process.start();
         // The child may restart after a transport/process failure. Restore its
         // private session before queued requests; id0 has no public callback.

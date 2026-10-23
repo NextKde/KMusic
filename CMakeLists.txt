@@ -31,7 +31,11 @@ install(TARGETS kmusic RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES data/kmusic.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
 install(FILES data/kmusic.svg DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
 
-# The provider is plain Node TypeScript; no Electron UI or npm install is needed.
+# Ship the generated plain-JavaScript provider: distro Node may lack TypeScript.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/providers/runtime/helper.js")
+    message(FATAL_ERROR "Missing generated provider runtime; regenerate with tools/build-provider-runtime.mjs")
+endif()
+# No Electron UI, TypeScript support or npm install is needed at runtime.
 add_custom_target(kmusic_providers ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/providers ${CMAKE_CURRENT_BINARY_DIR}/providers)
 add_dependencies(kmusic kmusic_providers)

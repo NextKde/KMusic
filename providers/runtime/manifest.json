@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "generator": "tools/build-provider-runtime.mjs",
+  "nodeVersion": "v22.19.0",
+  "files": [
+    {
+      "source": "helper.ts",
+      "sourceHash": "e5e4510da7f36cb02f68dc3e0223fe8c8640142c4ac6e5a7b45b3bce9389af43",
+      "output": "helper.js",
+      "outputHash": "75fb87f15d429e59eeaf4bcf9c7ebb6397d50cd9816d91af10021ce7a30107fa"
+    },
+    {
+      "source": "netease/core/checktoken.ts",
+      "sourceHash": "82625141728bfb06e2dcc8ad7a9246ac27c1a1e905e2a5eaacb57f365820ac63",
+      "output": "netease/core/checktoken.js",
+      "outputHash": "cdbac0aa76cc8b80f7540eaf97abf0d24046d1ea199c45b23b9d1238185627b0"
+    },
+    {
+      "source": "netease/core/config.ts",
+      "sourceHash": "c0ce148b1bebf99b94380bf55e6313b7448876dfff9dd0a85fbe422eef5b91ba",
+      "output": "netease/core/config.js",
+      "outputHash": "cfbe9adfac43682056e5a461a9d9d08dfc15a58dc884c049e0738776669ac808"
+    },
+    {
+      "source": "netease/core/cookie.ts",
+      "sourceHash": "816370422f30e5f7a01dc6424b2b0e6cba550ba3650d48739ab5efa66ace9f13",
+      "output": "netease/core/cookie.js",
+      "outputHash": "b88217d990031a7e4d949ed7f68c2076e723941fe7f0e3b2a565c0d1d50aa509"
+    },
+    {
+      "source": "netease/core/crypto.ts",
+      "sourceHash": "983b919e77def87f0a9ee494ed5fdfd48111549a55836788cde7f1243286976f",
+      "output": "netease/core/crypto.js",
+      "outputHash": "3d896166fe6ec618c986d79246035fe5cf7350b5731159a4d23596e4e5b048e8"
+    },
+    {
+      "source": "netease/core/device.ts",
+      "sourceHash": "fe74ba0020fa0c66cd7c90e0d7990e9b08da7bf4760f15d462846847a9e01f84",
+      "output": "netease/core/device.js",
+      "outputHash": "acb78afd687576324aae8cfecc22de395998f3811ef4b9fad362102cf5093f79"
+    },
+    {
+      "source": "netease/core/option.ts",
+      "sourceHash": "c5cdcef1fa6fffba20d418c776e88eeac9b42dbaaac01ee0ed5c1a53a1601259",
+      "output": "netease/core/option.js",
+      "outputHash": "2df8b62961fa37d9e5a54ff2e2168f31cf1af48dbccce32be0f8db54861ed678"
+    },
+    {
+      "source": "netease/core/request.ts",
+      "sourceHash": "78668ae1fbd138f69c5d3afd3762054b33c7fe6f54d834a6513943eb2d3e3748",
+      "output": "netease/core/request.js",
+      "outputHash": "8a80522ec812eb142517f3d7ddb1ddd1e3cfa4cd3c7318fa4763e340aa6d9784"
+    },
+    {
+      "source": "netease/core/response.ts",
+      "sourceHash": "d4e17e1be1cd6566a44648d22a663ccedaed872f3e42dfbcd51057b3fcc48676",
+      "output": "netease/core/response.js",
+      "outputHash": "b3638a7d80c004edb0876f79f6a39209f1765f1d907bba556d7e30eb1a6d6f50"
+    },
+    {
+      "source": "netease/core/transport.ts",
+      "sourceHash": "52543944a9fff9ffd9643a9cacc77d7e5972727cbd39eb5b46b014f2b33e70ec",
+      "output": "netease/core/transport.js",
+      "outputHash": "ad29f6298b8e597a4c7e57221be8ac09e358793623983277c7e002dcb837da34"
+    },
+    {
+      "source": "netease/core/types.ts",
+      "sourceHash": "6de7082365fffe50c349bebc85488ec0861b0fd2646c072cdf964886fdb2b635",
+      "output": "netease/core/types.js",
+      "outputHash": "ebc9d96e2589d8050917100e07658b7c477735ed1502877c93e8ee035e4b1279"
+    },
+    {
+      "source": "netease/core/xeapi.ts",
+      "sourceHash": "5dc1374c68c7e11c907b6543385ecbb904bf69c4c1e33a16ffaaad2c125d84d3",
+      "output": "netease/core/xeapi.js",
+      "outputHash": "34f94651574013c0b92627536c91cc5fe937dd7c713c88c1a4b8c4f5e225bc72"
+    },
+    {
+      "source": "netease/modules/album_new.ts",
+      "sourceHash": "e5d63f013b5533ebe7107229accb2986da0b5a8029389fc7c99af569d81883c3",
+      "output": "netease/modules/album_new.js",
+      "outputHash": "a12ab4b19bbaaf85fdf96e458de1791561838fd537f09db648e25ac16e6fe6ca"
+    },
+    {
+      "source": "netease/modules/album_sublist.ts",
+      "sourceHash": "e2ca174ce1c2c6405522600a5184617d2199a53d1a5527a564ac729e63da14b0",
+      "output": "netease/modules/album_sublist.js",
+      "outputHash": "f5c73b1fa864de08268a9305c50c58078040b819f89760d1cd80870923c89cdb"
+    },
+    {
+      "source": "netease/modules/album.ts",
+      "sourceHash": "2de782db927837d0c9c6b9da4a0e496ce5b19fcb55cee63366b032497b789c27",
+      "output": "netease/modules/album.js",
+      "outputHash": "8c5ac47934bf4c36ca10cd83be8da6c84042c61dfeb41514d31c84270a69f165"
+    },
+    {
+      "source": "netease/modules/artist_album.ts",
+      "sourceHash": "fbebc429d3c718157f9f36e60ae651886408285d21c1be44c33f4f62f1ccd65c",
+      "output": "netease/modules/artist_album.js",
+      "outputHash": "3b0a0a06628a7566130ac531717a9e7ce4e2737f9755ca73a86df0bdb1eff3dc"
+    },
+    {
+      "source": "netease/modules/artist_sublist.ts",
+      "sourceHash": "bfff28d1f861ff4fa6c12466fbda2b859dc9a07d24ddd0ff1c555f341226284b",
+      "output": "netease/modules/artist_sublist.js",
+      "outputHash": "b4af90626e6010890e8daf09f09ea5c0870c9b8b1b0fea7b863c7cc4acd58a12"
+    },
+    {
+      "source": "netease/modules/artists.ts",
+      "sourceHash": "65559d81b48d911abafa5973b38fb8b372b38158a41b89675644b6ce9032fe59",
+      "output": "netease/modules/artists.js",
+      "outputHash": "cbf5f3425960a7bc734847f2f27fb7b7ed95eeab4106b1ecae56295a04c2782c"
+    },
+    {
+      "source": "netease/modules/cloudsearch.ts",
+      "sourceHash": "c86f4c6ffdbc1d9fa0978f4a166b1dd792cfe876da50eeddcfc1224646fadf03",
+      "output": "netease/modules/cloudsearch.js",
+      "outputHash": "79228db8aa1538275b0364315cfceb2d6ade138dc4207552a234a1dbb4b37567"
+    },
+    {
+      "source": "netease/modules/likelist.ts",
+      "sourceHash": "81d5372e00a0705598f3ef24f9d945be2a52f3b02c6423ee2909ef6851980417",
+      "output": "netease/modules/likelist.js",
+      "outputHash": "ede38ffe983d4fe467a932569c8fa73b84048b2f962491f0fc31306dd16a9ed8"
+    },
+    {
+      "source": "netease/modules/login_qr_check.ts",
+      "sourceHash": "f79e37e1017fd927f9202b42a6b7739598f4f8898bd852a388e7ea572b393763",
+      "output": "netease/modules/login_qr_check.js",
+      "outputHash": "f163a34995e337334513cedef264a55196de4293ee896b336803b63f41a9d9cd"
+    },
+    {
+      "source": "netease/modules/login_qr_key.ts",
+      "sourceHash": "516ed4f67d1cb6aad6a9e59f65c4d9d7b2aa85b68d89a10ce18351d4a8221587",
+      "output": "netease/modules/login_qr_key.js",
+      "outputHash": "fe858e646d1330f34f26eff4b1fde5ff3aead326169a6358d9b0864211a05c17"
+    },
+    {
+      "source": "netease/modules/login_status.ts",
+      "sourceHash": "c227297d12202a1dcb7fe74b01ba5d11bd26633a6a0c875cb14fbc6a868ba245",
+      "output": "netease/modules/login_status.js",
+      "outputHash": "f505ff4fb85a72ee6d076f1388f4c6fbd9738a00dabeb0c82cd8d21a3401474b"
+    },
+    {
+      "source": "netease/modules/logout.ts",
+      "sourceHash": "685f7ea59919e1c14f555f96016e6dbd81a76f43cf8d6e9f0b60454a7d5d018e",
+      "output": "netease/modules/logout.js",
+      "outputHash": "d647f647d6fc02c4da4d10e22f2c723ca94d3c50fe88058e677139f5191c15be"
+    },
+    {
+      "source": "netease/modules/lyric_new.ts",
+      "sourceHash": "6bec3a2e7c876bd9d505c7e46f567c3dcaf415fae645a59cfac94fd080fa9c33",
+      "output": "netease/modules/lyric_new.js",
+      "outputHash": "596c4bd277dc5e053d5d00570eeb8a213dcad6b85c2c94232993f22d928e53ef"
+    },
+    {
+      "source": "netease/modules/personalized.ts",
+      "sourceHash": "191a4965c33acfc9a9562cc42e538d59aff52c0bd3f506a9d841d0bce7983351",
+      "output": "netease/modules/personalized.js",
+      "outputHash": "697f4c5c1bccc8d711b525012c2f379f57d76db2693f4fa003bb260a83711efa"
+    },
+    {
+      "source": "netease/modules/playlist_detail.ts",
+      "sourceHash": "71ffc5ec64f2572f400f6d1c869be91ad456b887d5d643ba63cae5e85c9282c1",
+      "output": "netease/modules/playlist_detail.js",
+      "outputHash": "de46236b5417cef5a51c41834fea4c9919086e6f8eb33c3b333f59a9ce32d199"
+    },
+    {
+      "source": "netease/modules/recommend_resource.ts",
+      "sourceHash": "d28740094459373b006bd8f07fa17830ea93b3a368492c9c05567aedae7bfd8a",
+      "output": "netease/modules/recommend_resource.js",
+      "outputHash": "e3c745e385771232f15ca5706394c68c09389d7e644205c2a0c27fa087f0c561"
+    },
+    {
+      "source": "netease/modules/recommend_songs.ts",
+      "sourceHash": "3ac3f6cd3d7dfe7c118426db77be81532da36a01946ee3cab9192590eee6171f",
+      "output": "netease/modules/recommend_songs.js",
+      "outputHash": "34eb100f4df357d7a9bd4eb8a7c3b86a77678c7090332714b36eb358be8fd925"
+    },
+    {
+      "source": "netease/modules/record_recent_song.ts",
+      "sourceHash": "ba2c3455572ff4a0aa0e667fc523210953a731dbe78608adc856972e1386d6a6",
+      "output": "netease/modules/record_recent_song.js",
+      "outputHash": "fbd35f0877eb4ebb572f16410a140fe7781e9195f077260d4a5ab10f08e14c9e"
+    },
+    {
+      "source": "netease/modules/search.ts",
+      "sourceHash": "0d022f38f1ab059f995616b218ba58635573ebcbee19af835853ab80ada9b01c",
+      "output": "netease/modules/search.js",
+      "outputHash": "191cc3bd86bb5b039b026189a55f5b56d13c4c9aa50463cd7663768182a850e7"
+    },
+    {
+      "source": "netease/modules/song_detail.ts",
+      "sourceHash": "3c6543b6f2c3f796b230916af2d88d84c4042530c6e3d35914c2faf1f759408d",
+      "output": "netease/modules/song_detail.js",
+      "outputHash": "17ab8b545430139eee6ab399e8c28f86d12c8e5f4e8ebeda1b39ea61805ff656"
+    },
+    {
+      "source": "netease/modules/song_url.ts",
+      "sourceHash": "45d046a797c8c017df75b261f2c0e16ca16ec59c5b6e9e32ef2b401cbab802f9",
+      "output": "netease/modules/song_url.js",
+      "outputHash": "2aecd48b4975d8764b50418c77fb00f75bd0574094a2c6da5a99804a9ce15b0b"
+    },
+    {
+      "source": "netease/modules/top_song.ts",
+      "sourceHash": "29c18936bc20563866a12445a760f4e8e5ba54558cdcedacd46345ccea2ec871",
+      "output": "netease/modules/top_song.js",
+      "outputHash": "19f92bdcdfc9fba4f33b57e3b7b1be6d49d27f238feaf2a41c258ac7265a4efa"
+    },
+    {
+      "source": "netease/modules/toplist.ts",
+      "sourceHash": "5072d9f070eb717c2d1b76f86a4d751b807b83d0b0c00d2fe1512c5462a01fcb",
+      "output": "netease/modules/toplist.js",
+      "outputHash": "fef88fe869ab442b6a107e2437561344757484455aaff92cf4d02cc54c8ff7a8"
+    },
+    {
+      "source": "netease/modules/user_playlist.ts",
+      "sourceHash": "072ae07e26c711687e91e5857ae85d7627d55a86bbde8bdf76b85888a4f103ac",
+      "output": "netease/modules/user_playlist.js",
+      "outputHash": "c1d2909010e5b2bc862ab4094e64ec2e0c29f4d3404b938edad364d530e504a4"
+    },
+    {
+      "source": "personal.ts",
+      "sourceHash": "531df735ca07f3eedb69ff2cae16cbf0afd713b85c5b4ad0ed773b06e2dfcbcc",
+      "output": "personal.js",
+      "outputHash": "2839a58d5478b9f93b1adb3c40676f1d5462129b74b402985277a1d934c0a131"
+    }
+  ]
+}

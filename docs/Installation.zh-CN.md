@@ -24,6 +24,8 @@
 
 具体检查项见 [packaging/installer.py](../packaging/installer.py)。`check` 包含小型 C++20 编译器探测。缺失或版本过低会返回退出码 11，具体项目在 `details.dependencies` 中；解决后重试。通过版本管理器安装 Node 时，注意图形应用启动环境也必须能够找到 Node。
 
+随附 provider 使用普通 JavaScript，兼容未编译 TypeScript 支持的发行版 Node。只有重新生成 provider 的开发者需要类型剥离功能，见 [provider 开发说明](../providers/README.md)。
+
 ## 安装与打开
 
 ```sh

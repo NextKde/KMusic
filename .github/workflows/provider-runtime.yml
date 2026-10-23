@@ -1,0 +1,25 @@
+name: Provider JavaScript runtime
+on:
+  push:
+    branches: [main, codex/player-ui-refinement]
+    paths: [providers/**, tools/build-provider-runtime.mjs, tests/provider_runtime.mjs, .github/workflows/provider-runtime.yml]
+  pull_request:
+    paths: [providers/**, tools/build-provider-runtime.mjs, tests/provider_runtime.mjs, .github/workflows/provider-runtime.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  plain-javascript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+      - name: Verify generated sources and start helper with TypeScript disabled
+        env:
+          NODE_OPTIONS: --no-experimental-strip-types
+        run: node tests/provider_runtime.mjs

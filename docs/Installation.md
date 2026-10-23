@@ -24,6 +24,8 @@ Install requirements yourself using your distribution's supported tooling. KMusi
 
 The exact checks are in [packaging/installer.py](../packaging/installer.py). `check` includes a small C++20 compiler probe. Missing or too-old dependencies produce exit 11 with `details.dependencies`; resolve those entries before retrying. GUI launches must also see Node, especially when it is installed through a shell-only version manager.
 
+The bundled provider runs as ordinary JavaScript, including on distro Node builds without TypeScript support. TypeScript is needed only by developers regenerating provider artifacts; see [provider development](../providers/README.md).
+
 ## Install and launch
 
 ```sh

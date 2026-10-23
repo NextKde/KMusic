@@ -28,3 +28,9 @@ when distributing the combined application and helper.
   Its native QML/GLSL derivation references mkj0kjay/vue-web-liquid-glass revision
   `934404c05167417945e73a36388c20cc201b5a55`; see the component NOTICE. No Vue UI,
   displacement-map code, website image or external desktop pixels are imported.
+
+The plain-JavaScript files under `providers/runtime/` are generated from the
+corresponding TypeScript sources using `tools/build-provider-runtime.mjs`. Their
+original source comments and AGPL license/NOTICE are preserved; generation does
+not change provider request/crypto behavior. Source/artifact hashes are recorded
+in `providers/runtime/manifest.json`.
