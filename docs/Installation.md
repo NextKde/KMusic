@@ -26,10 +26,38 @@ The exact checks are in [packaging/installer.py](../packaging/installer.py). `ch
 
 The bundled provider runs as ordinary JavaScript, including on distro Node builds without TypeScript support. TypeScript is needed only by developers regenerating provider artifacts; see [provider development](../providers/README.md).
 
+## Install from an existing clone (no source download)
+
+Use a revision containing this feature, currently `codex/player-ui-refinement`; it is not yet merged into main.
+
+```sh
+cd /your/path/KMusic
+./install.sh install --source-dir .
+./install.sh status
+# Only when removing the installation:
+./install.sh uninstall
+```
+
+The directory must be a Git repository root; relative paths and paths containing spaces are supported.
+This mode builds directly from that directory into installer-owned temporary directories. It never runs
+clone, fetch, checkout or submodule update, and never installs dependencies. Commit or discard tracked
+source changes first. All pinned recursive submodules must already be present, match their gitlinks and
+have no tracked changes. Untracked files are not version identifiers; commit new source files before installing.
+Missing files/submodules, mismatched revisions or tracked changes return `INTEGRITY_FAILED` (21);
+invalid paths or conflicting options return `INVALID_ARGUMENT` (2). Missing dependencies still return
+`DEPENDENCY_UNSATISFIED` (11). Prepare missing submodules separately; local installation will not fetch them.
+
+Local and remote installations share the same manifest, atomic activation, launcher, icon and uninstall.
+The version is the full local HEAD SHA; the manifest records `sourceType: local`. Repeating that revision
+returns `ALREADY_INSTALLED`. Commit changes and rerun to update. A failed build preserves the previous
+installation. Uninstall preserves library/settings/user data and does not delete the source checkout.
+`--source-dir` and `--version` are mutually exclusive. Prior manual `cmake --install` deployments are not
+managed by this manifest. See [local installer tests](../tests/installer/README.md).
+
 ## Install and launch
 
 ```sh
-git clone --branch codex/music-development https://github.com/NextKde/KMusic.git
+git clone --branch main https://github.com/NextKde/KMusic.git
 cd KMusic
 ```
 

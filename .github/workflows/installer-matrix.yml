@@ -1,8 +1,8 @@
 name: Installer distro matrix
 on:
   push:
-    branches: [codex/music-development]
-    paths: [install.sh, packaging/**, .github/workflows/installer-matrix.yml]
+    branches: [main, codex/music-development, codex/player-ui-refinement]
+    paths: [install.sh, packaging/**, tests/installer/**, .github/workflows/installer-matrix.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,7 +10,7 @@ jobs:
   install:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          submodules: recursive
       - uses: actions/checkout@v4
         with:
           repository: NextKde/NextKde
@@ -45,6 +46,16 @@ jobs:
           docker run --rm -v "$PWD:/source:ro" -v "$PWD/results:/results" "$IMAGE" \
             bash /source/kos-tests/tests/app-store/run-kmusic-container.sh \
             /source "$REVISION" /source/kos-tests/tests/app-store /results
+          docker run --rm -v "$PWD:/source:ro" -v "$PWD/results:/results" "$IMAGE" bash -c '
+            set -euo pipefail
+            bash /source/kos-tests/tests/app-store/provision-kmusic-ci.sh > /results/local-provision.log 2>&1
+            useradd -m installer-test
+            chown -R installer-test:installer-test /results
+            extra=()
+            . /etc/os-release
+            if [[ "$ID" == ubuntu && "$VERSION_ID" == 24.04 ]]; then extra+=(--reject-dependencies); fi
+            runuser -u installer-test -- python3 /source/tests/installer/run_local_install.py --source /source --results /results/local-source "${extra[@]}"
+          '
       - name: Preserve complete evidence, including failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -52,3 +63,31 @@ jobs:
           name: installer-${{ strategy.job-index }}
           path: results
           retention-days: 14
+
+  local-source:
+    name: Local source lifecycle (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [archlinux:base, 'ubuntu:26.04', 'debian:13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exercise local Git/CMake lifecycle and failures without source downloads
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          docker run --rm -v "$PWD:/source:ro" "$IMAGE" bash -c '
+            set -euo pipefail
+            if command -v pacman >/dev/null; then
+              pacman -Sy --noconfirm --needed python git cmake make shadow
+            else
+              apt-get update
+              apt-get install -y --no-install-recommends python3 git cmake make passwd
+            fi
+            useradd -m installer-test
+            runuser -u installer-test -- python3 -m unittest discover -s /source/tests/installer -p test_local_source.py -v
+          '

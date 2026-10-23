@@ -48,13 +48,17 @@ KMusic 是独立的开源音乐客户端，在线功能通过第三方服务接�
 先准备[安装指南](docs/Installation.zh-CN.md)所列依赖，再以普通用户运行：
 
 ```sh
-git clone --branch codex/music-development https://github.com/NextKde/KMusic.git
+git clone --recurse-submodules --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
 cd KMusic
 ./install.sh check
-./install.sh install --version 49264b0d45a6f8958e8d8b6eb4e5da1ee3e655d0
+./install.sh install --source-dir .
 ```
 
-上面固定到已通过安装矩阵的提交。安装器从官方仓库下载对应源码并编译；缺依赖直接返回统一 JSON 错误，**不会自动安装依赖，也不会调用 sudo**。安装成功后从应用启动器打开 KMusic。
+上面直接安装已克隆的本地源码，不再次下载。源码和固定版本子模块需完整且无已跟踪修改；缺依赖直接返回统一 JSON 错误，**不会自动安装依赖，也不会调用 sudo**。安装成功后从应用启动器打开 KMusic。
+
+本地模式同样支持 `./install.sh status` 和 `./install.sh uninstall`，卸载保留用户数据。远程固定 SHA 安装仍支持 `install --version <SHA>`。
+
+下表是此前远程安装路径的测试记录，本地模式测试范围见[安装指南](docs/Installation.zh-CN.md)。
 
 | 发行版（x86_64） | 已运行的安装测试 |
 | :--- | :--- |

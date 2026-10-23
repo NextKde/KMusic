@@ -9,7 +9,7 @@ CODES = {'INVALID_ARGUMENT':2, 'UNSUPPORTED_PLATFORM':10, 'DEPENDENCY_UNSATISFIE
          'PERMISSION_DENIED':12, 'INSTALL_BUSY':13, 'DOWNLOAD_FAILED':20,
          'INTEGRITY_FAILED':21, 'BUILD_FAILED':30, 'INSTALL_FAILED':31,
          'UNINSTALL_FAILED':32, 'INTERNAL_ERROR':99, 'CANCELLED':130}
-action = 'unknown'; stage = 'arguments'; log_path = None; log = None
+action = 'unknown'; stage = 'arguments'; log_path = None; log = None; lock_handle = None
 
 def emit(**fields):
     print(json.dumps(dict(schemaVersion=1, type='result', appId=APP, action=action, **fields)), flush=True)
@@ -110,15 +110,43 @@ def dependencies(work):
     if missing: fail('DEPENDENCY_UNSATISFIED', 'Required dependencies are missing or incompatible.', dependencies=missing)
 
 
+def validate_local_source(source):
+    """Validate only; never fetch, checkout or initialize the caller's repository."""
+    top = run(['git','-C',str(source),'rev-parse','--show-toplevel'], code='INTEGRITY_FAILED')
+    if pathlib.Path(top).resolve() != source:
+        fail('INVALID_ARGUMENT','--source-dir must point to the repository root.')
+    for name in ['CMakeLists.txt', 'src/main.cpp', 'providers/runtime/helper.js', 'data/kmusic.desktop']:
+        if not (source/name).is_file():
+            fail('INTEGRITY_FAILED','Required local source file is missing.', path=name)
+    revision = run(['git','-C',str(source),'rev-parse','HEAD'], code='INTEGRITY_FAILED')
+    if not re.fullmatch(r'[0-9a-f]{40}', revision):
+        fail('INTEGRITY_FAILED','Local source has no committed revision.')
+    if run(['git','-C',str(source),'status','--porcelain','--untracked-files=no'], code='INTEGRITY_FAILED'):
+        fail('INTEGRITY_FAILED','Commit or discard tracked source changes before installing.')
+    submodules = run(['git','-C',str(source),'submodule','status','--recursive'], code='INTEGRITY_FAILED')
+    if any(line.startswith(('+','-','U')) for line in submodules.splitlines()):
+        fail('INTEGRITY_FAILED','Local submodules are missing or do not match the pinned revisions; no download was attempted.')
+    if not (source/'vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt').is_file():
+        fail('INTEGRITY_FAILED','The local Kos.Ui submodule is missing; no download was attempted.')
+    dirty = run(['git','-C',str(source),'submodule','foreach','--quiet','--recursive',
+                 'git status --porcelain --untracked-files=no'], code='INTEGRITY_FAILED')
+    if dirty:
+        fail('INTEGRITY_FAILED','Commit or discard tracked submodule changes before installing.')
+    return revision, submodules
+
+
 def main():
-    global action, stage, log_path, log
+    global action, stage, log_path, log, lock_handle
     args = sys.argv[1:]
     if not args or args[0] not in ['check','install','status','uninstall']: fail('INVALID_ARGUMENT','Expected check, install, status or uninstall.')
-    action = args.pop(0); revision = None
+    action = args.pop(0); revision = None; local_source = None
     if args:
         if action == 'install' and len(args)==2 and args[0]=='--version': revision=args[1]
+        elif action == 'install' and len(args)==2 and args[0]=='--source-dir':
+            local_source = pathlib.Path(args[1]).expanduser().resolve()
+            if not local_source.is_dir(): fail('INVALID_ARGUMENT','--source-dir must be an existing repository directory.')
         else: fail('INVALID_ARGUMENT','Unexpected arguments.')
-    if action == 'install' and (revision is None or not re.fullmatch(r'[0-9a-f]{40}', revision)):
+    if action == 'install' and local_source is None and (revision is None or not re.fullmatch(r'[0-9a-f]{40}', revision)):
         fail('INVALID_ARGUMENT','--version must be the exact 40-character Git commit SHA from the trusted store catalog.')
     if sys.version_info < (3,9): fail('DEPENDENCY_UNSATISFIED','Python 3.9 or newer is required.',dependencies=[dict(id='python3',required='>=3.9',installed=platform.python_version(),reason='version_too_old')])
     if os.geteuid()==0: fail('PERMISSION_DENIED','Run as the target desktop user, not root.')
@@ -137,8 +165,8 @@ def main():
     root = data/'kmusic-app'; current = root/'current'; manifest = root/'manifest.json'
     desktop = data/'applications/kmusic.desktop'; icon = data/'icons/hicolor/scalable/apps/kmusic.svg'
     state.mkdir(parents=True,exist_ok=True)
-    lock = (state/'lock').open('a')
-    try: fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    lock_handle = (state/'lock').open('a')
+    try: fcntl.flock(lock_handle,fcntl.LOCK_EX|fcntl.LOCK_NB)
     except BlockingIOError: fail('INSTALL_BUSY','Another KMusic installer is running.')
     log_path = str(state/('install-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-'+uuid.uuid4().hex[:8]+'.log'))
     log = open(log_path,'w'); os.chmod(log_path,0o600)
@@ -157,6 +185,9 @@ def main():
     with tempfile.TemporaryDirectory(prefix='check-',dir=state) as td:
         dependencies(pathlib.Path(td))
     if action == 'check': emit(success=True,code='OK',distribution=release.get('ID'),architecture=platform.machine(),logPath=log_path); return
+    if local_source is not None:
+        progress('source')
+        revision, submodules = validate_local_source(local_source)
     if installed and installed.get('version')==revision and (current/'bin/kmusic').is_file():
         emit(success=True,code='ALREADY_INSTALLED',version=revision,changed=False,desktopId='kmusic.desktop',logPath=log_path); return
     if root.is_symlink(): fail('INSTALL_FAILED','Installation root must not be a symlink.')
@@ -166,15 +197,18 @@ def main():
     root.mkdir(parents=True,exist_ok=True); (root/'versions').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='stage-',dir=root) as td:
         work = pathlib.Path(td); source=work/'source'; build=work/'build'; dest=work/'payload'
-        progress('download')
-        run(['git','init',str(source)],code='DOWNLOAD_FAILED')
-        run(['git','-C',str(source),'remote','add','origin',REPO],code='DOWNLOAD_FAILED')
-        run(['git','-C',str(source),'fetch','--depth=1','origin',revision],code='DOWNLOAD_FAILED')
-        run(['git','-C',str(source),'checkout','--detach','FETCH_HEAD'],code='DOWNLOAD_FAILED')
-        if run(['git','-C',str(source),'rev-parse','HEAD']) != revision: fail('INTEGRITY_FAILED','Source revision mismatch.')
-        run(['git','-C',str(source),'-c','protocol.file.allow=never','submodule','update','--init','--recursive','--depth=1'],code='DOWNLOAD_FAILED')
-        submodules = run(['git','-C',str(source),'submodule','status','--recursive'])
-        if any(line.startswith(('+','-','U')) for line in submodules.splitlines()): fail('INTEGRITY_FAILED','Submodule revisions do not match the source.')
+        if local_source is not None:
+            source = local_source
+        else:
+            progress('download')
+            run(['git','init',str(source)],code='DOWNLOAD_FAILED')
+            run(['git','-C',str(source),'remote','add','origin',REPO],code='DOWNLOAD_FAILED')
+            run(['git','-C',str(source),'fetch','--depth=1','origin',revision],code='DOWNLOAD_FAILED')
+            run(['git','-C',str(source),'checkout','--detach','FETCH_HEAD'],code='DOWNLOAD_FAILED')
+            if run(['git','-C',str(source),'rev-parse','HEAD']) != revision: fail('INTEGRITY_FAILED','Source revision mismatch.')
+            run(['git','-C',str(source),'-c','protocol.file.allow=never','submodule','update','--init','--recursive','--depth=1'],code='DOWNLOAD_FAILED')
+            submodules = run(['git','-C',str(source),'submodule','status','--recursive'])
+            if any(line.startswith(('+','-','U')) for line in submodules.splitlines()): fail('INTEGRITY_FAILED','Submodule revisions do not match the source.')
         progress('build')
         run(['cmake','-S',str(source),'-B',str(build),'-G','Unix Makefiles','-DCMAKE_BUILD_TYPE=Release','-DCMAKE_INSTALL_LIBDIR=lib','-DKMUSIC_BUILD_LOCAL_TESTS=OFF','-DKMUSIC_BUILD_SUBSONIC_TESTS=OFF'],code='BUILD_FAILED')
         run(['cmake','--build',str(build),'--parallel',str(min(4,os.cpu_count() or 1))],code='BUILD_FAILED')
@@ -192,7 +226,7 @@ def main():
             atomic_link(current,target)
             for p, rel in [(desktop,'share/applications/kmusic.desktop'),(icon,'share/icons/hicolor/scalable/apps/kmusic.svg')]:
                 p.parent.mkdir(parents=True,exist_ok=True); atomic_link(p,current/rel)
-            atomic_json(manifest,dict(appId=APP,version=revision,previous=str(old) if old else None,submodules=submodules))
+            atomic_json(manifest,dict(appId=APP,version=revision,previous=str(old) if old else None,submodules=submodules,sourceType='local' if local_source is not None else 'remote'))
         except BaseException:
             if old is not None: atomic_link(current,old)
             elif current.is_symlink(): current.unlink()
@@ -203,6 +237,7 @@ def main():
         emit(success=True,code='INSTALLED',version=revision,changed=True,desktopId='kmusic.desktop',logPath=log_path)
 
 def entrypoint():
+    global log, lock_handle
     def interrupted(signum, frame):
         raise KeyboardInterrupt()
     signal.signal(signal.SIGTERM, interrupted)
@@ -215,6 +250,9 @@ def entrypoint():
         code = 'PERMISSION_DENIED' if isinstance(e, PermissionError) else ('UNINSTALL_FAILED' if action=='uninstall' else 'INSTALL_FAILED' if stage=='install' else 'INTERNAL_ERROR')
         if log: log.write(repr(e)+'\n'); log.flush()
         emit(success=False,code=code,stage=stage,message='Operation failed; see the log.',logPath=log_path); sys.exit(CODES[code])
+    finally:
+        if log is not None: log.close(); log = None
+        if lock_handle is not None: lock_handle.close(); lock_handle = None
 
 if __name__ == '__main__':
     entrypoint()

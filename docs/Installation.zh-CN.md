@@ -26,10 +26,37 @@
 
 随附 provider 使用普通 JavaScript，兼容未编译 TypeScript 支持的发行版 Node。只有重新生成 provider 的开发者需要类型剥离功能，见 [provider 开发说明](../providers/README.md)。
 
+## 从已克隆仓库安装（不重新下载）
+
+需要包含此功能的版本，当前位于 `codex/player-ui-refinement`；尚未合入 main。
+
+```sh
+cd /你的路径/KMusic
+./install.sh install --source-dir .
+./install.sh status
+# 需要卸载时：
+./install.sh uninstall
+```
+
+`--source-dir` 接受相对或绝对路径（含空格），必须指向 Git 仓库根目录。
+本地模式直接读取该目录、在安装器自己的临时目录编译，不执行 clone、fetch、checkout 或子模块更新，
+也不自动安装依赖。源码中已跟踪文件的修改需要先提交或还原；固定版本的递归子模块必须已完整存在且无已跟踪修改。
+未跟踪文件不作为安装版本标识，请先提交要安装的新源码文件。缺失文件或子模块、版本不匹配、未提交修改返回统一 `INTEGRITY_FAILED`（21），
+路径不存在或参数冲突返回 `INVALID_ARGUMENT`（2），缺依赖仍为 `DEPENDENCY_UNSATISFIED`（11）。
+如果最初 clone 时没有获取子模块，需要事先自行准备它们；本地安装命令不会代为联网补齐。
+
+本地安装与远程安装共用安装清单、原子切换、启动器、图标及卸载逻辑。
+版本为本地仓库 HEAD 的完整 SHA，清单 `sourceType` 为 `local`；同版本再次安装返回 `ALREADY_INSTALLED`。
+提交新的源码后重跑同一命令即可更新；构建失败保留旧安装。`uninstall` 保留音乐库、设置等用户数据，
+不删除原始克隆仓库。`--source-dir` 与 `--version` 不能同时使用。
+
+这是源码安装入口；先前直接执行 `cmake --install` 的手工安装不属于此清单管理范围。
+自动化覆盖见 [本地安装测试](../tests/installer/README.md)。
+
 ## 安装与打开
 
 ```sh
-git clone --branch codex/music-development https://github.com/NextKde/KMusic.git
+git clone --branch main https://github.com/NextKde/KMusic.git
 cd KMusic
 ```
 

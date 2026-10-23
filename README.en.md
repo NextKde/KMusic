@@ -48,13 +48,15 @@ Report copyright, API-use or other rights concerns through [Issues](https://gith
 Prepare the dependencies in the [installation guide](docs/Installation.md), then run as a regular user:
 
 ```sh
-git clone --branch codex/music-development https://github.com/NextKde/KMusic.git
+git clone --recurse-submodules --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
 cd KMusic
 ./install.sh check
-./install.sh install --version 49264b0d45a6f8958e8d8b6eb4e5da1ee3e655d0
+./install.sh install --source-dir .
 ```
 
-This pins the revision that passed the installer matrix. The installer downloads and builds that source from the official repository. Missing dependencies return structured JSON errors; **it never installs dependencies or invokes sudo**. Open KMusic from the application launcher after installation.
+This builds the already-cloned local source without downloading it again. Tracked source changes must be committed and pinned submodules must already be present. Local installs support the same `status` and `uninstall` actions, preserving user data. Remote pinned installation remains available with `install --version <SHA>`. Missing dependencies return structured JSON errors; **it never installs dependencies or invokes sudo**. Open KMusic from the application launcher after installation.
+
+The following records cover the earlier remote installation matrix; see the [installation guide](docs/Installation.md) for local-mode test scope.
 
 | Distribution (x86_64) | Executed installer coverage |
 | :--- | :--- |
