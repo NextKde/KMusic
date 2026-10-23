@@ -74,7 +74,7 @@ Item {
                 Artwork { Layout.preferredWidth: 44; Layout.preferredHeight: 44; radius: 22; source: page.signedIn ? page.music.account.avatarUrl : ""; title: page.signedIn ? page.music.account.nickname : "" }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 3
-                    Label { text: page.signedIn ? page.music.account.nickname : ""; color: AppTheme.text; font.pixelSize: 21; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
+                    Label { textFormat: Text.PlainText; text: page.signedIn ? page.music.account.nickname : ""; color: AppTheme.text; font.pixelSize: 21; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
                     Label { text: Language.text("NetEase Cloud Music", "网易云音乐"); color: AppTheme.mutedText; font.pixelSize: 12 }
                 }
                 MusicActionButton { text: Language.text("Refresh", "刷新"); enabled: !page.feed.loading; onClicked: page.refresh() }
@@ -149,8 +149,8 @@ Item {
                             Artwork { Layout.preferredWidth: 40; Layout.preferredHeight: 40; radius: 5; source: modelData.artwork || ""; title: modelData.title || "" }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 3
-                                Label { text: modelData.title || ""; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 13; font.weight: Font.Medium }
-                                Label { text: modelData.artist || ""; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 11 }
+                                Label { textFormat: Text.PlainText; text: modelData.title || ""; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 13; font.weight: Font.Medium }
+                                Label { textFormat: Text.PlainText; text: modelData.artist || ""; Layout.fillWidth: true; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 11 }
                             }
                             Label {
                                 visible: page.section === "recentSongs" && Number(modelData.playedAt || 0) > 0

@@ -14,6 +14,7 @@ LiquidDialog {
         spacing: 14
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.text
+            textFormat: Text.PlainText
             text: dialog.account.authenticated ? Language.text("Signed in as %1", "已登录：%1").arg(dialog.account.nickname)
                 : dialog.account.message || Language.text("Sign in with the NetEase Cloud Music mobile app. No password is shared with KMusic.", "请使用网易云音乐手机客户端扫码登录，无需向 KMusic 提供密码。")
         }
@@ -26,6 +27,7 @@ LiquidDialog {
         BusyIndicator { Layout.alignment: Qt.AlignHCenter; visible: running; running: ["generating", "checking", "restoring"].indexOf(dialog.account.state) >= 0 }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 11; color: AppTheme.mutedText
+            textFormat: Text.PlainText
             text: dialog.account.storageMessage
             visible: text.length > 0
         }
