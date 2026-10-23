@@ -1,0 +1,64 @@
+name: Sync pinned Kos.Ui snapshot
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Exact reviewed nextkdeAppDemo commit (40 lowercase hex characters)
+        required: true
+        type: string
+  repository_dispatch:
+    types: [kos-ui-sync]
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: sync-kos-ui
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate explicit revision
+        id: pin
+        env:
+          REQUESTED_SHA: ${{ inputs.revision || github.event.client_payload.revision }}
+        run: |
+          if [[ ! "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'An exact full commit SHA is required; branches/latest are not accepted.' >&2
+            exit 1
+          fi
+          echo "sha=$REQUESTED_SHA" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: NextKde/nextkdeAppDemo
+          ref: ${{ steps.pin.outputs.sha }}
+          path: .task/upstream-kos-ui
+          persist-credentials: false
+      - name: Import exact shared source and verify its manifest
+        run: python3 tools/vendor_components.py --upstream-dir .task/upstream-kos-ui --revision '${{ steps.pin.outputs.sha }}'
+      - name: Update a single review branch and PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PIN: ${{ steps.pin.outputs.sha }}
+        run: |
+          if git diff --quiet -- vendor/nextkdeAppDemo; then
+            echo 'Already at the requested snapshot.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B codex/sync-kos-ui
+          git add vendor/nextkdeAppDemo
+          git commit -m "chore: sync Kos.Ui $PIN"
+          git push --force-with-lease origin HEAD:codex/sync-kos-ui
+          printf 'Sync shared Kos.Ui source from NextKde/nextkdeAppDemo commit `%s`.\n\nOnly shared components, shaders and license/provenance files are imported. No automatic merge; installer/build checks and visual acceptance remain required.\n' "$PIN" > .task/sync-pr.md
+          number=$(gh pr list --head codex/sync-kos-ui --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh pr edit "$number" --title "chore: sync pinned Kos.Ui snapshot" --body-file .task/sync-pr.md
+          else
+            gh pr create --base main --head codex/sync-kos-ui --title "chore: sync pinned Kos.Ui snapshot" --body-file .task/sync-pr.md
+          fi

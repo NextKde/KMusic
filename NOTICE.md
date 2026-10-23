@@ -10,7 +10,7 @@ when distributing the combined application and helper.
   `38f3fb88e1ed6c0a44ca4188b694859aca29381c`, `apps/music/`. Existing source comments
   are retained. KMusic replaces the application entry and UI, isolates data/cache
   defaults and MPRIS identity, and adapts provider integration.
-- `vendor/nextkdeAppDemo` is a pinned Git submodule, preserving its LICENSE and
+- `vendor/nextkdeAppDemo` is a vendored fixed-revision source snapshot, preserving its LICENSE and
   NOTICE. Portable controls are linked from that source, not copied privately.
 - Apple Music supplies layout inspiration. Discovery metadata/artwork are fetched
   from NetEase's anonymous new-album API; they are source-provided catalogue data,
@@ -24,7 +24,7 @@ when distributing the combined application and helper.
 - `providers/helper.ts` and the Qt QProcess protocol are KMusic glue. No Electron
   UI, account cookie from another player, or third-party source fallback is used.
 
-- Convex button/input material is implemented by the pinned Kos.Ui submodule.
+- Convex button/input material is implemented by the pinned bundled Kos.Ui snapshot.
   Its native QML/GLSL derivation references mkj0kjay/vue-web-liquid-glass revision
   `934404c05167417945e73a36388c20cc201b5a55`; see the component NOTICE. No Vue UI,
   displacement-map code, website image or external desktop pixels are imported.
@@ -34,3 +34,7 @@ corresponding TypeScript sources using `tools/build-provider-runtime.mjs`. Their
 original source comments and AGPL license/NOTICE are preserved; generation does
 not change provider request/crypto behavior. Source/artifact hashes are recorded
 in `providers/runtime/manifest.json`.
+
+The bundled component file list, SHA-256 hashes and full upstream commit are recorded in
+`vendor/nextkdeAppDemo/vendor-manifest.json`. Only `shared/qml`, LICENSE and NOTICE.md
+are imported. Gallery examples and their assets are excluded. See `docs/SharedUi.zh-CN.md`.

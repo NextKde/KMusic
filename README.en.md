@@ -48,13 +48,13 @@ Report copyright, API-use or other rights concerns through [Issues](https://gith
 Prepare the dependencies in the [installation guide](docs/Installation.md), then run as a regular user:
 
 ```sh
-git clone --recurse-submodules --branch main https://github.com/NextKde/KMusic.git
+git clone --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
 cd KMusic
 ./install.sh check
 ./install.sh install --source-dir .
 ```
 
-This builds the already-cloned local source without downloading it again. Tracked source changes must be committed and pinned submodules must already be present. Local installs support the same `status` and `uninstall` actions, preserving user data. Remote pinned installation remains available with `install --version <SHA>`. Missing dependencies return structured JSON errors; **it never installs dependencies or invokes sudo**. Open KMusic from the application launcher after installation.
+This builds the already-cloned local source without downloading it again. Tracked source changes must be committed; the fixed shared UI snapshot is already included. Local installs support the same `status` and `uninstall` actions, preserving user data. Remote pinned installation remains available with `install --version <SHA>`. Missing dependencies return structured JSON errors; **it never installs dependencies or invokes sudo**. Open KMusic from the application launcher after installation.
 
 The following records cover the earlier remote installation matrix; see the [installation guide](docs/Installation.md) for local-mode test scope.
 
@@ -75,3 +75,5 @@ The following records cover the earlier remote installation matrix; see the [ins
 <!-- progress-links:start -->
 [Interface preview](docs/images/kmusic-ipad.png) · [Component Gallery](https://github.com/NextKde/nextkdeAppDemo/blob/ui-evidence/README.md)
 <!-- progress-links:end -->
+
+See [pinned component provenance and synchronization](docs/SharedUi.md).

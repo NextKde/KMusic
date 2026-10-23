@@ -28,7 +28,7 @@ The bundled provider runs as ordinary JavaScript, including on distro Node build
 
 ## Install from an existing clone (no source download)
 
-Use a revision of main containing this feature.
+The bundled-component migration is currently on `codex/player-ui-refinement`; use that branch until it is merged into main.
 
 ```sh
 cd /your/path/KMusic
@@ -41,11 +41,10 @@ cd /your/path/KMusic
 The directory must be a Git repository root; relative paths and paths containing spaces are supported.
 This mode builds directly from that directory into installer-owned temporary directories. It never runs
 clone, fetch, checkout or submodule update, and never installs dependencies. Commit or discard tracked
-source changes first. All pinned recursive submodules must already be present, match their gitlinks and
-have no tracked changes. Untracked files are not version identifiers; commit new source files before installing.
-Missing files/submodules, mismatched revisions or tracked changes return `INTEGRITY_FAILED` (21);
+source changes first. The pinned shared component source is already bundled; no submodule initialization is needed. Untracked files are not version identifiers; commit new source files before installing.
+Missing files, mismatched component manifests or tracked changes return `INTEGRITY_FAILED` (21);
 invalid paths or conflicting options return `INVALID_ARGUMENT` (2). Missing dependencies still return
-`DEPENDENCY_UNSATISFIED` (11). Prepare missing submodules separately; local installation will not fetch them.
+`DEPENDENCY_UNSATISFIED` (11). An ordinary clone includes the shared UI source; see [component provenance and sync](SharedUi.md).
 
 Local and remote installations share the same manifest, atomic activation, launcher, icon and uninstall.
 The version is the full local HEAD SHA; the manifest records `sourceType: local`. Repeating that revision
@@ -57,7 +56,7 @@ managed by this manifest. See [local installer tests](../tests/installer/README.
 ## Install and launch
 
 ```sh
-git clone --branch main https://github.com/NextKde/KMusic.git
+git clone --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
 cd KMusic
 ```
 
@@ -69,7 +68,7 @@ Run as a regular user, not root. Keep `install.sh` and `packaging/installer.py` 
 ./install.sh status
 ```
 
-Run `check`, then `install`. The latter fetches the pinned official source and submodules and builds it; it is not a prebuilt binary download. `status` reports installation state; run `uninstall` only to remove it. There is no stable release yet. For another reviewed revision, replace the version with a full 40-character Git SHA, not a branch or tag.
+Run `check`, then `install`. The latter fetches the pinned official source and builds it; current revisions include the shared components; it is not a prebuilt binary download. `status` reports installation state; run `uninstall` only to remove it. There is no stable release yet. For another reviewed revision, replace the version with a full 40-character Git SHA, not a branch or tag.
 
 After success, open **KMusic** from your application launcher. Installation does not automatically launch it or create a `~/.local/bin/kmusic` command.
 
@@ -110,10 +109,9 @@ The [App Store contract and automated tests](https://github.com/NextKde/NextKde/
 This is separate from the managed installer and uses the same prerequisites:
 
 ```sh
-git submodule update --init --recursive
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel 4
 ./build/kmusic
 ```
 
-Shared controls come from the pinned `vendor/nextkdeAppDemo` submodule. Source attribution is in [NOTICE.md](../NOTICE.md). No npm installation is required for the bundled Node provider.
+Shared controls come from the pinned `vendor/nextkdeAppDemo` bundled snapshot. Source attribution is in [NOTICE.md](../NOTICE.md). No npm installation is required for the bundled Node provider.

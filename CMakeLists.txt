@@ -11,7 +11,7 @@ pkg_check_modules(MUSIC_GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstream
 pkg_check_modules(MUSIC_TAGLIB REQUIRED IMPORTED_TARGET taglib>=1.12)
 qt_standard_project_setup(REQUIRES 6.8)
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt")
-    message(FATAL_ERROR "Run git submodule update --init --recursive")
+    message(FATAL_ERROR "Missing bundled Kos.Ui source; use a complete KMusic checkout")
 endif()
 add_subdirectory(vendor/nextkdeAppDemo/shared/qml kos-ui)
 qt_add_executable(kmusic src/main.cpp
