@@ -54,7 +54,7 @@ Item {
         x: 16; y: 16; implicitWidth: 34; implicitHeight: 34
         materialForm: false; backdrop: ambientBackdrop
         iconOnly: true; iconName: "close"; iconColor: page.foreground
-        onClicked: page.closeRequested(); Accessible.name: qsTr("Close now playing")
+        onClicked: page.closeRequested(); Accessible.name: Language.text("Close now playing", "关闭正在播放")
     }
     LiquidCard {
         anchors.right: parent.right; anchors.rightMargin: 32; y: 40
@@ -69,7 +69,7 @@ Item {
                 trackHeight: 3; thumbWidth: 20; thumbHeight: 12; appearanceMode: "dark"
                 onPreviewChanged: value => page.music.volume = value
                 onCommitRequested: value => page.music.volume = value
-                Accessible.name: qsTr("Volume")
+                Accessible.name: Language.text("Volume", "音量")
             }
         }
     }
@@ -91,12 +91,12 @@ Item {
             Item { Layout.fillHeight: true; Layout.maximumHeight: 16 }
             RowLayout {
                 Layout.fillWidth: true
-                Label { text: page.music.currentTitle || qsTr("Nothing playing"); color: page.foreground; font.pixelSize: 22; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+                Label { text: page.music.currentTitle || Language.text("Nothing playing", "暂无播放"); color: page.foreground; font.pixelSize: 22; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
                 MusicActionButton {
                     objectName: "reviewCurrentFavorite"; flat: true; iconOnly: true; iconName: "heart"; iconFilled: page.music.currentFavorite
                     iconColor: page.music.currentFavorite ? MusicColors.sidebarAccent : page.foreground
                     implicitWidth: 30; implicitHeight: 30; enabled: page.music.currentTrackId > 0
-                    Accessible.name: page.music.currentFavorite ? qsTr("Remove local favorite") : qsTr("Add local favorite")
+                    Accessible.name: page.music.currentFavorite ? Language.text("Remove local favorite", "取消本机收藏") : Language.text("Add local favorite", "加入本机收藏")
                     ToolTip.text: Accessible.name; ToolTip.visible: hovered
                     onClicked: page.music.toggleTrackFavorite("current", 0)
                 }
@@ -115,7 +115,7 @@ Item {
                     onPreviewChanged: value => previewValue = value
                     onCommitRequested: value => { page.music.seekFraction(value); previewValue = -1 }
                     onCanceled: previewValue = -1
-                    Accessible.name: qsTr("Playback position")
+                    Accessible.name: Language.text("Playback position", "播放进度")
                 }
                 RowLayout {
                     Layout.fillWidth: true
@@ -126,19 +126,19 @@ Item {
             }
             RowLayout {
                 Layout.fillWidth: true; spacing: 14
-                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "shuffle"; iconColor: checked ? "#ffffff" : page.secondary; checked: page.music.shuffle; onClicked: page.music.shuffle = !page.music.shuffle; Accessible.name: qsTr("Shuffle") }
+                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "shuffle"; iconColor: checked ? "#ffffff" : page.secondary; checked: page.music.shuffle; onClicked: page.music.shuffle = !page.music.shuffle; Accessible.name: Language.text("Shuffle", "随机播放") }
                 Item { Layout.fillWidth: true }
-                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "mediaPrevious"; iconFilled: true; iconSize: 28; iconColor: page.foreground; enabled: page.music.canGoPrevious; onClicked: page.music.previous(); Accessible.name: qsTr("Previous") }
-                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; objectName: "reviewImmersivePlay"; flat: true; iconOnly: true; implicitWidth: 54; implicitHeight: 48; iconName: page.music.playbackState === "Playing" ? "mediaPause" : "mediaPlay"; iconFilled: true; iconSize: 32; iconColor: page.foreground; enabled: page.music.currentTrackId > 0; onClicked: page.music.togglePlayPause(); Accessible.name: qsTr("Play or pause") }
-                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "mediaNext"; iconFilled: true; iconSize: 28; iconColor: page.foreground; enabled: page.music.canGoNext; onClicked: page.music.next(); Accessible.name: qsTr("Next") }
+                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "mediaPrevious"; iconFilled: true; iconSize: 28; iconColor: page.foreground; enabled: page.music.canGoPrevious; onClicked: page.music.previous(); Accessible.name: Language.text("Previous", "上一首") }
+                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; objectName: "reviewImmersivePlay"; flat: true; iconOnly: true; implicitWidth: 54; implicitHeight: 48; iconName: page.music.playbackState === "Playing" ? "mediaPause" : "mediaPlay"; iconFilled: true; iconSize: 32; iconColor: page.foreground; enabled: page.music.currentTrackId > 0; onClicked: page.music.togglePlayPause(); Accessible.name: Language.text("Play or pause", "播放或暂停") }
+                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "mediaNext"; iconFilled: true; iconSize: 28; iconColor: page.foreground; enabled: page.music.canGoNext; onClicked: page.music.next(); Accessible.name: Language.text("Next", "下一首") }
                 Item { Layout.fillWidth: true }
-                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "repeat"; iconColor: checked ? "#ffffff" : page.secondary; checked: page.music.repeatMode !== "none"; onClicked: page.music.repeatMode = page.music.repeatMode === "none" ? "playlist" : page.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: qsTr("Repeat mode"); ToolTip.text: page.music.repeatMode; ToolTip.visible: hovered }
+                MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "repeat"; iconColor: checked ? "#ffffff" : page.secondary; checked: page.music.repeatMode !== "none"; onClicked: page.music.repeatMode = page.music.repeatMode === "none" ? "playlist" : page.music.repeatMode === "playlist" ? "track" : "none"; Accessible.name: Language.text("Repeat mode", "循环模式"); ToolTip.text: page.music.repeatMode === "track" ? Language.text("Repeat one", "单曲循环") : page.music.repeatMode === "playlist" ? Language.text("Repeat all", "列表循环") : Language.text("Repeat off", "关闭循环"); ToolTip.visible: hovered }
             }
             Label { Layout.fillWidth: true; elide: Text.ElideRight; text: page.music.providerStatus; color: page.secondary; font.pixelSize: 11; ToolTip.text: text; ToolTip.visible: statusHover.hovered; HoverHandler { id: statusHover } }
         }
         ColumnLayout {
             Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumWidth: 240; Layout.bottomMargin: 46; spacing: 18
-            Label { visible: page.presentationMode === 0; text: qsTr("Queue · %1 remaining").arg(Math.max(0, page.music.queueModel.count - page.music.queueIndex - 1)); color: page.foreground; font.pixelSize: 14; font.weight: Font.DemiBold }
+            Label { visible: page.presentationMode === 0; text: Language.text("Queue · %1 remaining", "队列 · 剩余 %1 首").arg(Math.max(0, page.music.queueModel.count - page.music.queueIndex - 1)); color: page.foreground; font.pixelSize: 14; font.weight: Font.DemiBold }
             ListView {
                 id: upcoming
                 visible: page.presentationMode === 0
@@ -166,10 +166,10 @@ Item {
                             Label { text: queueRow.title; Layout.fillWidth: true; elide: Text.ElideRight; color: page.foreground; font.pixelSize: 13 }
                             Label { text: queueRow.artist + (queueRow.album ? " — " + queueRow.album : ""); Layout.fillWidth: true; elide: Text.ElideRight; color: page.secondary; font.pixelSize: 11 }
                         }
-                        MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "close"; iconSize: 13; iconColor: page.secondary; implicitWidth: 28; onClicked: page.music.removeQueueRow(queueRow.index); Accessible.name: qsTr("Remove from queue") }
+                        MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; flat: true; iconOnly: true; iconName: "close"; iconSize: 13; iconColor: page.secondary; implicitWidth: 28; onClicked: page.music.removeQueueRow(queueRow.index); Accessible.name: Language.text("Remove from queue", "移出队列") }
                     }
                 }
-                Label { anchors.centerIn: parent; visible: page.music.queueModel.count <= page.music.queueIndex + 1; width: parent.width - 32; text: qsTr("No more songs queued. Add music from an album or search."); wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; color: page.secondary }
+                Label { anchors.centerIn: parent; visible: page.music.queueModel.count <= page.music.queueIndex + 1; width: parent.width - 32; text: Language.text("No more songs queued. Add music from an album or search.", "队列中没有更多歌曲，可从专辑或搜索中添加。"); wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; color: page.secondary }
             }
             Flickable {
                 id: lyricsView
@@ -269,8 +269,8 @@ Item {
                 }
                 ColumnLayout {
                     anchors.centerIn: parent; width: parent.width - 32; visible: parent.count === 0; spacing: 12
-                    Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; text: page.music.lyricsLoading ? qsTr("Loading lyrics…") : page.music.lyricsError || qsTr("Lyrics unavailable"); color: page.secondary }
-                    MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; Layout.alignment: Qt.AlignHCenter; text: qsTr("Retry lyrics"); visible: page.music.lyricsEnabled && !page.music.lyricsLoading && page.music.currentTrackId > 0; onClicked: page.music.reloadLyrics() }
+                    Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter; text: page.music.lyricsLoading ? Language.text("Loading lyrics…", "正在加载歌词…") : page.music.lyricsError || Language.text("Lyrics unavailable", "暂无歌词"); color: page.secondary }
+                    MusicActionButton { surfaceColor: "#33485f"; textColor: page.foreground; Layout.alignment: Qt.AlignHCenter; text: Language.text("Retry lyrics", "重试加载歌词"); visible: page.music.lyricsEnabled && !page.music.lyricsLoading && page.music.currentTrackId > 0; onClicked: page.music.reloadLyrics() }
                 }
             }
         }
