@@ -30,12 +30,12 @@ ScrollView {
     ColumnLayout {
         x: 32; width: page.availableWidth - 64; spacing: 16
         Label { Layout.topMargin: 20; text: "Navidrome / OpenSubsonic"; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
-        Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: page.server.connected ? page.server.server + " · " + page.server.username : Language.text("Connect your personal music server.", "连接你的个人音乐服务器。"); color: AppTheme.mutedText }
+        Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: page.server.connected ? page.server.server + " · " + page.server.username : Language.text("Connect your personal music server.", "连接你的个人音乐服务器。"); color: AppTheme.mutedText }
         RowLayout {
             MusicActionButton { text: page.server.connected ? Language.text("Change server", "更换服务器") : Language.text("Connect", "连接"); enabled: !page.server.busy; onClicked: connection.open() }
             MusicActionButton { text: Language.text("Disconnect", "断开连接"); visible: page.server.connected || page.server.server.length > 0; onClicked: page.server.disconnectServer() }
         }
-        Label { visible: page.server.message.length > 0; text: page.server.message; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText }
+        Label { textFormat: Text.PlainText; visible: page.server.message.length > 0; text: page.server.message; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText }
         BusyIndicator { running: page.server.busy; visible: running; Layout.alignment: Qt.AlignHCenter }
         RowLayout {
             visible: page.server.connected; Layout.fillWidth: true
@@ -46,6 +46,7 @@ ScrollView {
         Label {
             visible: page.server.connected && page.view === "search" && page.submittedQuery.length > 0
             Layout.fillWidth: true
+            textFormat: Text.PlainText
             text: Language.text("Results for “", "搜索结果：“") + page.submittedQuery + "”"
             color: AppTheme.mutedText
             font.pixelSize: 13
@@ -62,7 +63,7 @@ ScrollView {
                         TapHandler { enabled: !page.server.busy; onTapped: { page.view = "songs"; page.server.openAlbum(modelData.id) } }
                     }
                     MusicActionButton { width: 150; text: modelData.title; flat: true; enabled: !page.server.busy; onClicked: { page.view = "songs"; page.server.openAlbum(modelData.id) } }
-                    Label { width: parent.width; text: modelData.artist; color: AppTheme.mutedText; elide: Text.ElideRight; font.pixelSize: 12 }
+                    Label { textFormat: Text.PlainText; width: parent.width; text: modelData.artist; color: AppTheme.mutedText; elide: Text.ElideRight; font.pixelSize: 12 }
                 }
             }
         }
@@ -77,8 +78,8 @@ ScrollView {
                     Artwork { Layout.preferredWidth: 40; Layout.preferredHeight: 40; radius: 5; source: modelData.artwork; title: modelData.title }
                     ColumnLayout {
                         Layout.fillWidth: true; spacing: 2
-                        Label { Layout.fillWidth: true; text: modelData.title; elide: Text.ElideRight; color: AppTheme.text }
-                        Label { Layout.fillWidth: true; text: modelData.artist + " · " + modelData.album; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 12 }
+                        Label { textFormat: Text.PlainText; Layout.fillWidth: true; text: modelData.title; elide: Text.ElideRight; color: AppTheme.text }
+                        Label { textFormat: Text.PlainText; Layout.fillWidth: true; text: modelData.artist + " · " + modelData.album; elide: Text.ElideRight; color: AppTheme.mutedText; font.pixelSize: 12 }
                     }
                     MusicActionButton { iconOnly: true; iconName: "mediaPlay"; Accessible.name: Language.text("Play", "播放"); onClicked: page.music.playMediaSong(index) }
                     MusicActionButton { text: "+"; Accessible.name: Language.text("Add to queue", "加入队列"); onClicked: page.music.playMediaSong(index, true) }
