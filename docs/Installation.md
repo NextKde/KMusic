@@ -28,7 +28,7 @@ The bundled provider runs as ordinary JavaScript, including on distro Node build
 
 ## Install from an existing clone (no source download)
 
-The bundled-component migration is currently on `codex/player-ui-refinement`; use that branch until it is merged into main.
+Use the complete source on main; shared component submodule initialization is not required.
 
 ```sh
 cd /your/path/KMusic
@@ -56,7 +56,7 @@ managed by this manifest. See [local installer tests](../tests/installer/README.
 ## Install and launch
 
 ```sh
-git clone --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
+git clone --branch main https://github.com/NextKde/KMusic.git
 cd KMusic
 ```
 

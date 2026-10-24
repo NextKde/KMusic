@@ -48,7 +48,7 @@ KMusic 是独立的开源音乐客户端，在线功能通过第三方服务接�
 先准备[安装指南](docs/Installation.zh-CN.md)所列依赖，再以普通用户运行：
 
 ```sh
-git clone --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
+git clone --branch main https://github.com/NextKde/KMusic.git
 cd KMusic
 ./install.sh check
 ./install.sh install --source-dir .

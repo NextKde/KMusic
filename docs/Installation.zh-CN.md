@@ -28,7 +28,7 @@
 
 ## 从已克隆仓库安装（不重新下载）
 
-本次内置组件迁移位于 `codex/player-ui-refinement`，合入 main 前请使用该分支。
+使用 main 分支中的完整源码即可，无需初始化共享组件子模块。
 
 ```sh
 cd /你的路径/KMusic
@@ -56,7 +56,7 @@ cd /你的路径/KMusic
 ## 安装与打开
 
 ```sh
-git clone --branch codex/player-ui-refinement https://github.com/NextKde/KMusic.git
+git clone --branch main https://github.com/NextKde/KMusic.git
 cd KMusic
 ```
 
