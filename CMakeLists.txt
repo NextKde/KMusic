@@ -14,17 +14,19 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nextkdeAppDemo/shared/qml/CMak
     message(FATAL_ERROR "Missing bundled Kos.Ui source; use a complete KMusic checkout")
 endif()
 add_subdirectory(vendor/nextkdeAppDemo/shared/qml kos-ui)
+add_subdirectory(src/providers)
 qt_add_executable(kmusic src/main.cpp
     src/AudioCache.cpp src/AudioCache.h src/MetadataScanner.cpp src/MetadataScanner.h
     src/MusicDatabase.cpp src/MusicDatabase.h src/MusicTypes.h src/MprisService.cpp src/MprisService.h
-    src/PlaybackEngine.cpp src/PlaybackEngine.h src/Transcoder.cpp src/Transcoder.h
+    src/PlaybackHttpHeaders.cpp src/PlaybackEngine.cpp src/PlaybackEngine.h src/Transcoder.cpp src/Transcoder.h
     src/LxSourceService.cpp src/LxSourceService.h src/LyricsService.cpp src/LyricsService.h
     src/OnlineMusicProvider.cpp src/OnlineMusicProvider.h src/AccountController.cpp src/AccountController.h src/SubsonicProvider.cpp src/SubsonicProvider.h)
 set_source_files_properties(qml/MusicColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(kmusic URI NextKde.Music VERSION 1.0 RESOURCE_PREFIX /qt/qml
-    SOURCES src/MusicController.cpp src/MusicController.h src/TrackListModel.cpp src/TrackListModel.h
-    QML_FILES qml/SearchHistory.mjs qml/MusicTextField.qml qml/MediaSourcesPage.qml qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
+    SOURCES src/MusicController.cpp src/MusicController.h src/MusicControllerBilibili.cpp src/BilibiliAccountController.cpp src/BilibiliAccountController.h src/BilibiliDiscoveryController.cpp src/BilibiliDiscoveryController.h src/BilibiliLibraryController.cpp src/BilibiliLibraryController.h src/BilibiliController.cpp src/BilibiliController.h src/TrackListModel.cpp src/TrackListModel.h
+    QML_FILES qml/BilibiliDiscoveryPage.qml qml/BilibiliFeedSection.qml qml/BilibiliPersonalPage.qml qml/BilibiliPage.qml qml/SearchHistory.mjs qml/MusicTextField.qml qml/MediaSourcesPage.qml qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
 target_include_directories(kmusic PRIVATE src)
+target_link_libraries(kmusic PRIVATE kmusic_provider_core)
 target_link_libraries(kmusic PRIVATE Qt6Keychain::Qt6Keychain PkgConfig::MUSIC_QRENCODE Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickDialogs2 Qt6::Concurrent Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
 target_compile_definitions(kmusic PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
 install(TARGETS kmusic RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -45,12 +47,12 @@ install(DIRECTORY providers/ DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/kmusic/pro
 option(KMUSIC_BUILD_LOCAL_TESTS "Build local-library integration tests" OFF)
 if(KMUSIC_BUILD_LOCAL_TESTS)
     qt_add_executable(kmusic_local_tests tests/local_music_integration.cpp
-        src/MusicController.cpp src/TrackListModel.cpp src/AudioCache.cpp
+        src/MusicController.cpp src/MusicControllerBilibili.cpp src/BilibiliAccountController.cpp src/BilibiliAccountController.h src/BilibiliDiscoveryController.cpp src/BilibiliDiscoveryController.h src/BilibiliLibraryController.cpp src/BilibiliLibraryController.h src/BilibiliController.cpp src/TrackListModel.cpp src/AudioCache.cpp
         src/MetadataScanner.cpp src/MusicDatabase.cpp src/MprisService.cpp
-        src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
+        src/PlaybackHttpHeaders.cpp src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
         src/LyricsService.cpp src/OnlineMusicProvider.cpp src/AccountController.cpp src/SubsonicProvider.cpp)
     target_include_directories(kmusic_local_tests PRIVATE src)
-    target_link_libraries(kmusic_local_tests PRIVATE Qt6Keychain::Qt6Keychain
+    target_link_libraries(kmusic_local_tests PRIVATE kmusic_provider_core Qt6Keychain::Qt6Keychain
         PkgConfig::MUSIC_QRENCODE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Concurrent
         Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
     target_compile_definitions(kmusic_local_tests PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
@@ -60,12 +62,12 @@ endif()
 option(KMUSIC_BUILD_SUBSONIC_TESTS "Build isolated media-server integration runner" OFF)
 if(KMUSIC_BUILD_SUBSONIC_TESTS)
     qt_add_executable(kmusic_subsonic_tests tests/subsonic_integration.cpp
-        src/MusicController.cpp src/TrackListModel.cpp src/AudioCache.cpp
+        src/MusicController.cpp src/MusicControllerBilibili.cpp src/BilibiliAccountController.cpp src/BilibiliAccountController.h src/BilibiliDiscoveryController.cpp src/BilibiliDiscoveryController.h src/BilibiliLibraryController.cpp src/BilibiliLibraryController.h src/BilibiliController.cpp src/TrackListModel.cpp src/AudioCache.cpp
         src/MetadataScanner.cpp src/MusicDatabase.cpp src/MprisService.cpp
-        src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
+        src/PlaybackHttpHeaders.cpp src/PlaybackEngine.cpp src/Transcoder.cpp src/LxSourceService.cpp
         src/LyricsService.cpp src/OnlineMusicProvider.cpp src/AccountController.cpp src/SubsonicProvider.cpp)
     target_include_directories(kmusic_subsonic_tests PRIVATE src)
-    target_link_libraries(kmusic_subsonic_tests PRIVATE Qt6Keychain::Qt6Keychain
+    target_link_libraries(kmusic_subsonic_tests PRIVATE kmusic_provider_core Qt6Keychain::Qt6Keychain
         PkgConfig::MUSIC_QRENCODE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Concurrent
         Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
     target_compile_definitions(kmusic_subsonic_tests PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")

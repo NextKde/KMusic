@@ -2,6 +2,14 @@
 
 <h1 align="center">KMusic</h1>
 
+<h2 align="center"><strong>重要免责声明</strong></h2>
+
+<p align="center"><strong>KMusic 是非官方第三方客户端，与网易云音乐、哔哩哔哩等平台不存在官方隶属、合作或背书关系。</strong></p>
+
+<p align="center"><strong>音乐、歌词、封面等内容的版权属于各自权利人。请仅访问你有权使用的内容，遵守平台条款；本项目不提供绕过付费、会员或其他访问限制的授权。</strong></p>
+
+<p align="center"><strong>在适用法律允许的范围内，软件按“现状”提供，不保证第三方接口持续可用；依法不能排除的责任不受本声明限制。完整说明见下方“免责声明”。</strong></p>
+
 <p align="center"><strong>原生 Qt 音乐播放器，属于 NextKDE。</strong><br>在线发现、本地音乐与自己的音乐服务器，共用一个播放器。</p>
 
 <p align="center">

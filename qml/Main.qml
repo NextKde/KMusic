@@ -47,11 +47,13 @@ ApplicationWindow {
     }
     function selectSource(id) {
         restoringSourceSearch = true
+        if (selectedSource !== id) music.bilibili.cancelBrowse()
         selectedSource = id
         if (id === "netease" || id === "bilibili") { onlineProvider = id; navigationArea = "discover" }
         else navigationArea = id === "local" ? "local" : "media"
         const sections = SourceCatalog.sections(id)
         if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
+        if (id === "bilibili") { pageTitle = "Bilibili"; selectedSourceEntry = "recommend"; destination = "bilibiliDiscover"; bilibiliPage.queryText = savedSourceSearch(id) }
         if (id === "netease") onlinePage.queryText = savedSourceSearch(id)
         music.setSearch(id === "local" ? savedSourceSearch(id) : "")
         restoringSourceSearch = false
@@ -78,7 +80,10 @@ ApplicationWindow {
     }
     property string pageTitle: Language.text("Songs", "歌曲")
     property double selectedPlaylist: -1
-    readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
+    readonly property bool sensitiveContentVisible: (window.contentDestination === "bilibiliDiscover" && music.bilibili.account.authenticated)
+        || (accountDialog.visible && (accountDialog.account.qrImage.length > 0 || accountDialog.account.authenticated))
+        || (window.contentDestination === "personalHome" && (window.onlineProvider === "bilibili" ? music.bilibili.account.authenticated : music.account.authenticated))
+        || (headerAvatar.visible && headerAvatar.signedIn)
     property int sensitiveContentRevision: 0
     onSensitiveContentVisibleChanged: if (sensitiveContentVisible) ++sensitiveContentRevision
     function openPlaylistPicker(source, rowOrId) { if (music.preparePlaylistTrack(source, rowOrId)) addDialog.open() }
@@ -89,7 +94,13 @@ ApplicationWindow {
         const entry = music.playlists[row]; window.selectedPlaylist = entry.id; music.selectPlaylist(entry.id)
         window.destination = "playlist"; window.pageTitle = entry.name
     }
-    function openAccount() { accountDialog.open() }
+    function openAccount() {
+        if (accountDialog.visible) return
+        accountDialog.provider = window.onlineProvider === "bilibili" ? "bilibili" : "netease"
+        accountDialog.account = accountDialog.provider === "bilibili" ? music.bilibili.account : music.account
+        accountDialog.open()
+    }
+    function reviewBilibiliSearch(text) { selectSource("bilibili"); destination = "bilibili"; bilibiliPage.queryText = text; music.bilibili.search(text) }
     function reviewOnlineSearch(text) { window.selectSource("netease"); music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else settingsMenu.popup() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
@@ -240,12 +251,27 @@ ApplicationWindow {
                     onClearSearchRequested: { window.rememberSourceSearch("local", ""); music.setSearch("") }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
+                BilibiliDiscoveryPage {
+                    anchors.fill: parent; visible: window.contentDestination === "bilibiliDiscover"
+                    backend: music.bilibili; bottomContentInset: window.playerContentInset
+                    onSignInRequested: window.openAccount()
+                }
+                BilibiliPage {
+                    id: bilibiliPage; anchors.fill: parent; visible: window.contentDestination === "bilibili"
+                    backend: music.bilibili; bottomContentInset: window.playerContentInset
+                    onDiscoverRequested: { window.selectedSourceEntry = "recommend"; window.destination = "bilibiliDiscover" }
+                }
                 PersonalPage {
                     anchors.fill: parent
-                    visible: window.contentDestination === "personalHome"
+                    visible: window.contentDestination === "personalHome" && window.onlineProvider !== "bilibili"
                     music: window.music; provider: window.onlineProvider
                     bottomContentInset: window.playerContentInset
-                    onSignInRequested: accountDialog.open()
+                    onSignInRequested: window.openAccount()
+                }
+                BilibiliPersonalPage {
+                    anchors.fill: parent; visible: window.contentDestination === "personalHome" && window.onlineProvider === "bilibili"
+                    backend: music.bilibili; bottomContentInset: window.playerContentInset
+                    onSignInRequested: window.openAccount()
                 }
                 DiscoveryPage {
                     id: discover
@@ -313,12 +339,12 @@ ApplicationWindow {
                     instanceName: window.demoMediaAliases[window.selectedSource] || ""
                     entryId: window.selectedSourceEntry
                     requiresLogin: window.sourcePrototypeEntry.login === true
-                    authenticated: window.selectedSource === "netease" && music.account.authenticated
+                    authenticated: window.selectedSource === "bilibili" ? music.bilibili.account.authenticated : window.selectedSource === "netease" && music.account.authenticated
                     sourceName: window.sourceLabel(window.activeSource)
                     entryName: window.sourcePrototypeEntry.en ? window.sourceLabel(window.sourcePrototypeEntry) : ""
                     connectionStatus: window.activeSource.status
                     bottomContentInset: window.playerContentInset
-                    onAccountRequested: accountDialog.open()
+                    onAccountRequested: window.openAccount()
                     onConnectionRequested: {
                         sourceConnectionDialog.sourceId = window.selectedSource
                         sourceConnectionDialog.sourceName = window.sourceLabel(window.activeSource)
@@ -372,7 +398,8 @@ ApplicationWindow {
             id: floatingHeader
             x: 236; y: 0; width: parent.width - x; height: 52
             visible: window.contentDestination !== "now" && window.contentDestination !== "onlineAlbum" && window.contentDestination !== "online"
-            readonly property string heading: window.contentDestination === "new" ? Language.text("Discover", "发现")
+            readonly property string heading: window.contentDestination === "bilibiliDiscover" ? Language.text("Discover", "发现")
+                : window.contentDestination === "new" ? Language.text("Discover", "发现")
                 : window.contentDestination === "personalHome" ? Language.text("Personal", "个人")
                 : window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐")
                 : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源")
@@ -438,7 +465,7 @@ ApplicationWindow {
                             id: headerSearchButton
                             Layout.preferredWidth: 36; Layout.minimumWidth: 0; Layout.fillHeight: true
                             padding: 0
-                            enabled: window.selectedSource === "netease" || window.selectedSource === "local"
+                            enabled: window.selectedSource === "netease" || window.selectedSource === "bilibili" || window.selectedSource === "local"
                             Accessible.name: Language.text("Search", "搜索")
                             ToolTip.text: Language.text("Search · Ctrl+F", "搜索 · Ctrl+F")
                             ToolTip.visible: hovered
@@ -462,8 +489,12 @@ ApplicationWindow {
                             visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
                             enabled: window.navigationArea !== "local" || music.ready
                             Accessible.name: window.navigationArea === "local" ? Language.text("Import music", "导入音乐") : Language.text("Switch platform", "切换平台")
-                            onClicked: { if (window.navigationArea === "local") folderDialog.open() }
-                            // Online platform switching remains reserved.
+                            onClicked: { if (window.navigationArea === "local") folderDialog.open(); else platformMenu.popup() }
+                            Menu {
+                                id: platformMenu
+                                MenuItem { text: Language.text("NetEase Cloud Music", "网易云音乐"); onTriggered: window.selectSource("netease") }
+                                MenuItem { text: "Bilibili"; onTriggered: window.selectSource("bilibili") }
+                            }
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
                             contentItem: Item {
                                 implicitWidth: 14; implicitHeight: 14
@@ -483,18 +514,18 @@ ApplicationWindow {
                     Layout.topMargin: 5.5
                     topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
                     visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
-                    readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
+                    readonly property var account: window.onlineProvider === "bilibili" ? music.bilibili.account : music.account
+                    readonly property bool signedIn: account.authenticated
                     Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
                     onClicked: {
-                        if (window.onlineProvider === "netease") accountDialog.open()
-                        else window.openSourceEntry(SourceCatalog.sections("bilibili")[1].entries[0])
+                        window.openAccount()
                     }
                     background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
                     contentItem: Item {
                         Image { anchors.centerIn: parent; width: 16; height: 16; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
                         Image {
                             id: avatarImage
-                            anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
+                            anchors.fill: parent; source: headerAvatar.signedIn ? headerAvatar.account.avatarUrl : ""
                             visible: headerAvatar.signedIn && source.toString().length > 0
                             fillMode: Image.PreserveAspectCrop; asynchronous: true
                             layer.enabled: true
@@ -512,6 +543,9 @@ ApplicationWindow {
                     if (window.selectedSource === "local") {
                         music.setSearch(query); localPage.searchLibrary()
                         window.destination = "localHome"
+                    } else if (window.selectedSource === "bilibili") {
+                        bilibiliPage.queryText = query; music.bilibili.search(query)
+                        window.destination = "bilibili"
                     } else if (window.selectedSource === "netease") {
                         onlinePage.queryText = query; music.searchOnline(query)
                         window.destination = "online"; window.selectedSourceEntry = "search"

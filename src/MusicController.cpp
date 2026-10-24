@@ -69,6 +69,7 @@ MusicController::MusicController(QObject *parent)
     , m_playlistTracksModel(this)
     , m_onlineModel(this)
     , m_albumTracksModel(this)
+    , m_bilibili(this)
     , m_onlineProvider(this)
     , m_account(&m_onlineProvider, this)
     , m_mediaServer(this)
@@ -264,6 +265,7 @@ void MusicController::initialize()
         m_providerStatus = tr("NetEase · account updated");
         emit playbackStateChanged(); emit playbackStatusChanged(); emit seekableChanged();
     });
+    setupBilibili();
     connect(&m_onlineProvider, &OnlineMusicProvider::searchingChanged,
             this, &MusicController::onlineSearchingChanged);
     connect(&m_onlineProvider, &OnlineMusicProvider::errorMessageChanged,
@@ -1905,7 +1907,7 @@ void MusicController::persistPlaybackPosition()
         QString::fromUtf8(QJsonDocument(position).toJson(QJsonDocument::Compact)));
 }
 
-void MusicController::loadPreparedTrack(const QUrl &url)
+void MusicController::loadPreparedTrack(const QUrl &url, const QByteArray &userAgent, const QUrl &referer)
 {
     if (m_resolvingTrackId != currentTrackId() || m_resolvingTrackId < 0)
         return;
@@ -1914,7 +1916,7 @@ void MusicController::loadPreparedTrack(const QUrl &url)
     m_loadedTrackId = m_resolvingTrackId;
     m_resolvingTrackId = -1;
     ++m_engineLoadRequests;
-    m_engine.load(url, m_playWhenReady, m_resumePositionMs);
+    m_engine.load(url, m_playWhenReady, m_resumePositionMs, userAgent, referer);
     m_activeEngineGeneration = m_engine.generation();
     emit playbackStateChanged();
 }
@@ -1958,6 +1960,14 @@ void MusicController::startCurrentTrack(qint64 startPositionMs, bool autoPlay)
         m_onlineProvider.resolve(track->id, track->providerId, m_onlineQuality);
         return;
     }
+    if (track->source == QLatin1String("bilibili")) {
+        m_streamAvailabilityConfirmed = false;
+        m_providerStatus = tr("Bilibili · loading audio…");
+        emit playbackStatusChanged(); emit playbackStateChanged();
+        m_trackTimeout.start();
+        m_bilibili.prepare(track->id, track->providerId);
+        return;
+    }
     if (track->source == QLatin1String("subsonic")) {
         m_providerStatus = tr("Media server · loading audio…");
         emit playbackStatusChanged();
@@ -1988,6 +1998,7 @@ void MusicController::startCurrentTrack(qint64 startPositionMs, bool autoPlay)
 
 void MusicController::cancelRecovery()
 {
+    m_bilibili.cancelPlayback();
     m_mediaServer.cancelPlayback();
     m_activeEngineGeneration = 0;
     m_onlineProvider.cancelResolve();

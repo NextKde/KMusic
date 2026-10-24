@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MusicDatabase.h"
+#include "BilibiliController.h"
 #include "OnlineMusicProvider.h"
 #include "AccountController.h"
 #include "SubsonicProvider.h"
@@ -28,6 +29,7 @@ class MusicController : public QObject {
     Q_OBJECT
     QML_ELEMENT
 
+    Q_PROPERTY(BilibiliController *bilibili READ bilibili CONSTANT)
     Q_PROPERTY(bool restorePlayback READ restorePlayback WRITE setRestorePlayback NOTIFY startupPreferencesChanged)
     Q_PROPERTY(bool startupAutoplay READ startupAutoplay WRITE setStartupAutoplay NOTIFY startupPreferencesChanged)
     Q_PROPERTY(qlonglong audioCacheBytes READ audioCacheBytes NOTIFY audioCacheChanged)
@@ -125,6 +127,7 @@ class MusicController : public QObject {
     Q_PROPERTY(QString transcodeError READ transcodeError NOTIFY transcodeChanged)
 
 public:
+    BilibiliController *bilibili() { return &m_bilibili; }
     AccountController *account() { return &m_account; }
     explicit MusicController(QObject *parent = nullptr);
     ~MusicController() override;
@@ -389,7 +392,8 @@ private:
     void setQueue(const QList<qint64> &trackIds, int currentIndex);
     void persistQueue();
     void startCurrentTrack(qint64 startPositionMs = 0, bool autoPlay = true);
-    void loadPreparedTrack(const QUrl &url);
+    void setupBilibili();
+    void loadPreparedTrack(const QUrl &url, const QByteArray &userAgent = {}, const QUrl &referer = {});
     void tryNextSource();
     void resolveWithReadySource();
     void schedulePlaybackFailure(const QString &message);
@@ -437,6 +441,7 @@ private:
     bool m_albumLoadingMore = false;
     QString m_albumLoadMoreError;
     QString m_albumError, m_albumMessage;
+    BilibiliController m_bilibili;
     OnlineMusicProvider m_onlineProvider;
     AccountController m_account;
     SubsonicProvider m_mediaServer;

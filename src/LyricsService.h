@@ -2,7 +2,7 @@
 
 #include "MusicTypes.h"
 
-#include <QNetworkAccessManager>
+#include "providers/NetworkAccessManager.h"
 #include <QObject>
 #include <QVariantList>
 
@@ -40,7 +40,7 @@ private:
 
     QString m_cachePath;
     QVariantList m_lines;
-    QNetworkAccessManager m_network;
+    MusicProviders::NetworkAccessManager m_network;
     QNetworkReply *m_reply = nullptr;
     QString m_errorMessage;
     quint64 m_generation = 0;

@@ -1,4 +1,5 @@
 #include "PlaybackEngine.h"
+#include "PlaybackHttpHeaders.h"
 
 #include <QFileInfo>
 #include <QFile>
@@ -198,7 +199,7 @@ double PlaybackEngine::volume() const
     return m_volume;
 }
 
-bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositionMs)
+bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositionMs, const QByteArray &userAgent, const QUrl &referer)
 {
     if (!m_playbin)
         return false;
@@ -207,6 +208,8 @@ bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositio
     // NULL flushes old pipeline messages; keep it explicit while replacing URI.
     if (m_bus) gst_bus_set_flushing(m_bus, TRUE);
     gst_element_set_state(m_playbin, GST_STATE_NULL);
+    if (m_httpHeadersConnection) g_signal_handler_disconnect(m_playbin, m_httpHeadersConnection);
+    m_httpHeadersConnection = installPlaybackHttpHeaders(m_playbin, userAgent, referer);
     finishDownload();
     if (source.isEmpty() || !source.isValid()) {
         setErrorMessage(QStringLiteral("Invalid audio URL"));
@@ -410,6 +413,7 @@ void PlaybackEngine::pollBus()
             gint percent = 100;
             gst_message_parse_buffering(message, &percent);
             m_bufferingPercent = percent;
+            observeLoadingProgress();
             emit bufferingChanged();
             if (percent < 100 && m_requestedPlaying) {
                 gst_element_set_state(m_playbin, GST_STATE_PAUSED);
@@ -477,9 +481,11 @@ void PlaybackEngine::setState(const QString &state)
         m_positionTimer.start();
     else
         m_positionTimer.stop();
-    if (m_state == QStringLiteral("Loading"))
-        m_loadingTimeout.start();
-    else
+    if (m_state == QStringLiteral("Loading")) {
+        m_loadingElapsed.start();
+        m_loadingDeadline.reset(m_bufferingPercent, m_downloadProgress);
+        m_loadingTimeout.start(PlaybackLoadingDeadline::stallMs);
+    } else
         m_loadingTimeout.stop();
     if (m_state == QStringLiteral("Error") || m_state == QStringLiteral("Stopped"))
         m_downloadTimer.stop();
@@ -512,10 +518,20 @@ void PlaybackEngine::updateDownloadProgress()
         const double progress = std::clamp(double(covered) / GST_FORMAT_PERCENT_MAX, 0.0, 1.0);
         if (progress != m_downloadProgress) {
             m_downloadProgress = progress;
+            observeLoadingProgress();
             emit bufferingChanged();
         }
     }
     gst_query_unref(query);
+}
+
+void PlaybackEngine::observeLoadingProgress()
+{
+    if (m_state != QStringLiteral("Loading") || !m_loadingElapsed.isValid())
+        return;
+    const auto elapsed = m_loadingElapsed.elapsed();
+    m_loadingDeadline.observe(elapsed, m_bufferingPercent, m_downloadProgress);
+    m_loadingTimeout.start(m_loadingDeadline.remaining(elapsed));
 }
 
 void PlaybackEngine::setErrorMessage(const QString &message)

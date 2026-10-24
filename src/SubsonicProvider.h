@@ -1,7 +1,7 @@
 #pragma once
 #include "MusicTypes.h"
 #include <QObject>
-#include <QNetworkAccessManager>
+#include "providers/NetworkAccessManager.h"
 #include <QNetworkReply>
 #include <QJsonObject>
 #include <QVariantList>
@@ -55,7 +55,7 @@ private:
     void saveCredentials();
     void restore();
     void resetRequests();
-    QNetworkAccessManager m_network;
+    MusicProviders::NetworkAccessManager m_network;
     QUrl m_base;
     QString m_user, m_password, m_message, m_cache, m_query;
     bool m_connected = false, m_busy = false, m_more = false, m_remember = false;

@@ -4,6 +4,8 @@
 #include <QTimer>
 #include <QUrl>
 #include <atomic>
+#include <QElapsedTimer>
+#include "PlaybackLoadingDeadline.h"
 
 typedef struct _GstElement GstElement;
 typedef struct _GstBus GstBus;
@@ -31,7 +33,7 @@ public:
     double downloadProgress() const;
     void setDownloadDirectory(const QString &directory);
 
-    bool load(const QUrl &source, bool autoPlay = true, qint64 startPositionMs = 0);
+    bool load(const QUrl &source, bool autoPlay = true, qint64 startPositionMs = 0, const QByteArray &userAgent = {}, const QUrl &referer = {});
     void play();
     void pause();
     void stop();
@@ -64,15 +66,19 @@ private:
     void updateSeekable();
     void updateDownloadProgress();
     void finishDownload();
+    void observeLoadingProgress();
 
     std::atomic<quint64> m_generation{0};
     quint64 m_eosDeliveredGeneration = 0;
     int m_naturalEosCount = 0, m_ignoredEosCount = 0;
     GstElement *m_playbin = nullptr;
+    unsigned long m_httpHeadersConnection = 0;
     GstBus *m_bus = nullptr;
     QTimer m_positionTimer;
     QTimer m_downloadTimer;
     QTimer m_loadingTimeout;
+    QElapsedTimer m_loadingElapsed;
+    PlaybackLoadingDeadline m_loadingDeadline;
     QByteArray m_downloadTemplate;
     QUrl m_source;
     QString m_backendName;

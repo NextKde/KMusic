@@ -2,6 +2,14 @@
 
 <h1 align="center">KMusic</h1>
 
+<h2 align="center"><strong>重要免责声明</strong></h2>
+
+<p align="center"><strong>KMusic 是非官方第三方客户端，与网易云音乐、哔哩哔哩等平台不存在官方隶属、合作或背书关系。</strong></p>
+
+<p align="center"><strong>音乐、歌词、封面等内容的版权属于各自权利人。请仅访问你有权使用的内容，遵守平台条款；本项目不提供绕过付费、会员或其他访问限制的授权。</strong></p>
+
+<p align="center"><strong>在适用法律允许的范围内，软件按“现状”提供，不保证第三方接口持续可用；依法不能排除的责任不受本声明限制。完整说明见下方“免责声明”。</strong></p>
+
 <p align="center"><strong>原生 Qt 音乐播放器，属于 NextKDE。</strong><br>在线发现、本地音乐与自己的音乐服务器，共用一个播放器。</p>
 
 <p align="center">
@@ -28,7 +36,8 @@
 - **播放** — 队列、进度、音量、随机与循环，以及沉浸式歌词视图。
 - **个人** — 网易云账号歌单、喜欢、收藏和播放记录的只读接入；真实账号授权及权限仍需用户确认。
 - **外观** — 浅色、深色、跟随系统与语言选择；覆盖滚动内容的位置使用共享 QML 液态材质。
-- **边界** — B站尚未接入；不支持 Jellyfin/WebDAV、多服务器或远端歌单写入。缺少文件封面时显示占位图，不自动生成封面。网易云试听与播放权限取决于服务端。
+- **[B站](docs/Bilibili.zh-CN.md)** — 视频搜索、BV 链接、分 P 与普通 AAC 音频播放；尚未接入 B站登录、收藏夹和推荐。
+- **边界** — 不支持 Jellyfin/WebDAV、多服务器或远端歌单写入。缺少文件封面时显示占位图，不自动生成封面。网易云试听与播放权限取决于服务端。
 
 ## 免责声明
 
@@ -68,6 +77,8 @@ cd KMusic
 [测试运行与日志](https://github.com/NextKde/KMusic/actions/runs/39783294345) · [完整安装、卸载与故障说明](docs/Installation.zh-CN.md)
 
 ## 开发与文档
+
+- [音源模块与接口契约](docs/ProviderContracts.zh-CN.md)
 
 - [本地音乐](docs/LocalMusic.zh-CN.md) · [个人资料库](docs/PersonalBackend.zh-CN.md) · [媒体源](docs/MediaSources.zh-CN.md)
 - [设计说明](docs/Design.zh-CN.md) · [路线图](docs/Roadmap.zh-CN.md) · [来源与许可](NOTICE.md)

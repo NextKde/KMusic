@@ -1,4 +1,5 @@
 #include "MusicController.h"
+#include "MusicNetworkAccessManagerFactory.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -42,7 +43,9 @@ int main(int argc, char *argv[]) {
     QQuickStyle::setStyle(QStringLiteral("Basic"));
     QQuickWindow::setDefaultAlphaBuffer(true);
     MusicController music;
+    MusicNetworkAccessManagerFactory qmlNetworkFactory;
     QQmlApplicationEngine engine;
+    engine.setNetworkAccessManagerFactory(&qmlNetworkFactory);
     QQmlPropertyMap languagePreferences;
     QSettings settings;
     QString language = settings.value("UserPreferences/language", "system").toString();
@@ -142,7 +145,7 @@ int main(int argc, char *argv[]) {
                     {"scale", item->scale()}, {"windowLocalX", position.x()}, {"windowLocalY", position.y()}
                 }).toJson());
             } else if (action == "onlineSearch") {
-                QMetaObject::invokeMethod(window, "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
+                QMetaObject::invokeMethod(window, data.value("provider").toString() == "bilibili" ? "reviewBilibiliSearch" : "reviewOnlineSearch", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "collectionSearch") {
                 QMetaObject::invokeMethod(window, "reviewCollectionSearch", Q_ARG(QVariant, data.value("query").toString()), Q_ARG(QVariant, data.value("kind").toString()));
             } else if (action == "cancelPlaylistSave") {
@@ -155,7 +158,10 @@ int main(int argc, char *argv[]) {
                 QMetaObject::invokeMethod(window, "reviewAlbumFilter", Q_ARG(QVariant, data.value("query").toString()));
             } else if (action == "playDiscovery") music.playDiscoveryAlbum(data.value("row").toInt());
             else if (action == "reloadDiscovery") music.reloadDiscovery();
-            else if (action == "playOnline") music.playOnlineRow(data.value("row").toInt());
+            else if (action == "playOnline") {
+                if (data.value("provider").toString() == "bilibili") music.bilibili()->play(data.value("row").toInt());
+                else music.playOnlineRow(data.value("row").toInt());
+            }
             else if (action == "selectMenu") QMetaObject::invokeMethod(window, "openReviewSelect", Q_ARG(QVariant, data.value("name").toString()));
             else if (action == "materialSequence") {
                 const QString control = data.value("control").toString();
@@ -303,6 +309,7 @@ int main(int argc, char *argv[]) {
                     {"albumLoadingMore", music.albumLoadingMore()}, {"albumLoadMoreError", music.albumLoadMoreError()}, {"albumLoading", music.albumLoading()},
                     {"albumError", music.albumError()}, {"albumMessage", music.albumMessage()},
                     {"queueCount", music.queueModel()->count()}, {"queueIndex", music.queueIndex()}, {"currentTrackId", music.currentTrackId()},
+                    {"bilibiliCount", music.bilibili()->results().size()}, {"bilibiliError", music.bilibili()->error()}, {"bilibiliBusy", music.bilibili()->busy()},
                     {"onlineCount", music.onlineModel()->count()}, {"onlineSearching", music.onlineSearching()},
                     {"onlineError", music.onlineError()}, {"error", music.errorMessage()},
                     {"windowWidth", window->width()}, {"windowHeight", window->height()}, {"dpr", window->devicePixelRatio()}
