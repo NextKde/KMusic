@@ -3,7 +3,7 @@
 Select Bilibili using the platform button, then search videos or paste an official
 BV link. Public search, pagination, video parts and ordinary AAC audio use
 separate native Qt modules. Playback shares KMusic's queue, pause and seek controls.
-Account QR login, read-only favorites folders and account video history are available; see [account setup and limitations](BilibiliAccount.md). Recommendations and lyrics are not integrated.
+Account QR login, read-only favorites folders and account video history are available; see [account setup and limitations](BilibiliAccount.md). Lyrics and cloud write operations are not integrated.
 
 Temporary playback URLs never persist. The GStreamer HTTP identity is scoped to
 one load and carries no account cookies. No Biu code was copied or ported.
@@ -29,3 +29,5 @@ as a candidate, and remains primary when no direct CDN is supplied.
 VM retesting passed for a short video and twice for the previously failing
 43-minute BV1toJR6HEn7, including pause and seeking to 20 minutes followed by
 advancing playback. This was not a full 43-minute endurance run.
+
+Bilibili now opens [Discover](BilibiliDiscovery.md): new music, music-region picks, popular videos and signed-in following updates.

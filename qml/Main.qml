@@ -53,7 +53,7 @@ ApplicationWindow {
         else navigationArea = id === "local" ? "local" : "media"
         const sections = SourceCatalog.sections(id)
         if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
-        if (id === "bilibili") { pageTitle = "Bilibili"; selectedSourceEntry = "search"; destination = "bilibili"; bilibiliPage.queryText = savedSourceSearch(id) }
+        if (id === "bilibili") { pageTitle = "Bilibili"; selectedSourceEntry = "recommend"; destination = "bilibiliDiscover"; bilibiliPage.queryText = savedSourceSearch(id) }
         if (id === "netease") onlinePage.queryText = savedSourceSearch(id)
         music.setSearch(id === "local" ? savedSourceSearch(id) : "")
         restoringSourceSearch = false
@@ -80,7 +80,8 @@ ApplicationWindow {
     }
     property string pageTitle: Language.text("Songs", "歌曲")
     property double selectedPlaylist: -1
-    readonly property bool sensitiveContentVisible: (accountDialog.visible && (accountDialog.account.qrImage.length > 0 || accountDialog.account.authenticated))
+    readonly property bool sensitiveContentVisible: (window.contentDestination === "bilibiliDiscover" && music.bilibili.account.authenticated)
+        || (accountDialog.visible && (accountDialog.account.qrImage.length > 0 || accountDialog.account.authenticated))
         || (window.contentDestination === "personalHome" && (window.onlineProvider === "bilibili" ? music.bilibili.account.authenticated : music.account.authenticated))
         || (headerAvatar.visible && headerAvatar.signedIn)
     property int sensitiveContentRevision: 0
@@ -99,7 +100,7 @@ ApplicationWindow {
         accountDialog.account = accountDialog.provider === "bilibili" ? music.bilibili.account : music.account
         accountDialog.open()
     }
-    function reviewBilibiliSearch(text) { selectSource("bilibili"); bilibiliPage.queryText = text; music.bilibili.search(text) }
+    function reviewBilibiliSearch(text) { selectSource("bilibili"); destination = "bilibili"; bilibiliPage.queryText = text; music.bilibili.search(text) }
     function reviewOnlineSearch(text) { window.selectSource("netease"); music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else settingsMenu.popup() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
@@ -250,9 +251,16 @@ ApplicationWindow {
                     onClearSearchRequested: { window.rememberSourceSearch("local", ""); music.setSearch("") }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
+                BilibiliDiscoveryPage {
+                    anchors.fill: parent; visible: window.contentDestination === "bilibiliDiscover"
+                    backend: music.bilibili; bottomContentInset: window.playerContentInset
+                    onSearchRequested: { window.selectedSourceEntry = "search"; window.destination = "bilibili" }
+                    onSignInRequested: window.openAccount()
+                }
                 BilibiliPage {
                     id: bilibiliPage; anchors.fill: parent; visible: window.contentDestination === "bilibili"
                     backend: music.bilibili; bottomContentInset: window.playerContentInset
+                    onDiscoverRequested: { window.selectedSourceEntry = "recommend"; window.destination = "bilibiliDiscover" }
                 }
                 PersonalPage {
                     anchors.fill: parent
@@ -391,7 +399,8 @@ ApplicationWindow {
             id: floatingHeader
             x: 236; y: 0; width: parent.width - x; height: 52
             visible: window.contentDestination !== "now" && window.contentDestination !== "onlineAlbum" && window.contentDestination !== "online"
-            readonly property string heading: window.contentDestination === "new" ? Language.text("Discover", "发现")
+            readonly property string heading: window.contentDestination === "bilibiliDiscover" ? Language.text("Discover", "发现")
+                : window.contentDestination === "new" ? Language.text("Discover", "发现")
                 : window.contentDestination === "personalHome" ? Language.text("Personal", "个人")
                 : window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐")
                 : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源")

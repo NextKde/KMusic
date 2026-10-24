@@ -11,8 +11,9 @@ QVariantList rows(const QList<MediaItem> &items) {
 }
 }
 BilibiliController::BilibiliController(QObject *parent) : QObject(parent), m_session(this), m_account(m_session, this),
-    m_library(m_session, m_account, this), m_search(this, &m_session), m_detail(this, &m_session), m_resolver(this, &m_session) {
+    m_library(m_session, m_account, this), m_discovery(m_session, m_account, this), m_search(this, &m_session), m_detail(this, &m_session), m_resolver(this, &m_session) {
     connect(&m_library, &BilibiliLibraryController::selected, this, &BilibiliController::select);
+    connect(&m_discovery, &BilibiliDiscoveryController::selected, this, &BilibiliController::select);
     connect(&m_account, &BilibiliAccountController::sessionChanged, this, [this] { cancelBrowse(); cancelPlayback(); });
 }
 QVariantList BilibiliController::results() const { return rows(m_results); }

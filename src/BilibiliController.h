@@ -1,6 +1,7 @@
 #pragma once
 #include "MusicTypes.h"
 #include "BilibiliLibraryController.h"
+#include "BilibiliDiscoveryController.h"
 #include "providers/bilibili/BilibiliSearch.h"
 #include "providers/bilibili/BilibiliPlaybackResolver.h"
 #include <QVariantList>
@@ -10,6 +11,7 @@ class BilibiliController : public QObject {
     QML_ANONYMOUS
     Q_PROPERTY(BilibiliAccountController *account READ account CONSTANT)
     Q_PROPERTY(BilibiliLibraryController *library READ library CONSTANT)
+    Q_PROPERTY(BilibiliDiscoveryController *discovery READ discovery CONSTANT)
     Q_PROPERTY(QVariantList results READ results NOTIFY changed)
     Q_PROPERTY(QVariantList parts READ parts NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
@@ -19,6 +21,7 @@ public:
     explicit BilibiliController(QObject *parent = nullptr);
     BilibiliAccountController *account() { return &m_account; }
     BilibiliLibraryController *library() { return &m_library; }
+    BilibiliDiscoveryController *discovery() { return &m_discovery; }
     QVariantList results() const;
     QVariantList parts() const;
     bool busy() const { return m_busy; }
@@ -43,6 +46,7 @@ private:
     MusicProviders::BilibiliSession m_session;
     BilibiliAccountController m_account;
     BilibiliLibraryController m_library;
+    BilibiliDiscoveryController m_discovery;
     MusicProviders::BilibiliSearch m_search;
     MusicProviders::BilibiliDetail m_detail;
     MusicProviders::BilibiliPlaybackResolver m_resolver;

@@ -59,4 +59,6 @@ AAC 播放需要可用的 GStreamer AAC 解码插件，例如 Debian/Ubuntu 的 
 保留下载缓存与 MP4 跳转路径，不通过关闭缓存或无限加长超时来掩盖失败。
 `playback_loading_tests` 使用单调时间输入覆盖进展、停滞、进度回退、总时限和重新加载。
 
-二维码登录、只读收藏夹和账号视频历史已接入独立会话；用法与验证边界见 [账号说明](BilibiliAccount.zh-CN.md)。推荐与歌词未接入。
+二维码登录、只读收藏夹和账号视频历史已接入独立会话；用法与验证边界见 [账号说明](BilibiliAccount.zh-CN.md)。歌词及云端写入未接入。
+
+哔哩哔哩首页已接入 [发现](BilibiliDiscovery.zh-CN.md)：新歌、音乐推荐、热门音乐视频，以及登录后的关注更新。

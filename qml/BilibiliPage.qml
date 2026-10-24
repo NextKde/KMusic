@@ -8,10 +8,12 @@ Item {
     required property var backend
     property real bottomContentInset: 100
     property alias queryText: query.text
+    signal discoverRequested()
     ColumnLayout {
         anchors.fill: parent; anchors.margins: 28; spacing: 14
         RowLayout {
             Layout.fillWidth: true
+            MusicActionButton { text: Language.text("Discover", "发现"); onClicked: page.discoverRequested() }
             MusicTextField {
                 id: query; objectName: "bilibiliSearchInput"; Layout.fillWidth: true
                 searchField: true; materialForm: true; maximumLength: 200

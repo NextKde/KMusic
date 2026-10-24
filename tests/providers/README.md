@@ -30,3 +30,11 @@ favorites/history pagination (including mixed-business history cursors).
 opts into real anonymous generate/poll/cancel/nav checks, with status-only output.
 It performs no account authorization and does not test real keyring job races or
 private account-library access. Do not capture or log QR content or credentials.
+
+`bilibili_discovery_tests` covers music/following response parsing, related-video
+identity, empty/errors, cancellation, wrong-account gates with a synthetic cookie,
+stale account generations, cursor cycles, deduplication and pending-handle teardown.
+`./build-provider-contracts/bilibili_discovery_tests --live` opts into the three
+public discovery endpoints, a recommendation continuation batch and first-new-song
+AAC resolution. It reports counts/status only; any feed/resolve failure returns a
+nonzero result. Authenticated following data still requires the user's phone scan.
