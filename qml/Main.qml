@@ -80,7 +80,9 @@ ApplicationWindow {
     }
     property string pageTitle: Language.text("Songs", "歌曲")
     property double selectedPlaylist: -1
-    readonly property bool sensitiveContentVisible: accountDialog.visible && (music.account.qrImage.length > 0 || music.account.authenticated)
+    readonly property bool sensitiveContentVisible: (accountDialog.visible && (accountDialog.account.qrImage.length > 0 || accountDialog.account.authenticated))
+        || (window.contentDestination === "personalHome" && (window.onlineProvider === "bilibili" ? music.bilibili.account.authenticated : music.account.authenticated))
+        || (headerAvatar.visible && headerAvatar.signedIn)
     property int sensitiveContentRevision: 0
     onSensitiveContentVisibleChanged: if (sensitiveContentVisible) ++sensitiveContentRevision
     function openPlaylistPicker(source, rowOrId) { if (music.preparePlaylistTrack(source, rowOrId)) addDialog.open() }
@@ -91,7 +93,12 @@ ApplicationWindow {
         const entry = music.playlists[row]; window.selectedPlaylist = entry.id; music.selectPlaylist(entry.id)
         window.destination = "playlist"; window.pageTitle = entry.name
     }
-    function openAccount() { accountDialog.open() }
+    function openAccount() {
+        if (accountDialog.visible) return
+        accountDialog.provider = window.onlineProvider === "bilibili" ? "bilibili" : "netease"
+        accountDialog.account = accountDialog.provider === "bilibili" ? music.bilibili.account : music.account
+        accountDialog.open()
+    }
     function reviewBilibiliSearch(text) { selectSource("bilibili"); bilibiliPage.queryText = text; music.bilibili.search(text) }
     function reviewOnlineSearch(text) { window.selectSource("netease"); music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else settingsMenu.popup() }
@@ -249,10 +256,15 @@ ApplicationWindow {
                 }
                 PersonalPage {
                     anchors.fill: parent
-                    visible: window.contentDestination === "personalHome"
+                    visible: window.contentDestination === "personalHome" && window.onlineProvider !== "bilibili"
                     music: window.music; provider: window.onlineProvider
                     bottomContentInset: window.playerContentInset
-                    onSignInRequested: accountDialog.open()
+                    onSignInRequested: window.openAccount()
+                }
+                BilibiliPersonalPage {
+                    anchors.fill: parent; visible: window.contentDestination === "personalHome" && window.onlineProvider === "bilibili"
+                    backend: music.bilibili; bottomContentInset: window.playerContentInset
+                    onSignInRequested: window.openAccount()
                 }
                 DiscoveryPage {
                     id: discover
@@ -320,12 +332,12 @@ ApplicationWindow {
                     instanceName: window.demoMediaAliases[window.selectedSource] || ""
                     entryId: window.selectedSourceEntry
                     requiresLogin: window.sourcePrototypeEntry.login === true
-                    authenticated: window.selectedSource === "netease" && music.account.authenticated
+                    authenticated: window.selectedSource === "bilibili" ? music.bilibili.account.authenticated : window.selectedSource === "netease" && music.account.authenticated
                     sourceName: window.sourceLabel(window.activeSource)
                     entryName: window.sourcePrototypeEntry.en ? window.sourceLabel(window.sourcePrototypeEntry) : ""
                     connectionStatus: window.activeSource.status
                     bottomContentInset: window.playerContentInset
-                    onAccountRequested: accountDialog.open()
+                    onAccountRequested: window.openAccount()
                     onConnectionRequested: {
                         sourceConnectionDialog.sourceId = window.selectedSource
                         sourceConnectionDialog.sourceName = window.sourceLabel(window.activeSource)
@@ -494,18 +506,18 @@ ApplicationWindow {
                     Layout.topMargin: 5.5
                     topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
                     visible: floatingHeader.visible && (window.navigationArea === "discover" || window.navigationArea === "personal")
-                    readonly property bool signedIn: window.onlineProvider === "netease" && music.account.authenticated
+                    readonly property var account: window.onlineProvider === "bilibili" ? music.bilibili.account : music.account
+                    readonly property bool signedIn: account.authenticated
                     Accessible.name: signedIn ? Language.text("Account", "账号") : Language.text("Sign in", "登录")
                     onClicked: {
-                        if (window.onlineProvider === "netease") accountDialog.open()
-                        else window.openSourceEntry(SourceCatalog.sections("bilibili")[1].entries[0])
+                        window.openAccount()
                     }
                     background: Rectangle { radius: width / 2; color: AppTheme.dark ? "#48484a" : "#d4d4d8" }
                     contentItem: Item {
                         Image { anchors.centerIn: parent; width: 16; height: 16; source: MusicColors.sidebarIconSource("person", AppTheme.mutedText); fillMode: Image.PreserveAspectFit; visible: !avatarImage.visible || avatarImage.status !== Image.Ready }
                         Image {
                             id: avatarImage
-                            anchors.fill: parent; source: headerAvatar.signedIn ? music.account.avatarUrl : ""
+                            anchors.fill: parent; source: headerAvatar.signedIn ? headerAvatar.account.avatarUrl : ""
                             visible: headerAvatar.signedIn && source.toString().length > 0
                             fillMode: Image.PreserveAspectCrop; asynchronous: true
                             layer.enabled: true

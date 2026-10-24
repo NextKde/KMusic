@@ -16,6 +16,7 @@ public:
     void setCancelHandler(std::function<void()> handler) { m_cancelHandler = std::move(handler); }
 private:
     friend class HttpTransport;
+    friend class BilibiliSession;
     QPointer<QNetworkReply> m_reply;
     bool m_cancelled = false;
     std::function<void()> m_cancelHandler;

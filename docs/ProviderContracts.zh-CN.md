@@ -1,6 +1,6 @@
 # 音源模块与接口契约
 
-状态：已接入 Bilibili 视频搜索、BV/分 P 详情及普通 AAC 音频播放。登录、个人资料库与推荐尚未实现。
+状态：已接入 Bilibili 视频搜索、BV/分 P 详情及普通 AAC 音频播放。已接入独立二维码登录与只读个人收藏夹、账号视频历史；推荐尚未实现。详见 [账号说明](BilibiliAccount.zh-CN.md)。
 
 ## 模块边界
 
@@ -59,7 +59,7 @@ HTTP 限流/验证错误、重定向拒绝、响应上限。只能在虚拟机�
 搜索使用公开 WBI 协议；播放前重新解析地址，选取普通 AAC，限制内容或验证要求均返回错误。
 GStreamer 使用每次加载的不可变 UA/Referer 快照，切换来源时移除，API Cookie 不进入播放器。
 视频与分 P 在本机库以 `bilibili:BV[:cid]` 区分；不保存临时音频地址。
-公开搜索目前以游客范围工作，不混用网易云账号。登录与个人资料库仍待独立实现。
+公开搜索保持公开媒体身份，不混用网易云账号；登录后 API 请求可复用独立哔哩哔哩会话，账号资料库保持账号范围。CDN 媒体请求不带账号 Cookie。
 
 协议研究参考：[Bilibili 音乐项目架构说明](https://github.com/YOUYUDAWANG/bili-music/blob/main/ARCHITECTURE.md)、
 [Qt Network](https://doc.qt.io/qt-6/qnetworkaccessmanager.html)、

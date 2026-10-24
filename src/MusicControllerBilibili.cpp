@@ -1,5 +1,9 @@
 #include "MusicController.h"
 void MusicController::setupBilibili() {
+    connect(m_bilibili.account(), &BilibiliAccountController::sessionChanged, this, [this] {
+        const auto track = findTrack(currentTrackId());
+        if (track && track->source == "bilibili") { stop(); m_loadedTrackId = -1; m_streamAvailabilityConfirmed = false; }
+    });
     connect(&m_bilibili, &BilibiliController::trackSelected, this, [this](const TrackRecord &track) {
         QString error;
         const auto id = m_database.addExternalTrack(track, &error);

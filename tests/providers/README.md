@@ -22,3 +22,11 @@ On the VM, `bilibili_flow_tests --live` explicitly contacts Bilibili for public 
 `playback_loading_tests` exercises the loading deadline with deterministic monotonic
 time inputs: 30-second stalls, active slow downloads, repeated/regressing reports,
 the 120-second overall limit and fresh loading episodes. It does not contact a CDN.
+
+`bilibili_account_tests` covers QR origin/path matching, login/nav state parsing,
+synthetic cookie restoration and expiry, cancellation, account isolation and
+favorites/history pagination (including mixed-business history cursors).
+`KMUSIC_BILI_LIVE_ANONYMOUS=1 ./build-provider-contracts/bilibili_account_tests`
+opts into real anonymous generate/poll/cancel/nav checks, with status-only output.
+It performs no account authorization and does not test real keyring job races or
+private account-library access. Do not capture or log QR content or credentials.

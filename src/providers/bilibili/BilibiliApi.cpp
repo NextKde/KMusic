@@ -1,4 +1,5 @@
 #include "BilibiliApi.h"
+#include "BilibiliSession.h"
 #include "WbiSigner.h"
 #include "../contracts/Operation.h"
 #include <QDateTime>
@@ -9,8 +10,9 @@ namespace MusicProviders {
 HttpIdentity BilibiliApi::identity() {
     return {QByteArrayLiteral("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"), QUrl("https://www.bilibili.com/")};
 }
-BilibiliApi::BilibiliApi(QObject *parent) : QObject(parent), m_http(QUrl("https://api.bilibili.com"), identity(), this) {}
+BilibiliApi::BilibiliApi(QObject *parent, BilibiliSession *session) : QObject(parent), m_http(QUrl("https://api.bilibili.com"), identity(), this), m_session(session) {}
 Request *BilibiliApi::get(const QString &path, const QUrlQuery &query, QObject *context, Completion<QByteArray> done) {
+    if (m_session) return m_session->get(BilibiliSession::Origin::Api, path, query, context, std::move(done));
     return m_http.get(path, query, context, std::move(done));
 }
 Request *BilibiliApi::signedGet(const QString &path, const QMap<QString, QString> &params, QObject *context, Completion<QByteArray> done) {

@@ -14,9 +14,7 @@ bool validId(const MediaId &id)
         && bv.match(id.item).hasMatch();
 }
 }
-BilibiliDetail::BilibiliDetail(QObject *parent)
-    : QObject(parent), m_transport(QUrl(QStringLiteral("https://api.bilibili.com")),
-        {QByteArrayLiteral("Mozilla/5.0 KMusic/0.1"), QUrl(QStringLiteral("https://www.bilibili.com/"))}, this) {}
+BilibiliDetail::BilibiliDetail(QObject *parent, BilibiliSession *session) : QObject(parent), m_transport(this, session) {}
 
 Request *BilibiliDetail::detail(const MediaId &id, QObject *context, Completion<MediaDetail> done)
 {

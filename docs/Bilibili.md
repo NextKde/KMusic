@@ -3,7 +3,7 @@
 Select Bilibili using the platform button, then search videos or paste an official
 BV link. Public search, pagination, video parts and ordinary AAC audio use
 separate native Qt modules. Playback shares KMusic's queue, pause and seek controls.
-Account login, favorites, recommendations and lyrics are not integrated yet.
+Account QR login, read-only favorites folders and account video history are available; see [account setup and limitations](BilibiliAccount.md). Recommendations and lyrics are not integrated.
 
 Temporary playback URLs never persist. The GStreamer HTTP identity is scoped to
 one load and carries no account cookies. No Biu code was copied or ported.
