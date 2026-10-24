@@ -77,6 +77,8 @@ cd KMusic
 
 ## 开发与文档
 
+- [音源模块与接口契约](docs/ProviderContracts.zh-CN.md)
+
 - [本地音乐](docs/LocalMusic.zh-CN.md) · [个人资料库](docs/PersonalBackend.zh-CN.md) · [媒体源](docs/MediaSources.zh-CN.md)
 - [设计说明](docs/Design.zh-CN.md) · [路线图](docs/Roadmap.zh-CN.md) · [来源与许可](NOTICE.md)
 - [应用商店接入与自动化测试](https://github.com/NextKde/NextKde/blob/codex/settings-extension-store/docs/app-store/KMusicInstallation.zh-CN.md)

@@ -14,6 +14,7 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nextkdeAppDemo/shared/qml/CMak
     message(FATAL_ERROR "Missing bundled Kos.Ui source; use a complete KMusic checkout")
 endif()
 add_subdirectory(vendor/nextkdeAppDemo/shared/qml kos-ui)
+add_subdirectory(src/providers)
 qt_add_executable(kmusic src/main.cpp
     src/AudioCache.cpp src/AudioCache.h src/MetadataScanner.cpp src/MetadataScanner.h
     src/MusicDatabase.cpp src/MusicDatabase.h src/MusicTypes.h src/MprisService.cpp src/MprisService.h
@@ -25,6 +26,7 @@ qt_add_qml_module(kmusic URI NextKde.Music VERSION 1.0 RESOURCE_PREFIX /qt/qml
     SOURCES src/MusicController.cpp src/MusicController.h src/TrackListModel.cpp src/TrackListModel.h
     QML_FILES qml/SearchHistory.mjs qml/MusicTextField.qml qml/MediaSourcesPage.qml qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
 target_include_directories(kmusic PRIVATE src)
+target_link_libraries(kmusic PRIVATE kmusic_provider_core)
 target_link_libraries(kmusic PRIVATE Qt6Keychain::Qt6Keychain PkgConfig::MUSIC_QRENCODE Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickDialogs2 Qt6::Concurrent Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
 target_compile_definitions(kmusic PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
 install(TARGETS kmusic RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
