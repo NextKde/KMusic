@@ -413,6 +413,7 @@ void PlaybackEngine::pollBus()
             gint percent = 100;
             gst_message_parse_buffering(message, &percent);
             m_bufferingPercent = percent;
+            observeLoadingProgress();
             emit bufferingChanged();
             if (percent < 100 && m_requestedPlaying) {
                 gst_element_set_state(m_playbin, GST_STATE_PAUSED);
@@ -480,9 +481,11 @@ void PlaybackEngine::setState(const QString &state)
         m_positionTimer.start();
     else
         m_positionTimer.stop();
-    if (m_state == QStringLiteral("Loading"))
-        m_loadingTimeout.start();
-    else
+    if (m_state == QStringLiteral("Loading")) {
+        m_loadingElapsed.start();
+        m_loadingDeadline.reset(m_bufferingPercent, m_downloadProgress);
+        m_loadingTimeout.start(PlaybackLoadingDeadline::stallMs);
+    } else
         m_loadingTimeout.stop();
     if (m_state == QStringLiteral("Error") || m_state == QStringLiteral("Stopped"))
         m_downloadTimer.stop();
@@ -515,10 +518,20 @@ void PlaybackEngine::updateDownloadProgress()
         const double progress = std::clamp(double(covered) / GST_FORMAT_PERCENT_MAX, 0.0, 1.0);
         if (progress != m_downloadProgress) {
             m_downloadProgress = progress;
+            observeLoadingProgress();
             emit bufferingChanged();
         }
     }
     gst_query_unref(query);
+}
+
+void PlaybackEngine::observeLoadingProgress()
+{
+    if (m_state != QStringLiteral("Loading") || !m_loadingElapsed.isValid())
+        return;
+    const auto elapsed = m_loadingElapsed.elapsed();
+    m_loadingDeadline.observe(elapsed, m_bufferingPercent, m_downloadProgress);
+    m_loadingTimeout.start(m_loadingDeadline.remaining(elapsed));
 }
 
 void PlaybackEngine::setErrorMessage(const QString &message)

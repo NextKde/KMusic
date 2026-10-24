@@ -4,6 +4,8 @@
 #include <QTimer>
 #include <QUrl>
 #include <atomic>
+#include <QElapsedTimer>
+#include "PlaybackLoadingDeadline.h"
 
 typedef struct _GstElement GstElement;
 typedef struct _GstBus GstBus;
@@ -64,6 +66,7 @@ private:
     void updateSeekable();
     void updateDownloadProgress();
     void finishDownload();
+    void observeLoadingProgress();
 
     std::atomic<quint64> m_generation{0};
     quint64 m_eosDeliveredGeneration = 0;
@@ -74,6 +77,8 @@ private:
     QTimer m_positionTimer;
     QTimer m_downloadTimer;
     QTimer m_loadingTimeout;
+    QElapsedTimer m_loadingElapsed;
+    PlaybackLoadingDeadline m_loadingDeadline;
     QByteArray m_downloadTemplate;
     QUrl m_source;
     QString m_backendName;

@@ -14,6 +14,8 @@ void MusicController::setupBilibili() {
             m_streamMetadataTrackId = id; m_streamAvailability = "full";
             m_streamAvailabilityConfirmed = true; m_streamDurationMs = 0;
             m_streamQuality = source.quality; m_providerStatus = QStringLiteral("Bilibili · AAC");
+            // Resolution is complete; the engine now owns the bounded buffering deadline.
+            m_trackTimeout.stop();
             loadPreparedTrack(source.url, source.userAgent, source.referer);
             persistPlaybackPosition(); emit durationChanged(); emit playbackStatusChanged();
         });

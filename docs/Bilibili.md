@@ -14,3 +14,18 @@ isolated plugin directory rather than system package installation.
 
 See [usage, modules and test commands in Chinese](Bilibili.zh-CN.md) and
 [provider contracts](ProviderContracts.md).
+
+Long-audio buffering has a 30-second no-progress deadline and a 120-second
+absolute limit per loading episode. Only new buffering/download progress extends
+the stall deadline. Once Bilibili resolution finishes, the engine owns this deadline;
+the preparation timer no longer interrupts it. Download caching and MP4 seeking
+remain enabled. `playback_loading_tests` covers progress, stalls, oscillation,
+the absolute limit and reset using monotonic time inputs.
+
+Resolution prefers an API-provided `upos-*.bilivideo.com` direct CDN candidate
+over an edge relay. Signed URLs are never rewritten; the original is retained
+as a candidate, and remains primary when no direct CDN is supplied.
+
+VM retesting passed for a short video and twice for the previously failing
+43-minute BV1toJR6HEn7, including pause and seeking to 20 minutes followed by
+advancing playback. This was not a full 43-minute endurance run.

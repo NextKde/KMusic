@@ -48,5 +48,11 @@ int main(int argc, char **argv) {
     CHECK(source.url.path() == "/audio" && !source.userAgent.isEmpty() && source.referer.host() == "www.bilibili.com");
     CHECK(std::holds_alternative<Error>(BilibiliPlaybackResolver::decode(id, R"({"code":0,"data":{"dash":{"audio":[]}}})")));
     CHECK(std::holds_alternative<Error>(BilibiliPlaybackResolver::decode(id, R"({"code":0,"data":{"is_preview":1}})")));
+    auto relay = BilibiliPlaybackResolver::decode(id, R"({"code":0,"data":{"dash":{"audio":[{"codecs":"mp4a.40.2","baseUrl":"https://edge.example/audio?deadline=1800000000","backupUrl":["https://upos-cdn.bilivideo.com.evil.example/audio","https://upos-cdn.bilivideo.com/audio?deadline=1900000000"]}]}}})");
+    CHECK(std::holds_alternative<PlaybackSource>(relay));
+    const auto direct = std::get<PlaybackSource>(relay);
+    CHECK(direct.url == QUrl("https://upos-cdn.bilivideo.com/audio?deadline=1900000000"));
+    CHECK(direct.backups.first().host() == "edge.example" && direct.backups.size() == 2);
+    CHECK(direct.expiresAt.toSecsSinceEpoch() == 1900000000);
     qInfo("PASS: WBI published vector, search mapping/pagination, challenge handling, audio selection and safe descriptors");
 }

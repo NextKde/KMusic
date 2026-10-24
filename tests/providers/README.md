@@ -18,3 +18,7 @@ smoke test, a full player build, or UI/playback acceptance.
 Bilibili coverage adds the published WBI vector, search identity/pagination, challenge responses, ordinary AAC selection and temporary URL descriptors. Enable `-DKMUSIC_TEST_PLAYBACK_HEADERS=ON` with GStreamer development files to exercise HTTP audio decoding, progress, pause and header isolation between loads.
 
 On the VM, `bilibili_flow_tests --live` explicitly contacts Bilibili for public search and resolution. It logs counts and outcomes, never signed playback URLs. It is not run by CTest.
+
+`playback_loading_tests` exercises the loading deadline with deterministic monotonic
+time inputs: 30-second stalls, active slow downloads, repeated/regressing reports,
+the 120-second overall limit and fresh loading episodes. It does not contact a CDN.

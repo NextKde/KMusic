@@ -44,8 +44,24 @@ Result<PlaybackSource> BilibiliPlaybackResolver::decode(const MediaId &id, const
         QUrl backup(value.toString());
         if (backup.scheme() == "https" && !backup.host().isEmpty() && backup.userInfo().isEmpty()) source.backups.append(backup);
     }
+    // Prefer the API-provided direct UPOS CDN over edge relay nodes. Relay
+    // startup/range requests can stall on desktop networks. Never rewrite a
+    // signed URL: keep every candidate exactly as returned by the API.
+    auto directCdn = [](const QUrl &candidate) {
+        const auto host = candidate.host().toLower();
+        return host.startsWith("upos-") && host.endsWith(".bilivideo.com");
+    };
+    if (!directCdn(source.url)) {
+        for (int i = 0; i < source.backups.size(); ++i) {
+            if (!directCdn(source.backups[i])) continue;
+            const auto preferred = source.backups.takeAt(i);
+            source.backups.prepend(source.url);
+            source.url = preferred;
+            break;
+        }
+    }
     bool ok = false;
-    const qint64 deadline = QUrlQuery(url).queryItemValue("deadline").toLongLong(&ok);
+    const qint64 deadline = QUrlQuery(source.url).queryItemValue("deadline").toLongLong(&ok);
     if (ok) source.expiresAt = QDateTime::fromSecsSinceEpoch(deadline);
     return source;
 }
