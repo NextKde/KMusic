@@ -1,7 +1,7 @@
 #pragma once
 #include "../contracts/ProviderTypes.h"
 #include "../contracts/Request.h"
-#include <QNetworkAccessManager>
+#include "../NetworkAccessManager.h"
 #include <QNetworkCookieJar>
 #include <QUrlQuery>
 namespace MusicProviders {
@@ -17,7 +17,7 @@ public:
     bool hasSession() const;
     quint64 generation() const { return m_generation; }
 private:
-    QNetworkAccessManager m_manager;
+    NetworkAccessManager m_manager;
     QNetworkCookieJar *m_cookies;
     QList<QPointer<Request>> m_active;
     quint64 m_generation = 0;

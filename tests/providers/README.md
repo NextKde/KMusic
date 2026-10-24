@@ -1,6 +1,6 @@
 # Native provider contract tests
 
-Run **inside the development VM only**, with Qt >= 6.8 Core, Network and Test:
+Run **inside the development VM only**, with Qt >= 6.8 Core, Network, Qml and Test:
 
 ```sh
 cmake -S tests/providers -B build-provider-contracts -G Ninja
@@ -38,3 +38,11 @@ stale account generations, cursor cycles, deduplication and pending-handle teard
 public discovery endpoints, a recommendation continuation batch and first-new-song
 AAC resolution. It reports counts/status only; any feed/resolve failure returns a
 nonzero result. Authenticated following data still requires the user's phone scan.
+
+`network_policy_tests` requires Qt Qml in addition to Core/Network/Test and runs
+without a GUI. It checks HTTP/1 compatibility through native and QML factories,
+caller request/header/TLS preservation, redirects, cancellation and context teardown.
+`./build-provider-contracts/network_policy_tests --live` explicitly requests a real
+public API and its returned cover using the QML factory, reporting HTTP status and
+`Http2WasUsedAttribute` only. See [compatibility scope](../../docs/NetworkCompatibility.md);
+passing these tests does not establish the host crash's root cause.

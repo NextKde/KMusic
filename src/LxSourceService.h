@@ -3,7 +3,7 @@
 #include "MusicTypes.h"
 
 #include <QHash>
-#include <QNetworkAccessManager>
+#include "providers/NetworkAccessManager.h"
 #include <QObject>
 #include <QProcess>
 #include <QStringList>
@@ -76,7 +76,7 @@ private:
     QProcess m_host;
     QByteArray m_hostBuffer;
     QHash<QString, PendingCommand> m_pending;
-    QNetworkAccessManager m_network;
+    MusicProviders::NetworkAccessManager m_network;
     QNetworkReply *m_importReply = nullptr;
     bool m_stoppingHost = false;
 };

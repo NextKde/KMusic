@@ -1,4 +1,5 @@
 #include "MusicController.h"
+#include "MusicNetworkAccessManagerFactory.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -42,7 +43,9 @@ int main(int argc, char *argv[]) {
     QQuickStyle::setStyle(QStringLiteral("Basic"));
     QQuickWindow::setDefaultAlphaBuffer(true);
     MusicController music;
+    MusicNetworkAccessManagerFactory qmlNetworkFactory;
     QQmlApplicationEngine engine;
+    engine.setNetworkAccessManagerFactory(&qmlNetworkFactory);
     QQmlPropertyMap languagePreferences;
     QSettings settings;
     QString language = settings.value("UserPreferences/language", "system").toString();

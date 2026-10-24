@@ -1,7 +1,7 @@
 #pragma once
 #include "contracts/ProviderTypes.h"
 #include "contracts/Request.h"
-#include <QNetworkAccessManager>
+#include "NetworkAccessManager.h"
 #include <QUrlQuery>
 
 namespace MusicProviders {
@@ -15,6 +15,6 @@ public:
 private:
     QUrl m_origin;
     HttpIdentity m_identity;
-    QNetworkAccessManager m_manager;
+    NetworkAccessManager m_manager;
 };
 }

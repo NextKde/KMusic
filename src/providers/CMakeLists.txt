@@ -1,5 +1,5 @@
 add_library(kmusic_provider_core STATIC
-    Request.cpp
+    Request.cpp NetworkAccessManager.cpp
     bilibili/BilibiliDiscovery.cpp bilibili/BilibiliFollowing.cpp
     bilibili/BilibiliSession.cpp bilibili/BilibiliAccount.cpp bilibili/BilibiliLibrary.cpp
     bilibili/WbiSigner.cpp bilibili/BilibiliResponse.cpp bilibili/BilibiliApi.cpp
