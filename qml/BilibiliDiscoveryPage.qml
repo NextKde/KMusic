@@ -7,8 +7,6 @@ Item {
     id: page
     required property var backend
     property real bottomContentInset: 100
-    property real topContentInset: 68
-    signal searchRequested()
     signal signInRequested()
     readonly property var discovery: backend.discovery
     readonly property var emptyFeed: ({ items: [], loading: false, error: "", more: false, loaded: false })
@@ -20,12 +18,7 @@ Item {
         anchors.fill: parent; contentWidth: availableWidth; clip: true
         ColumnLayout {
             x: 28; width: scroll.availableWidth - 56; spacing: 26
-            Item { Layout.preferredHeight: page.topContentInset }
-            RowLayout {
-                Layout.fillWidth: true
-                Label { Layout.fillWidth: true; color: AppTheme.mutedText; text: Language.text("Music videos from Bilibili", "来自哔哩哔哩的音乐视频") }
-                MusicActionButton { text: Language.text("Search videos", "搜索视频"); iconName: "search"; onClicked: page.searchRequested() }
-            }
+            // Main already places this page below the fixed 52px toolbar with a 16px gap.
             Repeater {
                 model: ["newSongs", "recommendations", "popular", "following"]
                 delegate: BilibiliFeedSection {

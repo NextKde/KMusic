@@ -254,7 +254,6 @@ ApplicationWindow {
                 BilibiliDiscoveryPage {
                     anchors.fill: parent; visible: window.contentDestination === "bilibiliDiscover"
                     backend: music.bilibili; bottomContentInset: window.playerContentInset
-                    onSearchRequested: { window.selectedSourceEntry = "search"; window.destination = "bilibili" }
                     onSignInRequested: window.openAccount()
                 }
                 BilibiliPage {
