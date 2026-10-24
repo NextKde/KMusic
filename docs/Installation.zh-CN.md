@@ -28,7 +28,7 @@
 
 ## 从已克隆仓库安装（不重新下载）
 
-使用 main 分支中包含此功能的版本。
+使用 main 分支中的完整源码即可，无需初始化共享组件子模块。
 
 ```sh
 cd /你的路径/KMusic
@@ -40,10 +40,10 @@ cd /你的路径/KMusic
 
 `--source-dir` 接受相对或绝对路径（含空格），必须指向 Git 仓库根目录。
 本地模式直接读取该目录、在安装器自己的临时目录编译，不执行 clone、fetch、checkout 或子模块更新，
-也不自动安装依赖。源码中已跟踪文件的修改需要先提交或还原；固定版本的递归子模块必须已完整存在且无已跟踪修改。
-未跟踪文件不作为安装版本标识，请先提交要安装的新源码文件。缺失文件或子模块、版本不匹配、未提交修改返回统一 `INTEGRITY_FAILED`（21），
+也不自动安装依赖。源码中已跟踪文件的修改需要先提交或还原；共享组件已按固定版本随仓库内置，无需子模块初始化。
+未跟踪文件不作为安装版本标识，请先提交要安装的新源码文件。缺失文件、组件清单不匹配、未提交修改返回统一 `INTEGRITY_FAILED`（21），
 路径不存在或参数冲突返回 `INVALID_ARGUMENT`（2），缺依赖仍为 `DEPENDENCY_UNSATISFIED`（11）。
-如果最初 clone 时没有获取子模块，需要事先自行准备它们；本地安装命令不会代为联网补齐。
+普通 clone 即包含共享组件；组件来源、同步和固定版本见[共享组件说明](SharedUi.zh-CN.md)。
 
 本地安装与远程安装共用安装清单、原子切换、启动器、图标及卸载逻辑。
 版本为本地仓库 HEAD 的完整 SHA，清单 `sourceType` 为 `local`；同版本再次安装返回 `ALREADY_INSTALLED`。
@@ -68,7 +68,7 @@ cd KMusic
 ./install.sh status
 ```
 
-依次执行 `check` 和 `install`。安装器拉取固定提交及其子模块并本地编译，不是下载预编译包。`status` 查看安装状态；只有需要卸载时才运行 `uninstall`。当前没有正式 release；安装其他已审查版本时，用完整 40 位 Git SHA 替换版本，不使用分支名或标签。
+依次执行 `check` 和 `install`。安装器拉取固定提交并本地编译，新版本已包含共享组件，不是下载预编译包。`status` 查看安装状态；只有需要卸载时才运行 `uninstall`。当前没有正式 release；安装其他已审查版本时，用完整 40 位 Git SHA 替换版本，不使用分支名或标签。
 
 安装成功后从应用启动器打开 **KMusic**。安装器不会自动启动应用，也不会创建 `~/.local/bin/kmusic` 命令。
 
@@ -109,10 +109,9 @@ cd KMusic
 开发构建与托管安装器独立，依赖要求相同：
 
 ```sh
-git submodule update --init --recursive
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel 4
 ./build/kmusic
 ```
 
-共享组件来自固定的 `vendor/nextkdeAppDemo` 子模块，来源说明见 [NOTICE.md](../NOTICE.md)。随附的 Node provider 不需要运行 npm install。
+共享组件来自内置的固定版本 `vendor/nextkdeAppDemo` 源码快照，来源说明见 [NOTICE.md](../NOTICE.md)。随附的 Node provider 不需要运行 npm install。

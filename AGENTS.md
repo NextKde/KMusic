@@ -7,6 +7,9 @@
   have been removed from remote history; keep only curated README images in docs/images.
 - Source refinement uses codex/player-ui-refinement. Main integration is explicitly
   authorized for the current cleanup delivery; later automatic iterations must not merge main.
+- Shared Kos.Ui is now an exact vendored snapshot, not a submodule. Its manifest
+  records the upstream SHA and file hashes. Only sync through tools/vendor_components.py;
+  edit shared components upstream and import a reviewed SHA via a PR. No automatic main merge.
 - Older local-validation and screenshot-publication instructions below are historical
   and superseded by these rules.
 
@@ -29,7 +32,7 @@ and acceptance; one implementation subagent owns application and component work.
 - User approved docs/ProjectPlan.zh-CN.md and said to start on 2026-10-20.
   Development, local builds/testing/screenshots and scheduled publication are ACTIVE.
 - Use the actual portable Kos.Ui components from NextKde/nextkdeAppDemo, pinned
-  through a Git submodule. Do not fork component visuals inside this application.
+  through the vendored manifest. Do not hand-edit bundled component visuals in this application.
   General control fixes belong upstream; business logic belongs here.
 - Before editing nextkdeAppDemo, follow its AGENTS.md and architecture documents.
   Preserve host-owned state, public signals, exports, and matching shader assets.

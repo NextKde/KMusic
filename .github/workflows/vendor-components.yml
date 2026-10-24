@@ -1,0 +1,26 @@
+name: Bundled Kos.Ui integrity
+on:
+  push:
+    branches: [main, codex/player-ui-refinement]
+    paths: [vendor/**, tools/vendor_components.py, .github/workflows/vendor-components.yml]
+  pull_request:
+    paths: [vendor/**, tools/vendor_components.py, .github/workflows/vendor-components.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # Intentionally no recursive submodule checkout.
+      - run: python3 tools/vendor_components.py --check
+      - name: Require ordinary tracked source, not a gitlink
+        run: |
+          test ! -e vendor/nextkdeAppDemo/.git
+          if git ls-files --stage vendor/nextkdeAppDemo | grep -q '^160000 '; then
+            echo 'Kos.Ui must be bundled source, not a submodule' >&2
+            exit 1
+          fi

@@ -123,23 +123,24 @@ def validate_local_source(source):
         fail('INTEGRITY_FAILED','Local source has no committed revision.')
     if run(['git','-C',str(source),'status','--porcelain','--untracked-files=no'], code='INTEGRITY_FAILED'):
         fail('INTEGRITY_FAILED','Commit or discard tracked source changes before installing.')
-    submodules = run(['git','-C',str(source),'submodule','status','--recursive'], code='INTEGRITY_FAILED')
-    if any(line.startswith(('+','-','U')) for line in submodules.splitlines()):
-        fail('INTEGRITY_FAILED','Local submodules are missing or do not match the pinned revisions; no download was attempted.')
-    if not (source/'vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt').is_file():
-        fail('INTEGRITY_FAILED','The local Kos.Ui submodule is missing; no download was attempted.')
-    dirty = run(['git','-C',str(source),'submodule','foreach','--quiet','--recursive',
-                 'git status --porcelain --untracked-files=no'], code='INTEGRITY_FAILED')
-    if dirty:
-        fail('INTEGRITY_FAILED','Commit or discard tracked submodule changes before installing.')
-    return revision, submodules
+    return revision, validate_components(source)
+
+
+def validate_components(source):
+    manifest = source/'vendor/nextkdeAppDemo/vendor-manifest.json'
+    checker = source/'tools/vendor_components.py'
+    if not manifest.is_file() or not checker.is_file():
+        fail('INTEGRITY_FAILED','The bundled Kos.Ui snapshot or its manifest is missing; use a complete KMusic checkout. No download was attempted.')
+    run([sys.executable, str(checker), '--check'], code='INTEGRITY_FAILED')
+    data = json.loads(manifest.read_text())
+    return {'Kos.Ui': {'repository': data['repository'], 'revision': data['revision']}}
 
 
 def main():
     global action, stage, log_path, log, lock_handle
     args = sys.argv[1:]
     if not args or args[0] not in ['check','install','status','uninstall']: fail('INVALID_ARGUMENT','Expected check, install, status or uninstall.')
-    action = args.pop(0); revision = None; local_source = None
+    action = args.pop(0); revision = None; local_source = None; components = None; submodules = ''
     if args:
         if action == 'install' and len(args)==2 and args[0]=='--version': revision=args[1]
         elif action == 'install' and len(args)==2 and args[0]=='--source-dir':
@@ -187,7 +188,7 @@ def main():
     if action == 'check': emit(success=True,code='OK',distribution=release.get('ID'),architecture=platform.machine(),logPath=log_path); return
     if local_source is not None:
         progress('source')
-        revision, submodules = validate_local_source(local_source)
+        revision, components = validate_local_source(local_source)
     if installed and installed.get('version')==revision and (current/'bin/kmusic').is_file():
         emit(success=True,code='ALREADY_INSTALLED',version=revision,changed=False,desktopId='kmusic.desktop',logPath=log_path); return
     if root.is_symlink(): fail('INSTALL_FAILED','Installation root must not be a symlink.')
@@ -206,9 +207,13 @@ def main():
             run(['git','-C',str(source),'fetch','--depth=1','origin',revision],code='DOWNLOAD_FAILED')
             run(['git','-C',str(source),'checkout','--detach','FETCH_HEAD'],code='DOWNLOAD_FAILED')
             if run(['git','-C',str(source),'rev-parse','HEAD']) != revision: fail('INTEGRITY_FAILED','Source revision mismatch.')
-            run(['git','-C',str(source),'-c','protocol.file.allow=never','submodule','update','--init','--recursive','--depth=1'],code='DOWNLOAD_FAILED')
-            submodules = run(['git','-C',str(source),'submodule','status','--recursive'])
-            if any(line.startswith(('+','-','U')) for line in submodules.splitlines()): fail('INTEGRITY_FAILED','Submodule revisions do not match the source.')
+            if (source/'vendor/nextkdeAppDemo/vendor-manifest.json').is_file():
+                components = validate_components(source)
+            else:
+                # Backward compatibility for explicitly pinned older installer revisions.
+                run(['git','-C',str(source),'-c','protocol.file.allow=never','submodule','update','--init','--recursive','--depth=1'],code='DOWNLOAD_FAILED')
+                submodules = run(['git','-C',str(source),'submodule','status','--recursive'])
+                if any(line.startswith(('+','-','U')) for line in submodules.splitlines()): fail('INTEGRITY_FAILED','Submodule revisions do not match the source.')
         progress('build')
         run(['cmake','-S',str(source),'-B',str(build),'-G','Unix Makefiles','-DCMAKE_BUILD_TYPE=Release','-DCMAKE_INSTALL_LIBDIR=lib','-DKMUSIC_BUILD_LOCAL_TESTS=OFF','-DKMUSIC_BUILD_SUBSONIC_TESTS=OFF'],code='BUILD_FAILED')
         run(['cmake','--build',str(build),'--parallel',str(min(4,os.cpu_count() or 1))],code='BUILD_FAILED')
@@ -226,7 +231,7 @@ def main():
             atomic_link(current,target)
             for p, rel in [(desktop,'share/applications/kmusic.desktop'),(icon,'share/icons/hicolor/scalable/apps/kmusic.svg')]:
                 p.parent.mkdir(parents=True,exist_ok=True); atomic_link(p,current/rel)
-            atomic_json(manifest,dict(appId=APP,version=revision,previous=str(old) if old else None,submodules=submodules,sourceType='local' if local_source is not None else 'remote'))
+            atomic_json(manifest,dict(appId=APP,version=revision,previous=str(old) if old else None,submodules=submodules,components=components,sourceType='local' if local_source is not None else 'remote'))
         except BaseException:
             if old is not None: atomic_link(current,old)
             elif current.is_symlink(): current.unlink()

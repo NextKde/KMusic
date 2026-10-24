@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import hashlib
+import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -27,16 +29,16 @@ class LocalSourceInstall(unittest.TestCase):
         self.git(self.source, 'init', '-q')
         self.git(self.source, 'config', 'user.name', 'Installer Test')
         self.git(self.source, 'config', 'user.email', 'installer@example.invalid')
-        module = self.base/'module'
-        module.mkdir()
-        self.git(module, 'init', '-q')
-        self.git(module, 'config', 'user.name', 'Installer Test')
-        self.git(module, 'config', 'user.email', 'installer@example.invalid')
-        (module/'shared/qml').mkdir(parents=True)
-        (module/'shared/qml/CMakeLists.txt').write_text('# pinned fixture\n')
-        self.git(module, 'add', '.')
-        self.git(module, 'commit', '-qm', 'module')
-        self.git(self.source, '-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', str(module), 'vendor/nextkdeAppDemo')
+        vendor = self.source/'vendor/nextkdeAppDemo'
+        (vendor/'shared/qml').mkdir(parents=True)
+        (vendor/'shared/qml/CMakeLists.txt').write_text('# pinned fixture\n')
+        (vendor/'LICENSE').write_text('fixture license\n')
+        files_hash = {name: hashlib.sha256((vendor/name).read_bytes()).hexdigest()
+                      for name in ['LICENSE', 'shared/qml/CMakeLists.txt']}
+        (vendor/'vendor-manifest.json').write_text(json.dumps(dict(schemaVersion=1,
+            repository='https://github.com/NextKde/nextkdeAppDemo.git', revision='a'*40, files=files_hash)))
+        (self.source/'tools').mkdir()
+        shutil.copyfile(Path(__file__).resolve().parents[2]/'tools/vendor_components.py', self.source/'tools/vendor_components.py')
         files = {
             'src/main.cpp': '// fixture\n',
             'providers/runtime/helper.js': '// fixture\n',
@@ -119,6 +121,8 @@ install(FILES data/kmusic.svg DESTINATION share/icons/hicolor/scalable/apps)
         self.assertIn('Exec="'+str(self.root/'current/bin/kmusic')+'" %U', desktop.read_text())
         manifest = json.loads((self.root/'manifest.json').read_text())
         self.assertEqual(manifest['sourceType'], 'local')
+        self.assertEqual(manifest['components']['Kos.Ui']['revision'], 'a'*40)
+        self.assertEqual(self.git(self.source, 'ls-files', '--stage', 'vendor').count('160000'), 0)
         self.assertEqual(self.invoke('status')[1]['version'], manifest['version'])
         self.assertEqual(self.install()[1]['code'], 'ALREADY_INSTALLED')
         (self.source/'src/main.cpp').write_text('// updated fixture\n')
@@ -159,24 +163,26 @@ install(FILES data/kmusic.svg DESTINATION share/icons/hicolor/scalable/apps)
         self.assertEqual(self.install()[0], 21)
         self.assertFalse(self.root.exists())
 
-    def test_missing_submodule_is_not_downloaded(self):
-        self.git(self.source, 'submodule', 'deinit', '-f', '--all')
+    def test_missing_bundled_component_is_not_downloaded(self):
+        (self.source/'vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt').unlink()
+        self.commit()
         self.assertEqual(self.install()[0], 21)
         self.assertFalse(self.root.exists())
 
-    def test_dirty_submodule_is_rejected(self):
-        (self.source/'vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt').write_text('# dirty\n')
+    def test_committed_component_change_without_sync_manifest_is_rejected(self):
+        (self.source/'vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt').write_text('# changed without sync\n')
+        self.commit()
         self.assertEqual(self.install()[0], 21)
 
-    def test_mismatched_submodule_revision_is_rejected(self):
-        module = self.source/'vendor/nextkdeAppDemo'
-        self.git(module, 'config', 'user.name', 'Installer Test')
-        self.git(module, 'config', 'user.email', 'installer@example.invalid')
-        (module/'shared/qml/CMakeLists.txt').write_text('# different revision\n')
-        self.git(module, 'add', '.')
-        self.git(module, 'commit', '-qm', 'different pin')
+    def test_manifest_revision_or_extra_file_is_rejected(self):
+        manifest = self.source/'vendor/nextkdeAppDemo/vendor-manifest.json'
+        data = json.loads(manifest.read_text()); data['revision'] = 'main'
+        manifest.write_text(json.dumps(data)); self.commit()
         self.assertEqual(self.install()[0], 21)
-        self.assertFalse(self.root.exists())
+        data['revision'] = 'a'*40; manifest.write_text(json.dumps(data))
+        (manifest.parent/'unexpected.qml').write_text('Item {}')
+        self.commit()
+        self.assertEqual(self.install()[0], 21)
 
     def test_committed_incomplete_source_is_rejected(self):
         (self.source/'providers/runtime/helper.js').unlink()
