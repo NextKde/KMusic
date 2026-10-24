@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <functional>
 #include <QPointer>
 #include <QNetworkReply>
 
@@ -12,9 +13,11 @@ public:
     explicit Request(QObject *context) : QObject(context) {}
     ~Request() override;
     void cancel();
+    void setCancelHandler(std::function<void()> handler) { m_cancelHandler = std::move(handler); }
 private:
     friend class HttpTransport;
     QPointer<QNetworkReply> m_reply;
     bool m_cancelled = false;
+    std::function<void()> m_cancelHandler;
 };
 }

@@ -11,7 +11,9 @@ Request::~Request()
 }
 void Request::cancel()
 {
+    if (m_cancelled) return;
     m_cancelled = true;
+    if (m_cancelHandler) { m_cancelHandler(); return; }
     if (m_reply) m_reply->abort();
 }
 }

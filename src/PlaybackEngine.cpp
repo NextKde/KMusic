@@ -1,4 +1,5 @@
 #include "PlaybackEngine.h"
+#include "PlaybackHttpHeaders.h"
 
 #include <QFileInfo>
 #include <QFile>
@@ -198,7 +199,7 @@ double PlaybackEngine::volume() const
     return m_volume;
 }
 
-bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositionMs)
+bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositionMs, const QByteArray &userAgent, const QUrl &referer)
 {
     if (!m_playbin)
         return false;
@@ -207,6 +208,8 @@ bool PlaybackEngine::load(const QUrl &source, bool autoPlay, qint64 startPositio
     // NULL flushes old pipeline messages; keep it explicit while replacing URI.
     if (m_bus) gst_bus_set_flushing(m_bus, TRUE);
     gst_element_set_state(m_playbin, GST_STATE_NULL);
+    if (m_httpHeadersConnection) g_signal_handler_disconnect(m_playbin, m_httpHeadersConnection);
+    m_httpHeadersConnection = installPlaybackHttpHeaders(m_playbin, userAgent, referer);
     finishDownload();
     if (source.isEmpty() || !source.isValid()) {
         setErrorMessage(QStringLiteral("Invalid audio URL"));

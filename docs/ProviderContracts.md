@@ -9,8 +9,8 @@ Requests are scoped to a caller-owned QObject; cancellation completes at most
 once, while destruction suppresses callbacks. Providers must outlive requests.
 
 The first implementation includes native Qt HTTP transport and independently
-implemented Bilibili video-detail/part decoding. It does not yet connect Bilibili
-search, playback or login to the UI. The current NetEase implementation remains
+implemented Bilibili video-detail/part decoding. Separate search, WBI signing and playback resolver modules now connect public video
+search, BV links and part playback to the UI. Login and personal libraries remain unimplemented. The current NetEase implementation remains
 unchanged; future adapters must not add endpoint logic to MusicController.
 
 Temporary playback descriptors stay native and never persist URLs or account

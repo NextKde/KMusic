@@ -35,7 +35,7 @@ LiquidDialog {
     }
     function submit(text) {
         const value = text.trim().slice(0, 200)
-        if (!value || (sourceId !== "local" && sourceId !== "netease")) return
+        if (!value || (sourceId !== "local" && sourceId !== "netease" && sourceId !== "bilibili")) return
         storeHistory([value].concat(history.filter(item => typeof item === "string" && item.toLowerCase() !== value.toLowerCase())).slice(0, 20))
         searchRequested(value)
         close()
@@ -50,7 +50,7 @@ LiquidDialog {
                 Layout.fillWidth: true; implicitHeight: 36
                 materialForm: false; liquidFinish: true; liquidIntensity: "strong"
                 backdrop: dialog.contentBackdrop
-                placeholderText: Language.text("Songs, artists or albums", "歌曲、艺术家或专辑")
+                placeholderText: sourceId === "bilibili" ? Language.text("Videos or a BV link", "视频或 BV 链接") : Language.text("Songs, artists or albums", "歌曲、艺术家或专辑")
                 maximumLength: 200; font.pixelSize: 13
                 onAccepted: dialog.submit(text)
             }

@@ -31,7 +31,7 @@ public:
     double downloadProgress() const;
     void setDownloadDirectory(const QString &directory);
 
-    bool load(const QUrl &source, bool autoPlay = true, qint64 startPositionMs = 0);
+    bool load(const QUrl &source, bool autoPlay = true, qint64 startPositionMs = 0, const QByteArray &userAgent = {}, const QUrl &referer = {});
     void play();
     void pause();
     void stop();
@@ -69,6 +69,7 @@ private:
     quint64 m_eosDeliveredGeneration = 0;
     int m_naturalEosCount = 0, m_ignoredEosCount = 0;
     GstElement *m_playbin = nullptr;
+    unsigned long m_httpHeadersConnection = 0;
     GstBus *m_bus = nullptr;
     QTimer m_positionTimer;
     QTimer m_downloadTimer;

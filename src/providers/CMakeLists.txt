@@ -1,5 +1,7 @@
 add_library(kmusic_provider_core STATIC
     Request.cpp
+    bilibili/WbiSigner.cpp bilibili/BilibiliResponse.cpp bilibili/BilibiliApi.cpp
+    bilibili/BilibiliSearch.cpp bilibili/BilibiliPlaybackResolver.cpp
     HttpTransport.cpp HttpTransport.h
     bilibili/BilibiliDetail.cpp bilibili/BilibiliDetail.h)
 target_include_directories(kmusic_provider_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

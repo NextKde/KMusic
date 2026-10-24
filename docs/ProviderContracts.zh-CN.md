@@ -1,6 +1,6 @@
 # 音源模块与接口契约
 
-状态：第一批基础代码已实现；Bilibili 尚未接入 UI，不代表搜索、播放或登录已经可用。
+状态：已接入 Bilibili 视频搜索、BV/分 P 详情及普通 AAC 音频播放。登录、个人资料库与推荐尚未实现。
 
 ## 模块边界
 
@@ -9,11 +9,11 @@
 | `providers/contracts/` | 来源身份、分页、错误及各能力接口 | 网络实现、QML 状态、凭据存储 |
 | `HttpTransport` | 异步 HTTP、大小限制、错误映射 | 视频 JSON、WBI 签名、登录业务 |
 | `bilibili/BilibiliDetail` | 视频详情与分 P 的解码 | 搜索、播放地址、登录、个人资料库 |
-| 后续 `BilibiliSearch` | 搜索请求与结果映射 | 播放、收藏、登录 |
-| 后续 `BilibiliPlaybackResolver` | 按 BV/cid 解析临时音频地址 | 操作播放器或保存临时 URL |
+| `BilibiliSearch` | 搜索请求与结果映射 | 播放、收藏、登录 |
+| `BilibiliPlaybackResolver` | 按 BV/cid 解析临时音频地址 | 操作播放器或保存临时 URL |
 | 后续 `BilibiliAccount` | 扫码状态、会话恢复与退出 | 操作首页列表、把 Cookie 暴露给 QML |
 | 后续 `BilibiliLibrary` | 收藏夹、历史、歌单及分页 | 复用其他平台或其他账号的数据 |
-| 后续 UI facade | 把能力结果转换为页面状态 | 端点、签名、Cookie、原始 JSON |
+| `BilibiliController` + `MusicControllerBilibili` | 把能力结果转换为页面状态 | 端点、签名、Cookie、原始 JSON |
 | `PlaybackEngine` | 播放解析后的媒体描述 | 调用平台 API、识别 BV、负责登录 |
 
 每种能力一个小接口；不要求所有来源实现全部能力，也不引入一个包含所有端点的基类。
@@ -55,9 +55,14 @@
 HTTP 限流/验证错误、重定向拒绝、响应上限。只能在虚拟机运行，不依赖真实账号或真实 Bilibili 服务。
 这批测试不能证明线上接口当前可用，更不代表 UI 或声音已经验收。
 
-下一批应独立实现播放解析和签名模块，再给 GStreamer 增加按次加载的 UA/Referer；
-搜索、账号和个人资料库分别接入。每批补对应契约测试，不先创建空的业务实现冒充已支持。
+第二批已实现独立 WbiSigner、BilibiliApi、BilibiliSearch、BilibiliPlaybackResolver，以及 UI facade。
+搜索使用公开 WBI 协议；播放前重新解析地址，选取普通 AAC，限制内容或验证要求均返回错误。
+GStreamer 使用每次加载的不可变 UA/Referer 快照，切换来源时移除，API Cookie 不进入播放器。
+视频与分 P 在本机库以 `bilibili:BV[:cid]` 区分；不保存临时音频地址。
+公开搜索目前以游客范围工作，不混用网易云账号。登录与个人资料库仍待独立实现。
 
 协议研究参考：[Bilibili 音乐项目架构说明](https://github.com/YOUYUDAWANG/bili-music/blob/main/ARCHITECTURE.md)、
 [Qt Network](https://doc.qt.io/qt-6/qnetworkaccessmanager.html)、
 [GStreamer HTTP source](https://gstreamer.freedesktop.org/documentation/soup/souphttpsrc.html)。
+
+WBI 协议事实与测试向量来源：[独立 API 文档存档](https://github.com/pskdje/bilibili-API-collect/blob/main/docs/misc/sign/wbi.md)。实现使用 Qt 原生 API 独立编写，未取用 Biu 源码。

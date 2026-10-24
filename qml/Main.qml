@@ -47,11 +47,13 @@ ApplicationWindow {
     }
     function selectSource(id) {
         restoringSourceSearch = true
+        if (selectedSource !== id) music.bilibili.cancelBrowse()
         selectedSource = id
         if (id === "netease" || id === "bilibili") { onlineProvider = id; navigationArea = "discover" }
         else navigationArea = id === "local" ? "local" : "media"
         const sections = SourceCatalog.sections(id)
         if (sections.length && sections[0].entries.length) openSourceEntry(sections[0].entries[0])
+        if (id === "bilibili") { pageTitle = "Bilibili"; selectedSourceEntry = "search"; destination = "bilibili"; bilibiliPage.queryText = savedSourceSearch(id) }
         if (id === "netease") onlinePage.queryText = savedSourceSearch(id)
         music.setSearch(id === "local" ? savedSourceSearch(id) : "")
         restoringSourceSearch = false
@@ -90,6 +92,7 @@ ApplicationWindow {
         window.destination = "playlist"; window.pageTitle = entry.name
     }
     function openAccount() { accountDialog.open() }
+    function reviewBilibiliSearch(text) { selectSource("bilibili"); bilibiliPage.queryText = text; music.bilibili.search(text) }
     function reviewOnlineSearch(text) { window.selectSource("netease"); music.onlineSearchKind = "song"; destination = "online"; onlinePage.queryText = text; music.searchOnline(text) }
     function openReviewSelect(name) { if (name === "quality") { destination = "online"; onlinePage.openQualityMenu() } else settingsMenu.popup() }
     function reviewMaterialAction(action, index) { destination = "now"; nowPlaying.reviewMaterialAction(action, index) }
@@ -239,6 +242,10 @@ ApplicationWindow {
                     onImportRequested: folderDialog.open()
                     onClearSearchRequested: { window.rememberSourceSearch("local", ""); music.setSearch("") }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
+                }
+                BilibiliPage {
+                    id: bilibiliPage; anchors.fill: parent; visible: window.contentDestination === "bilibili"
+                    backend: music.bilibili; bottomContentInset: window.playerContentInset
                 }
                 PersonalPage {
                     anchors.fill: parent
@@ -438,7 +445,7 @@ ApplicationWindow {
                             id: headerSearchButton
                             Layout.preferredWidth: 36; Layout.minimumWidth: 0; Layout.fillHeight: true
                             padding: 0
-                            enabled: window.selectedSource === "netease" || window.selectedSource === "local"
+                            enabled: window.selectedSource === "netease" || window.selectedSource === "bilibili" || window.selectedSource === "local"
                             Accessible.name: Language.text("Search", "搜索")
                             ToolTip.text: Language.text("Search · Ctrl+F", "搜索 · Ctrl+F")
                             ToolTip.visible: hovered
@@ -462,8 +469,12 @@ ApplicationWindow {
                             visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
                             enabled: window.navigationArea !== "local" || music.ready
                             Accessible.name: window.navigationArea === "local" ? Language.text("Import music", "导入音乐") : Language.text("Switch platform", "切换平台")
-                            onClicked: { if (window.navigationArea === "local") folderDialog.open() }
-                            // Online platform switching remains reserved.
+                            onClicked: { if (window.navigationArea === "local") folderDialog.open(); else platformMenu.popup() }
+                            Menu {
+                                id: platformMenu
+                                MenuItem { text: Language.text("NetEase Cloud Music", "网易云音乐"); onTriggered: window.selectSource("netease") }
+                                MenuItem { text: "Bilibili"; onTriggered: window.selectSource("bilibili") }
+                            }
                             background: Rectangle { radius: height / 2; color: parent.hovered ? MusicColors.hoverFill : "transparent" }
                             contentItem: Item {
                                 implicitWidth: 14; implicitHeight: 14
@@ -512,6 +523,9 @@ ApplicationWindow {
                     if (window.selectedSource === "local") {
                         music.setSearch(query); localPage.searchLibrary()
                         window.destination = "localHome"
+                    } else if (window.selectedSource === "bilibili") {
+                        bilibiliPage.queryText = query; music.bilibili.search(query)
+                        window.destination = "bilibili"
                     } else if (window.selectedSource === "netease") {
                         onlinePage.queryText = query; music.searchOnline(query)
                         window.destination = "online"; window.selectedSourceEntry = "search"

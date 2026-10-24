@@ -1,7 +1,7 @@
 // Declarative navigation only. Capability evidence is not an implemented adapter.
 export const sources = [
     { id: "netease", category: "online", en: "NetEase Cloud Music", zh: "网易云音乐", status: "connected", search: ["song", "playlist", "album", "artist"] },
-    { id: "bilibili", category: "online", en: "Bilibili", zh: "哔哩哔哩", status: "prototype", search: ["video", "uploader", "collection"] },
+    { id: "bilibili", category: "online", en: "Bilibili", zh: "哔哩哔哩", status: "partial", search: ["video"] },
     { id: "local", category: "local", en: "Local Music", zh: "本地音乐", status: "connected", search: ["song", "album", "artist"] },
     { id: "navidrome", category: "media", en: "Navidrome / OpenSubsonic", zh: "Navidrome / OpenSubsonic", status: "unconnected", search: ["song", "album", "artist"] },
     { id: "jellyfin", category: "media", en: "Jellyfin", zh: "Jellyfin", status: "unconnected", search: ["song", "album", "artist"] },
@@ -23,7 +23,7 @@ export function sections(id) {
             entry("history", "Recently played", "最近播放", "demo", "prototype", true)]}
     ]
     if (id === "bilibili") return [
-        {en: "Browse", zh: "浏览", entries: [entry("recommend", "Recommended videos", "推荐视频", "demo", "prototype"), entry("search", "Search", "搜索", "demo", "prototype"), entry("uploaders", "Uploaders", "UP主", "demo", "prototype"), entry("collections", "Collections", "合集", "demo", "prototype")]},
+        {en: "Browse", zh: "浏览", entries: [entry("recommend", "Recommended videos", "推荐视频", "demo", "prototype"), entry("search", "Search", "搜索", "bilibili", "connected"), entry("uploaders", "Uploaders", "UP主", "demo", "prototype"), entry("collections", "Collections", "合集", "demo", "prototype")]},
         {en: "My Bilibili", zh: "我的B站", entries: [entry("favorites", "Favorite folders", "收藏夹", "demo", "prototype", true), entry("history", "Watch history", "观看历史", "demo", "prototype", true)]}
     ]
     if (id === "local") return [
