@@ -2,6 +2,14 @@
 
 <h1 align="center">KMusic</h1>
 
+<h2 align="center"><strong>IMPORTANT DISCLAIMER</strong></h2>
+
+<p align="center"><strong>KMusic is an unofficial third-party client and is not affiliated with, partnered with, or endorsed by NetEase Cloud Music, Bilibili, or other platforms.</strong></p>
+
+<p align="center"><strong>Music, lyrics, artwork and other content belong to their respective rights holders. Access only content you are authorized to use and follow platform terms. This project grants no permission to bypass payment, membership or other access restrictions.</strong></p>
+
+<p align="center"><strong>To the extent permitted by applicable law, the software is provided “as is”, without any guarantee that third-party APIs remain available. Liability that cannot legally be excluded is unaffected. See the full Disclaimer below.</strong></p>
+
 <p align="center"><strong>A native Qt music player for NextKDE.</strong><br>Online discovery, local music, and your own music server in one player.</p>
 
 <p align="center">

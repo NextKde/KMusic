@@ -2,6 +2,10 @@
 
 ## Current user overrides (2026-10-23)
 
+- Bilibili research may examine Biu backend architecture/protocol flow, but do not
+  copy, translate or port Biu source code into KMusic. Implement independently
+  and preserve the existing GPL/AGPL licensing and source attribution.
+
 - Runtime validation, GUI interaction and tests are VM-only; do not run them on the host.
 - Do not automatically publish iteration screenshots. Historical screenshot objects
   have been removed from remote history; keep only curated README images in docs/images.
