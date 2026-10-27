@@ -1,5 +1,13 @@
 #pragma once
 
+#include <QtGlobal>
+
+#if defined(Q_OS_MACOS)
+// macOS 使用 Qt Multimedia 后端实现，见 platform/macos/PlaybackEngine.h
+#include "../platform/macos/PlaybackEngine.h"
+#else
+
+
 #include <QObject>
 #include <QTimer>
 #include <QUrl>
@@ -96,3 +104,5 @@ private:
     bool m_downloadFailed = false;
     QString m_completedDownload;
 };
+
+#endif // Q_OS_MACOS

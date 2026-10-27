@@ -1,5 +1,13 @@
 #pragma once
 
+#include <QtGlobal>
+
+#if defined(Q_OS_MACOS)
+// macOS 使用 Qt Multimedia 后端实现，见 platform/macos/Transcoder.h
+#include "../platform/macos/Transcoder.h"
+#else
+
+
 #include <QObject>
 #include <QTimer>
 #include <QUrl>
@@ -66,3 +74,5 @@ private:
     QString m_errorMessage;
     double m_progress = 0.0;
 };
+
+#endif // Q_OS_MACOS

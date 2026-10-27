@@ -10,20 +10,24 @@ ScrollView {
     required property var music
     property real bottomContentInset: 0
     signal importRequested()
+    // 文件夹导入降级为次要入口；主要方式是直接选择音频文件。
+    signal importFolderRequested()
     contentWidth: availableWidth
     clip: true
     ColumnLayout {
         width: page.availableWidth - 64; x: 32; spacing: 16
         Item { implicitHeight: 24 }
         Label { text: Language.text("Local Music", "本地音乐"); color: AppTheme.mutedText; font.pixelSize: 13 }
-        Label { visible: page.showHeading; text: Language.text("Music folders", "音乐文件夹"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
+        Label { visible: page.showHeading; text: Language.text("Import music", "导入音乐"); color: AppTheme.text; font.pixelSize: 26; font.weight: Font.Bold }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.mutedText
-            text: Language.text("Folders registered on this computer. Importing indexes your audio files; it does not upload them to an online account.", "管理此电脑上的音乐文件夹。导入仅建立文件索引，不会上传到在线账号。")
+            text: Language.text("Import individual audio files, or register a folder so new songs inside it are picked up automatically. Importing only indexes files; nothing is uploaded to an online account.",
+                                "可以直接导入单个音频文件，也可以登记一个文件夹，让其中的新歌自动进入曲库。导入仅在本机建立文件索引，不会上传到在线账号。")
         }
         RowLayout {
             spacing: 12
-            MusicActionButton { text: Language.text("Add music folder", "添加音乐文件夹"); enabled: page.music.ready; onClicked: page.importRequested() }
+            MusicActionButton { text: Language.text("Import music files", "导入音乐文件"); enabled: page.music.ready; onClicked: page.importRequested() }
+            MusicActionButton { text: Language.text("Add music folder", "添加音乐文件夹"); enabled: page.music.ready; onClicked: page.importFolderRequested() }
             MusicActionButton { text: page.music.scanning ? Language.text("Scanning…", "正在扫描…") : Language.text("Rescan", "重新扫描"); enabled: !page.music.scanning && page.music.libraryFolders.length > 0; onClicked: page.music.rescanLibrary() }
         }
         Label { visible: page.music.libraryFolders.length === 0; text: Language.text("No music folders added yet.", "尚未添加音乐文件夹。"); color: AppTheme.mutedText }

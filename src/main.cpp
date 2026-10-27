@@ -1,5 +1,9 @@
 #include "MusicController.h"
+#include "FavoriteLibrary.h"
 #include "MusicNetworkAccessManagerFactory.h"
+#ifdef Q_OS_MACOS
+#include "DesktopPresence.h"
+#endif
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -8,6 +12,8 @@
 #include <QLocale>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <chrono>
+#include <thread>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
 #include <QSGRendererInterface>
@@ -43,6 +49,23 @@ int main(int argc, char *argv[]) {
     QQuickStyle::setStyle(QStringLiteral("Basic"));
     QQuickWindow::setDefaultAlphaBuffer(true);
     MusicController music;
+    FavoriteLibrary favorites;
+#ifdef Q_OS_MACOS
+    // 关闭主窗口时隐藏而不是退出，常驻靠菜单栏图标 / Dock 菜单唤醒。
+    // 「退出」只走菜单里的那一项，或者用户在设置里关掉常驻。
+    app.setQuitOnLastWindowClosed(false);
+    DesktopPresence presence;
+    auto syncPresencePlayback = [&presence, &music] {
+        presence.setPlaybackActions(music.playbackState() == QLatin1String("Playing"),
+                                    music.canGoPrevious(), music.canGoNext());
+    };
+    QObject::connect(&music, &MusicController::queueChanged, &presence, syncPresencePlayback);
+    QObject::connect(&music, &MusicController::playbackStateChanged, &presence, syncPresencePlayback);
+    syncPresencePlayback();
+    // 状态项必须等 app 完成启动后再创建（macOS 26 的 NSScene 状态项
+    // 在此之前创建会拿到高度为 0 的窗口），所以放到事件循环首轮。
+    QTimer::singleShot(0, &presence, [&presence] { presence.installStatusItem(); });
+#endif
     MusicNetworkAccessManagerFactory qmlNetworkFactory;
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(&qmlNetworkFactory);
@@ -64,10 +87,59 @@ int main(int argc, char *argv[]) {
             applyLanguage(value.toString());
         });
     engine.rootContext()->setContextProperty("languagePreferences", &languagePreferences);
+    engine.rootContext()->setContextProperty("favorites", &favorites);
     engine.setInitialProperties({{QStringLiteral("music"), QVariant::fromValue(&music)}});
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.loadFromModule(QStringLiteral("NextKde.Music"), QStringLiteral("Main"));
+#ifdef Q_OS_MACOS
+    // 菜单栏 / Dock 菜单的请求转成主窗口动作。「打开」「设置」要走到 QML 的
+    // openPrimary，这样导航语义仍由 QML 维护，C++ 只负责唤起窗口。
+    QObject *mainWindow = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().first();
+    auto showMainWindow = [mainWindow] {
+        auto *window = qobject_cast<QQuickWindow *>(mainWindow);
+        if (!window)
+            return;
+        window->showNormal();
+        window->raise();
+        window->requestActivate();
+    };
+    QObject::connect(&presence, &DesktopPresence::openRequested, &engine, showMainWindow,
+                     Qt::QueuedConnection);
+    QObject::connect(&presence, &DesktopPresence::settingsRequested, &engine, [mainWindow] {
+        auto *window = qobject_cast<QQuickWindow *>(mainWindow);
+        if (!window)
+            return;
+        window->showNormal();
+        window->raise();
+        window->requestActivate();
+        QMetaObject::invokeMethod(mainWindow, "openPrimary",
+                                  Q_ARG(QVariant, QStringLiteral("settings")));
+    }, Qt::QueuedConnection);
+    QObject::connect(&presence, &DesktopPresence::previousRequested, &music,
+                     [&music] { music.previous(); });
+    QObject::connect(&presence, &DesktopPresence::nextRequested, &music,
+                     [&music] { music.next(); });
+    QObject::connect(&presence, &DesktopPresence::playPauseRequested, &music,
+                     [&music] { music.togglePlayPause(); });
+    QObject::connect(&presence, &DesktopPresence::quitRequested, &app,
+                     [] {
+                         // macOS 的事件分发器对 interrupt 的处理有个怪癖：在菜单回调里
+                         // 同步调 quit() 不会打断当前这一轮循环，永远退不出去。
+                         // 必须把真正的退出延迟到下一轮事件。
+                         QTimer::singleShot(0, qApp, [] {
+                             QCoreApplication::exit(0);
+                             // 兜底：万一清理阶段卡住（比如等待后台线程），2 秒后强制
+                             // 结束进程，否则 Dock 会一直显示「正在运行」。正常退出时
+                             // 进程早就没了，这段代码永远执行不到。aboutToQuit 里的
+                             // 播放进度落盘发生在它之前，不会被跳过。
+                             std::thread([] {
+                                 std::this_thread::sleep_for(std::chrono::seconds(2));
+                                 ::exit(0);
+                             }).detach();
+                         });
+                     });
+#endif
     const auto files = app.arguments().mid(1);
     if (!files.isEmpty()) QObject::connect(&music, &MusicController::readyChanged, &music, [&music, files] {
         if (music.ready()) music.openUri(files.first());
@@ -78,7 +150,7 @@ int main(int argc, char *argv[]) {
     QTimer reviewTimer;
     if (!reviewDir.isEmpty()) {
         QDir().mkpath(reviewDir);
-        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &app, reviewDir] {
+        QObject::connect(&reviewTimer, &QTimer::timeout, &engine, [&engine, &music, &app, &presence, reviewDir] {
             QFile request(QDir(reviewDir).filePath("request.json"));
             if (!request.open(QIODevice::ReadOnly)) return;
             const auto data = QJsonDocument::fromJson(request.readAll()).object();
@@ -116,7 +188,9 @@ int main(int argc, char *argv[]) {
                     {"account", "reviewAccountButton"}, {"signIn", "reviewAccountGenerate"}, {"cancelSignIn", "reviewAccountCancel"},
                     {"immersivePlay", "reviewImmersivePlay"}, {"nextQueued", "reviewNextQueued"},
                     {"recentNav", "reviewRecentNav"}, {"recentSong", "reviewRecentFirstSong"}, {"favoritesNav", "reviewFavoritesNav"}, {"favoriteOnline", "reviewFavoriteOnlineFirst"}, {"favoriteAlbum", "reviewFavoriteAlbumFirst"}, {"favoriteLocal", "reviewFavoriteLocalFirst"}, {"favoriteCurrent", "reviewCurrentFavorite"}, {"saveOnline", "reviewSaveOnlineFirst"}, {"saveAlbum", "reviewSaveAlbumFirst"}, {"savePlaylist", "reviewSavePlaylistFirst"}, {"createLocalPlaylist", "reviewCreateLocalPlaylist"}, {"localPlaylistSong", "reviewLocalPlaylistFirstSong"}, {"artistAlbums", "reviewArtistAlbums"}, {"artistAlbumsMore", "reviewArtistAlbumsMore"}, {"artistAlbumFirst", "reviewArtistAlbumFirst"}, {"albumBack", "reviewAlbumBack"}, {"albumMore", "reviewAlbumMore"}, {"collectionFirst", "reviewCollectionFirst"}, {"albumPlay", "reviewAlbumPlay"}, {"albumQueue", "reviewAlbumQueue"},
-                    {"albumSong", "reviewAlbumFirstSong"}, {"albumEnqueue", "reviewAlbumEnqueueFirst"}, {"albumRetry", "reviewAlbumRetry"}
+                    {"albumSong", "reviewAlbumFirstSong"}, {"albumEnqueue", "reviewAlbumEnqueueFirst"}, {"albumRetry", "reviewAlbumRetry"},
+                    {"favoriteSourceNetease", "reviewFavoriteSourceNetease"}, {"favoriteSourceBilibili", "reviewFavoriteSourceBilibili"}, {"libraryFavorite", "reviewLibraryFavorite"},
+                    {"favoriteFolder", "reviewFavoriteFolder"}, {"favoriteNewFolder", "reviewFavoriteNewFolder"}
                 };
                 if (!namedControls.contains(control) ||
                     (state != "hover" && state != "press" && state != "cancel" && state != "click")) return;
@@ -135,9 +209,13 @@ int main(int argc, char *argv[]) {
                     QCoreApplication::sendEvent(window, &event);
                 };
                 send(QEvent::MouseMove, Qt::NoButton, state == "cancel" ? Qt::LeftButton : Qt::NoButton);
-                if (state == "press" || state == "click") send(QEvent::MouseButtonPress, Qt::LeftButton, Qt::LeftButton);
-                if (state == "click") send(QEvent::MouseButtonRelease, Qt::LeftButton, Qt::NoButton);
-                if (state == "cancel") send(QEvent::MouseButtonRelease, Qt::LeftButton, Qt::NoButton);
+                // Context-menu review: "button":"right" sends the secondary button so the
+                // menu wiring can be exercised without a system pointer.
+                const Qt::MouseButton pointerButton = data.value("button").toString() == QLatin1String("right")
+                    ? Qt::RightButton : Qt::LeftButton;
+                if (state == "press" || state == "click") send(QEvent::MouseButtonPress, pointerButton, pointerButton);
+                if (state == "click") send(QEvent::MouseButtonRelease, pointerButton, Qt::NoButton);
+                if (state == "cancel") send(QEvent::MouseButtonRelease, pointerButton, Qt::NoButton);
                 QFile response(QDir(reviewDir).filePath("response.json"));
                 if (response.open(QIODevice::WriteOnly)) response.write(QJsonDocument(QJsonObject{
                     {"ok", true}, {"control", control}, {"state", state},
@@ -275,8 +353,15 @@ int main(int argc, char *argv[]) {
             else if (action == "retryLyrics") music.reloadLyrics();
             else if (action == "pause") music.pause();
             else if (action == "play") music.play();
+            // Review-only hooks: drive the close-to-menubar path and the
+            // direct-file import without needing a native file dialog.
+            else if (action == "closeWindow") window->close();
+            else if (action == "importFiles")
+                music.importMusicFiles(data.value("paths").toVariant().toStringList());
             else if (action == "seek") music.seek(data.value("positionMs").toVariant().toLongLong());
-            else if (action == "quit") app.quit();
+            else if (action == "quit") QTimer::singleShot(0, qApp, [] { QCoreApplication::exit(0); });
+            // 测试钩子：走 Dock/菜单栏菜单一模一样的信号链（emit -> 连接 -> 延迟退出）
+            else if (action == "quitSignal") emit presence.quitRequested();
             else if (action == "status") {
                 const auto api = window->rendererInterface()->graphicsApi();
                 const QString renderer = api == QSGRendererInterface::OpenGL ? "OpenGL" : api == QSGRendererInterface::Vulkan ? "Vulkan" : api == QSGRendererInterface::Software ? "Software" : api == QSGRendererInterface::Metal ? "Metal" : "other";
@@ -287,6 +372,9 @@ int main(int argc, char *argv[]) {
                     {"ok", true}, {"renderer", renderer},
                     {"materialReview", QJsonDocument::fromJson(materialState.toString().toUtf8()).object()},
                     {"page", window->property("destination").toString()}, {"windowVisible", window->isVisible()},
+                    {"favoritesExpanded", window->property("favoritesExpanded").toBool()},
+                    {"favoritesSource", window->property("favoritesSource").toString()},
+                    {"favoritesFolderId", window->property("favoritesFolderId").toString()},
                     {"windowVisibility", static_cast<int>(window->visibility())},
                     {"windowActive", window->isActive()}, {"windowX", window->x()}, {"windowY", window->y()},
                     {"fakeAudio", qEnvironmentVariableIsSet("KOS_MUSIC_FAKE_AUDIO")}, {"playbackState", music.playbackState()}, {"positionMs", music.positionMs()},

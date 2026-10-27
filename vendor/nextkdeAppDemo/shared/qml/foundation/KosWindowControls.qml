@@ -14,7 +14,9 @@ Row {
     spacing: 10
     HoverHandler { id: groupHover }
     Repeater {
-        model: ["fullscreen", "minimize", "close"]
+        // 用户要求从左到右为：关闭 / 最大化 / 最小化
+        // （fullscreen 在 maximizeMode 下就是最大化/还原）
+        model: ["close", "fullscreen", "minimize"]
         delegate: AbstractButton {
             id: button
             required property string modelData

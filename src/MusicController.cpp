@@ -828,6 +828,47 @@ void MusicController::addLibraryFolder(const QString &pathOrUrl)
     startNextScan();
 }
 
+int MusicController::importMusicFiles(const QStringList &pathsOrUrls)
+{
+    if (!m_ready)
+        return 0;
+    const QStringList supported = MetadataScanner::supportedExtensions();
+    const QSet<QString> extensions(supported.cbegin(), supported.cend());
+    int added = 0;
+    QStringList failures;
+    for (const QString &entry : pathsOrUrls) {
+        const QFileInfo info(localPath(entry));
+        QString canonical = info.canonicalFilePath();
+        if (canonical.isEmpty())
+            canonical = info.absoluteFilePath();
+        if (!info.isFile() || !info.isReadable()
+            || !extensions.contains(info.suffix().toLower())) {
+            failures.append(tr("Unsupported or unreadable: %1").arg(canonical));
+            continue;
+        }
+        if (m_database.trackForPath(canonical).has_value())
+            continue; // 已在曲库里，静默跳过比逐条报错更顺手
+        QString warning;
+        const auto scanned = MetadataScanner::scanFile(canonical, m_artworkPath, &warning);
+        if (!scanned) {
+            failures.append(warning.isEmpty()
+                ? tr("Could not read metadata: %1").arg(canonical) : warning);
+            continue;
+        }
+        QString error;
+        if (m_database.addExternalTrack(*scanned, &error) < 0) {
+            failures.append(error);
+            continue;
+        }
+        ++added;
+    }
+    if (!failures.isEmpty())
+        setError(failures.join(QStringLiteral("; ")));
+    if (added > 0)
+        refreshLibrary();
+    return added;
+}
+
 void MusicController::removeLibraryFolder(const QString &pathOrUrl)
 {
     if (!m_ready)
@@ -2473,6 +2514,12 @@ QString MusicController::currentProviderId() const
 {
     const auto track = findTrack(currentTrackId());
     return track ? track->providerId : QString{};
+}
+
+QString MusicController::currentSourceId() const
+{
+    const auto track = findTrack(currentTrackId());
+    return track ? track->source : QString{};
 }
 
 void MusicController::setOnlineSearchKind(const QString &kind)
