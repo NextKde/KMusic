@@ -570,6 +570,19 @@ ApplicationWindow {
             refractionStrength: 5; magnification: 1.025
             reflectionStrength: 0
         }
+        // Fixed sidebar title shares the window-chrome row; navigation starts
+        // immediately below it instead of carrying a second brand/logo row.
+        Label {
+            objectName: "musicSidebarTitle"
+            x: MusicColors.sidebarPadding + MusicColors.sidebarControlInset
+            y: 0; width: 236 - x - MusicColors.sidebarPadding; height: 35
+            text: Language.text("Music", "音乐")
+            color: MusicColors.sidebarLabelPrimary
+            font.pixelSize: 15
+            font.weight: Font.DemiBold
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+        }
         ColumnLayout {
             id: sidebarShell
             x: 0; y: 35; width: 236; height: parent.height - y
@@ -581,12 +594,6 @@ ApplicationWindow {
                 ColumnLayout {
                     width: sidebar.availableWidth - 2 * MusicColors.sidebarPadding
                     x: MusicColors.sidebarPadding; spacing: MusicColors.sidebarRowGap
-                    RowLayout {
-                        Layout.leftMargin: MusicColors.sidebarControlInset; Layout.topMargin: 8
-                        Layout.bottomMargin: MusicColors.sidebarGroupGap; spacing: 8
-                        Image { source: MusicColors.sidebarIconSource("music"); Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40) }
-                        Label { text: "KMusic"; color: MusicColors.sidebarLabelPrimary; font.pixelSize: MusicColors.sidebarTitleSize; font.weight: Font.DemiBold }
-                    }
                     Label { text: Language.text("Online Music", "在线音乐"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
                     MusicNavigationButton { id: discoverNav; Layout.fillWidth: true; text: Language.text("Discover", "发现"); iconName: "music"; checked: window.navigationArea === "discover"; onClicked: window.openPrimary("discover") }
                     MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Personal", "个人"); iconName: "person"; checked: window.navigationArea === "personal"; onClicked: window.openPrimary("personal") }
