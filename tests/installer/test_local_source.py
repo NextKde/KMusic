@@ -107,6 +107,13 @@ install(FILES data/kmusic.svg DESTINATION share/icons/hicolor/scalable/apps)
     def install(self):
         return self.invoke('install', '--source-dir', str(self.source))
 
+    def test_release_family_accepts_id_like_derivatives(self):
+        self.assertEqual(i.release_family({'ID': 'cachyos', 'ID_LIKE': 'arch'}), 'arch')
+        self.assertEqual(i.release_family({'ID': 'linuxmint', 'ID_LIKE': 'ubuntu debian'}), 'ubuntu')
+        self.assertEqual(i.release_family({'ID': 'ubuntu', 'ID_LIKE': 'debian'}), 'ubuntu')
+        self.assertEqual(i.release_family({'ID': 'debian'}), 'debian')
+        self.assertIsNone(i.release_family({'ID': 'fedora', 'ID_LIKE': 'rhel'}))
+
     def test_local_install_update_status_uninstall_preserves_data(self):
         # CWD-relative '.', spaces, actual configure/build/install, and atomic links.
         previous = os.getcwd()

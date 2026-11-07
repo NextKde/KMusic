@@ -21,6 +21,13 @@ class Failure(Exception):
     def __init__(self, code, message, details):
         self.code, self.message, self.details = code, message, details
 
+def release_family(release):
+    """Resolve os-release ID/ID_LIKE to a supported package family."""
+    for name in [release.get('ID', '')] + release.get('ID_LIKE', '').split():
+        if name in ('arch', 'ubuntu', 'debian'):
+            return name
+    return None
+
 def run(args, cwd=None, code='DEPENDENCY_UNSATISFIED', timeout=1800):
     try:
         p = subprocess.run(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -155,8 +162,8 @@ def main():
     for line in pathlib.Path('/etc/os-release').read_text().splitlines():
         if '=' in line:
             k,v=line.split('=',1); release[k]=v.strip('"')
-    if release.get('ID') not in ['arch','ubuntu','debian'] or platform.machine() not in ['x86_64','aarch64']:
-        fail('UNSUPPORTED_PLATFORM','Supported platforms: Arch, Ubuntu, Debian; x86_64 or aarch64.')
+    if release_family(release) is None or platform.machine() not in ['x86_64','aarch64']:
+        fail('UNSUPPORTED_PLATFORM','Supported platforms: Arch, Ubuntu, Debian and their derivatives; x86_64 or aarch64.')
     home = pathlib.Path.home()
     def xdg(name, fallback):
         p = pathlib.Path(os.environ.get(name, str(home/fallback)))
