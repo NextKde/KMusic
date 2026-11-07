@@ -42,7 +42,9 @@ QtObject {
             album: '<rect x="4" y="7" width="16" height="14" rx="2"/><path d="M6.5 4.5h11M9 2h6M14 16V10l3 1"/><ellipse cx="12.3" cy="16.6" rx="1.8" ry="1.4" fill="currentColor" stroke="none"/>',
             artist: '<rect x="8" y="2.5" width="8" height="12" rx="4"/><path d="M5 10.5v1a7 7 0 0 0 14 0v-1M12 18.5V22M8.5 22h7"/>',
             queue: '<path d="M3 5h13M3 10h13M3 15h7M18 18V10l3 1"/><ellipse cx="15.6" cy="19" rx="2.5" ry="1.8" fill="currentColor" stroke="none"/>',
-            playlist: '<path d="M3 5h13M3 10h13M3 15h7M18 18V10l3 1"/><ellipse cx="15.6" cy="19" rx="2.5" ry="1.8" fill="currentColor" stroke="none"/>'
+            playlist: '<path d="M3 5h13M3 10h13M3 15h7M18 18V10l3 1"/><ellipse cx="15.6" cy="19" rx="2.5" ry="1.8" fill="currentColor" stroke="none"/>',
+            heart: '<path d="M12 20 4 12a5 5 0 0 1 8-6 5 5 0 0 1 8 6z"/>',
+            chevron: '<path d="m9 6 6 6-6 6"/>'
         }
         const ink = (color || sidebarAccent).toString()
         return "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" color="' + ink + '" fill="none" stroke="' + ink + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + (glyphs[name] || glyphs.music) + '</svg>')

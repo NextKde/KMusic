@@ -1,5 +1,13 @@
 #pragma once
 
+#include <QtGlobal>
+
+#if defined(Q_OS_MACOS)
+// macOS 用 MediaPlayer 框架实现，见 platform/macos/MprisService.mm
+#include "../platform/macos/MprisService.h"
+#else
+
+
 #include <QObject>
 #include <QVariantMap>
 
@@ -20,3 +28,5 @@ private:
     bool m_objectRegistered = false;
     bool m_registered = false;
 };
+
+#endif // Q_OS_MACOS

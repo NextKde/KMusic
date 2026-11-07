@@ -52,6 +52,9 @@ class MusicController : public QObject {
     Q_PROPERTY(bool albumLoadingMore READ albumLoadingMore NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString albumLoadMoreError READ albumLoadMoreError NOTIFY onlineAlbumChanged)
     Q_PROPERTY(QString currentProviderId READ currentProviderId NOTIFY currentTrackChanged)
+    // TrackRecord::source 的原始值（local / netease / wy / bilibili）。
+    // currentProviderId 是远端曲目 ID，不能用来判断曲目来自哪个音源。
+    Q_PROPERTY(QString currentSourceId READ currentSourceId NOTIFY currentTrackChanged)
     Q_PROPERTY(QVariantList artistAlbums READ artistAlbums NOTIFY onlineAlbumChanged)
     Q_PROPERTY(bool artistAlbumsVisible READ artistAlbumsVisible NOTIFY onlineAlbumChanged)
     Q_PROPERTY(bool artistAlbumsLoading READ artistAlbumsLoading NOTIFY onlineAlbumChanged)
@@ -169,6 +172,7 @@ public:
     Q_INVOKABLE void loadMorePlaylistTracks();
     QString albumMessage() const { return m_albumMessage; }
     QString currentProviderId() const;
+    QString currentSourceId() const;
     Q_INVOKABLE void openDiscoveryAlbum(int row);
     Q_INVOKABLE void retryOnlineAlbum();
     Q_INVOKABLE void playOnlineAlbum();
@@ -256,6 +260,9 @@ public:
 
     Q_INVOKABLE void addLibraryFolder(const QString &pathOrUrl);
     Q_INVOKABLE void removeLibraryFolder(const QString &pathOrUrl);
+    // 直接导入若干音频文件（不挂到任何根目录，root_id 为 NULL，
+    // 因此不会被后续的文件夹扫描当作已删除清掉）。返回实际新增的曲目数。
+    Q_INVOKABLE int importMusicFiles(const QStringList &pathsOrUrls);
     Q_INVOKABLE void rescanLibrary();
     Q_INVOKABLE void setLibraryView(const QString &mode, const QString &filterValue = {});
     Q_INVOKABLE void setSearch(const QString &search);

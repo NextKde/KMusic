@@ -25,8 +25,87 @@ ApplicationWindow {
             selectSource("local"); navigationArea = area; localPage.openSection("songs"); destination = "localHome"
         } else { navigationArea = area; destination = area === "media" ? "mediaHome" : "settingsHome" }
     }
+    // 打开「导入音乐文件」对话框。与文件夹导入分开：文件直接进曲库（不建根目录），
+    // 文件夹仍走旧的扫描根目录流程。
+    function openImportFiles() {
+        if (!music.ready)
+            return
+        importFilesDialog.open()
+    }
     property string selectedSource: "netease"
     property string selectedSourceEntry: "discover"
+    // ── 收藏音乐：按在线来源分组的自定义收藏目录 ──
+    // 目录数据由 FavoriteLibrary 持有并落地成 JSON；这里只保存导航状态。
+    property bool favoritesExpanded: false
+    property string favoritesSource: "netease"
+    property string favoritesFolderId: ""
+    // 读取 revision 建立依赖，收藏库变更时两个列表会一起重算。
+    readonly property var neteaseFavoriteFolders: { const revision = favorites.revision; return favorites.folders("netease") }
+    readonly property var bilibiliFavoriteFolders: { const revision = favorites.revision; return favorites.folders("bilibili") }
+    // 侧边栏收藏树拍平成一个列表：来源行 + 其下每个目录行。
+    // 拍平后只需一层 Repeater，避免嵌套 Repeater 里 modelData 互相遮蔽。
+    readonly property var favoriteTreeRows: {
+        const revision = favorites.revision
+        if (!window.favoritesExpanded) return []
+        const rows = []
+        const sources = ["netease", "bilibili"]
+        for (let i = 0; i < sources.length; ++i) {
+            const source = sources[i]
+            rows.push({ kind: "source", source: source, id: "", name: window.favoriteSourceCaption(source) })
+            const list = favorites.folders(source)
+            for (let j = 0; j < list.length; ++j)
+                rows.push({ kind: "folder", source: source, id: list[j].id, name: list[j].name })
+        }
+        return rows
+    }
+    function favoriteFolders(source) {
+        return source === "bilibili" ? bilibiliFavoriteFolders : neteaseFavoriteFolders
+    }
+    function favoriteSourceCaption(source) {
+        return source === "bilibili" ? Language.text("Bilibili favorites", "Bilibili音乐收藏")
+            : Language.text("NetEase favorites", "网易云音乐收藏")
+    }
+    function openFavoritesSource(source) {
+        const list = favoriteFolders(source)
+        window.favoritesSource = source
+        window.favoritesFolderId = list.length ? list[0].id : ""
+        window.pageTitle = favoriteSourceCaption(source)
+        window.destination = "favorites"
+    }
+    function openFavoriteFolder(source, folderId) {
+        window.favoritesSource = source
+        window.favoritesFolderId = folderId
+        window.pageTitle = favorites.folderName(folderId)
+        window.destination = "favorites"
+    }
+    function createFavoriteFolder(source) {
+        favoriteFolderDialog.favoriteFolderSource = source
+        favoriteFolderDialog.editing = false
+        favoriteFolderDialog.targetFolderId = ""
+        favoriteFolderDialog.open()
+    }
+    function renameFavoriteFolder(folderId, name) {
+        favoriteFolderDialog.favoriteFolderSource = window.favoritesSource
+        favoriteFolderDialog.editing = true
+        favoriteFolderDialog.targetFolderId = folderId
+        favoriteFolderDialog.currentName = name
+        favoriteFolderDialog.open()
+    }
+    // 目录被删除后，页面要退回该来源下的第一个目录，而不是继续显示已删目录。
+    Connections {
+        target: favorites
+        function onChanged() {
+            if (window.destination !== "favorites" || window.favoritesFolderId.length === 0)
+                return
+            if (favorites.folderName(window.favoritesFolderId).length > 0)
+                return
+            const list = window.favoriteFolders(window.favoritesSource)
+            window.favoritesFolderId = list.length ? list[0].id : ""
+            window.pageTitle = list.length ? favorites.folderName(list[0].id)
+                : window.favoriteSourceCaption(window.favoritesSource)
+        }
+    }
+
     property var sourceSearchDrafts: ({})
     property bool restoringSourceSearch: false
     function rememberSourceSearch(provider, query) {
@@ -146,6 +225,7 @@ ApplicationWindow {
         property bool rememberWindowSize: true
         property int savedWidth: 1100
         property int savedHeight: 680
+        property bool closeToMenuBar: true
         property int lyricFontSize: 25
         property bool centerLyrics: false
         property bool lyricBlur: true
@@ -164,13 +244,19 @@ ApplicationWindow {
         function onAppearanceModeChanged() { userPreferences.appearance = AppTheme.appearanceMode }
         function onReduceMotionChanged() { userPreferences.reducedMotion = AppTheme.reduceMotion }
     }
-    onClosing: {
+    onClosing: (close) => {
         if (userPreferences.rememberWindowSize && visibility === Window.Windowed) {
             userPreferences.savedWidth = width; userPreferences.savedHeight = height
         }
         userPreferences.sync()
+        // 常驻模式：点关闭只是把窗口藏起来，播放和菜单栏图标继续。
+        // 关掉这个偏好后，关闭窗口就是真的退出。
+        if (userPreferences.closeToMenuBar) {
+            close.accepted = false
+            window.hide()
+        }
     }
-    Shortcut { sequence: "Ctrl+O"; onActivated: { window.selectSource("local"); folderDialog.open() } }
+    Shortcut { sequence: "Ctrl+O"; onActivated: { window.selectSource("local"); window.openImportFiles() } }
     // Controls own Space for activation/editing; the playback shortcut must not
     // steal it from a focused child (for example a dialog button or select).
     function focusConsumesSpace(item) {
@@ -247,7 +333,7 @@ ApplicationWindow {
                     id: localPage
                     anchors.fill: parent; visible: window.contentDestination === "localHome"
                     music: window.music; bottomContentInset: window.playerContentInset
-                    onImportRequested: folderDialog.open()
+                    onImportRequested: window.openImportFiles()
                     onClearSearchRequested: { window.rememberSourceSearch("local", ""); music.setSearch("") }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
@@ -280,7 +366,7 @@ ApplicationWindow {
                     sidebarUnderlap: 236
                     x: -236; y: 0; width: parent.width + 236; height: parent.height
                     visible: window.contentDestination === "new"; music: window.music
-                    onImportRequested: { window.selectSource("local"); folderDialog.open() }
+                    onImportRequested: { window.selectSource("local"); window.openImportFiles() }
                     onOnlineRequested: { window.selectSource("netease"); window.openSourceEntry(SourceCatalog.sections("netease")[0].entries[1]) }
                     onOnlineAlbumRequested: row => window.reviewOnlineAlbum(row)
                     onCollectionRequested: (section, row) => {
@@ -304,7 +390,7 @@ ApplicationWindow {
                     emptyMessage: recentView ? Language.text("Your playback history on this device is empty. Played songs will appear here.", "暂无本机播放历史，播放过的歌曲会出现在这里。") : favoritesView ? Language.text("Your favorites on this device are empty. Add songs using the heart button.", "暂无本机喜欢的歌曲，可通过爱心按钮添加。") : queueView ? Language.text("Your queue is empty", "播放队列为空") : playlistView ? Language.text("This device playlist is empty. Add tracks from a song list.", "歌单为空，可从歌曲列表添加。") : Language.text("No local songs match. Import a music folder or change the local search.", "暂无本地歌曲，请导入音乐文件夹。")
                     queueView: window.contentDestination === "queue"; recentView: window.contentDestination === "recent"; favoritesView: window.contentDestination === "favorites"; playlistView: window.contentDestination === "playlist"; playlistId: window.selectedPlaylist
                     trackModel: recentView ? music.recentModel : favoritesView ? music.favoritesModel : queueView ? music.queueModel : playlistView ? music.playlistTracksModel : music.libraryModel
-                    onImportRequested: { window.selectSource("local"); folderDialog.open() }
+                    onImportRequested: { window.selectSource("local"); window.openImportFiles() }
                     onAddToPlaylistRequested: trackId => window.openPlaylistPicker("library", trackId)
                 }
                 ScrollView {
@@ -330,7 +416,8 @@ ApplicationWindow {
                     showHeading: !floatingHeader.visible
                     anchors.fill: parent; visible: window.contentDestination === "folders"
                     music: window.music; bottomContentInset: window.playerContentInset
-                    onImportRequested: folderDialog.open()
+                    onImportRequested: window.openImportFiles()
+                    onImportFolderRequested: folderDialog.open()
                 }
                 SourceDemoPage {
                     showHeading: !floatingHeader.visible
@@ -357,6 +444,16 @@ ApplicationWindow {
                             window.rememberSourceSearch("netease", queryText)
                         }
                     }
+                }
+                FavoritesPage {
+                    anchors.fill: parent
+                    visible: window.contentDestination === "favorites"
+                    music: window.music
+                    source: window.favoritesSource
+                    folderId: window.favoritesFolderId
+                    bottomContentInset: window.playerContentInset
+                    backgroundColor: window.contentColor
+                    onNewFolderRequested: window.createFavoriteFolder(window.favoritesSource)
                 }
             }
         }
@@ -404,8 +501,10 @@ ApplicationWindow {
                 : window.contentDestination === "localHome" ? Language.text("Local Music", "本地音乐")
                 : window.contentDestination === "mediaHome" ? Language.text("Media Sources", "媒体源")
                 : window.contentDestination === "settingsHome" ? Language.text("Settings", "设置")
-                : window.contentDestination === "folders" ? Language.text("Music folders", "音乐文件夹")
+                : window.contentDestination === "folders" ? Language.text("Import music", "导入音乐")
                 : window.contentDestination === "sourceDemo" ? window.sourceLabel(window.sourcePrototypeEntry)
+                : window.contentDestination === "favorites" ? (window.favoritesFolderId.length
+                    ? favorites.folderName(window.favoritesFolderId) : window.favoriteSourceCaption(window.favoritesSource))
                 : window.contentDestination === "albums" ? Language.text("Albums", "专辑")
                 : window.contentDestination === "artists" ? Language.text("Artists", "艺术家") : window.pageTitle
             Item {
@@ -489,9 +588,27 @@ ApplicationWindow {
                             visible: window.navigationArea === "discover" || window.navigationArea === "personal" || window.navigationArea === "local"
                             enabled: window.navigationArea !== "local" || music.ready
                             Accessible.name: window.navigationArea === "local" ? Language.text("Import music", "导入音乐") : Language.text("Switch platform", "切换平台")
-                            onClicked: { if (window.navigationArea === "local") folderDialog.open(); else platformMenu.popup() }
+                            onClicked: { if (window.navigationArea === "local") window.openImportFiles(); else platformMenu.popup() }
                             Menu {
                                 id: platformMenu
+                                palette.window: MusicColors.controlSurface
+                                palette.windowText: AppTheme.text
+                                palette.text: AppTheme.text
+                                palette.buttonText: AppTheme.text
+                                palette.base: MusicColors.controlSurface
+                                palette.light: MusicColors.selectedSurface
+                                palette.midlight: MusicColors.hoverFill
+                                palette.dark: AppTheme.border
+                                palette.highlight: MusicColors.selectedSurface
+                                palette.highlightedText: AppTheme.text
+                                background: Rectangle {
+                                    implicitWidth: 176
+                                    implicitHeight: platformMenu.contentHeight + 8
+                                    color: MusicColors.controlSurface
+                                    radius: 8
+                                    border.width: 1
+                                    border.color: AppTheme.border
+                                }
                                 MenuItem { text: Language.text("NetEase Cloud Music", "网易云音乐"); onTriggered: window.selectSource("netease") }
                                 MenuItem { text: "Bilibili"; onTriggered: window.selectSource("bilibili") }
                             }
@@ -504,8 +621,6 @@ ApplicationWindow {
                         }
                     }
                 }
-                Label { visible: window.contentDestination !== "new" && window.navigationArea !== "local"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
-                Item { Layout.fillWidth: true }
                 Button {
                     id: headerAvatar
                     padding: 0
@@ -533,6 +648,8 @@ ApplicationWindow {
                         }
                     }
                 }
+                Label { visible: window.contentDestination !== "new" && window.navigationArea !== "local"; text: floatingHeader.heading; elide: Text.ElideRight; color: AppTheme.text; font.pixelSize: 23; font.weight: Font.Bold }
+                Item { Layout.fillWidth: true }
             }
             SearchDialog {
                 id: searchPopup
@@ -597,6 +714,67 @@ ApplicationWindow {
                     Label { text: Language.text("Online Music", "在线音乐"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
                     MusicNavigationButton { id: discoverNav; Layout.fillWidth: true; text: Language.text("Discover", "发现"); iconName: "music"; checked: window.navigationArea === "discover"; onClicked: window.openPrimary("discover") }
                     MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Personal", "个人"); iconName: "person"; checked: window.navigationArea === "personal"; onClicked: window.openPrimary("personal") }
+                    // 收藏音乐：展开后按来源列出「网易云音乐收藏」「Bilibili音乐收藏」，
+                    // 每个来源下是用户自建的收藏目录。目录行的右键菜单负责重命名和删除。
+                    MusicNavigationButton {
+                        id: favoritesNav
+                        objectName: "reviewFavoritesNav"
+                        Layout.fillWidth: true
+                        // 纯展开开关：checkable 会让点击写死 checked、断掉绑定，这里只要指示态。
+                        checkable: false
+                        rightPadding: 26
+                        text: Language.text("Favorite Music", "收藏音乐")
+                        iconName: "heart"
+                        checked: window.favoritesExpanded
+                        onClicked: window.favoritesExpanded = !window.favoritesExpanded
+                        Accessible.name: text
+                        VectorIcon {
+                            anchors.right: parent.right; anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 12; height: 12
+                            name: "chevron"; size: 12
+                            color: MusicColors.sidebarLabelSecondary
+                            // VectorIcon 的 chevron 是向下箭头：折叠时转 -90° 指右，展开时指下。
+                            rotation: window.favoritesExpanded ? 0 : -90
+                            Behavior on rotation {
+                                NumberAnimation { duration: AppTheme.reduceMotion ? 0 : 160; easing.type: Easing.OutCubic }
+                            }
+                        }
+                    }
+                    Repeater {
+                        model: window.favoriteTreeRows
+                        delegate: MusicNavigationButton {
+                            required property var modelData
+                            objectName: modelData.kind === "source"
+                                ? (modelData.source === "bilibili" ? "reviewFavoriteSourceBilibili" : "reviewFavoriteSourceNetease")
+                                : "reviewFavoriteFolder"
+                            Layout.fillWidth: true
+                            Layout.leftMargin: modelData.kind === "folder" ? 32 : 14
+                            checkable: false
+                            implicitHeight: modelData.kind === "folder" ? 28 : MusicColors.sidebarRowHeight
+                            text: modelData.name
+                            iconName: modelData.kind === "folder" ? "playlist" : "folder"
+                            checked: window.destination === "favorites" && window.favoritesSource === modelData.source
+                                && (modelData.kind === "source" || window.favoritesFolderId === modelData.id)
+                            onClicked: modelData.kind === "folder"
+                                ? window.openFavoriteFolder(modelData.source, modelData.id)
+                                : window.openFavoritesSource(modelData.source)
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                onTapped: {
+                                    if (modelData.kind === "folder") {
+                                        favoriteFolderMenu.folderId = modelData.id
+                                        favoriteFolderMenu.folderName = modelData.name
+                                        favoriteFolderMenu.folderSource = modelData.source
+                                        favoriteFolderMenu.popup()
+                                    } else {
+                                        favoriteSourceMenu.source = modelData.source
+                                        favoriteSourceMenu.popup()
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Label { text: Language.text("Local & Sources", "本地与媒体源"); color: MusicColors.sidebarLabelSecondary; font.pixelSize: MusicColors.sidebarCaptionSize; font.weight: Font.DemiBold; Layout.topMargin: MusicColors.sidebarGroupGap; Layout.leftMargin: MusicColors.sidebarControlInset }
                     MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Local Music", "本地音乐"); iconName: "folder"; checked: window.navigationArea === "local"; onClicked: window.openPrimary("local") }
                     MusicNavigationButton { Layout.fillWidth: true; text: Language.text("Media Sources", "媒体源"); iconName: "album"; checked: window.navigationArea === "media"; onClicked: window.openPrimary("media") }
@@ -619,8 +797,45 @@ ApplicationWindow {
                         onClicked: settingsMenu.popup()
                         Menu {
                             id: settingsMenu
+                            palette.window: MusicColors.controlSurface
+                            palette.windowText: AppTheme.text
+                            palette.text: AppTheme.text
+                            palette.buttonText: AppTheme.text
+                            palette.base: MusicColors.controlSurface
+                            palette.light: MusicColors.selectedSurface
+                            palette.midlight: MusicColors.hoverFill
+                            palette.dark: AppTheme.border
+                            palette.highlight: MusicColors.selectedSurface
+                            palette.highlightedText: AppTheme.text
+                            background: Rectangle {
+                                implicitWidth: 190
+                                implicitHeight: settingsMenu.contentHeight + 8
+                                color: MusicColors.controlSurface
+                                radius: 8
+                                border.width: 1
+                                border.color: AppTheme.border
+                            }
                             Menu {
+                                id: appearanceMenu
+                                palette.window: MusicColors.controlSurface
+                                palette.windowText: AppTheme.text
+                                palette.text: AppTheme.text
+                                palette.buttonText: AppTheme.text
+                                palette.base: MusicColors.controlSurface
+                                palette.light: MusicColors.selectedSurface
+                                palette.midlight: MusicColors.hoverFill
+                                palette.dark: AppTheme.border
+                                palette.highlight: MusicColors.selectedSurface
+                                palette.highlightedText: AppTheme.text
                                 title: Language.text("Appearance", "外观")
+                                background: Rectangle {
+                                    implicitWidth: 190
+                                    implicitHeight: appearanceMenu.contentHeight + 8
+                                    color: MusicColors.controlSurface
+                                    radius: 8
+                                    border.width: 1
+                                    border.color: AppTheme.border
+                                }
                                 MenuItem { text: Language.text("System", "跟随系统"); checkable: true; checked: AppTheme.appearanceMode === "system"; onTriggered: AppTheme.appearanceMode = "system" }
                                 MenuItem { text: Language.text("Light appearance", "浅色模式"); checkable: true; checked: AppTheme.appearanceMode === "light"; onTriggered: AppTheme.appearanceMode = "light" }
                                 MenuItem { text: Language.text("Dark appearance", "深色模式"); checkable: true; checked: AppTheme.appearanceMode === "dark"; onTriggered: AppTheme.appearanceMode = "dark" }
@@ -666,6 +881,15 @@ ApplicationWindow {
     AccountDialog { id: accountDialog; account: music.account }
     KosWindowResizeHandles { targetWindow: window }
     FolderDialog { id: folderDialog; title: Language.text("Import music folder", "导入音乐文件夹"); onAccepted: { window.openPrimary("local"); music.addLibraryFolder(selectedFolder.toString()) } }
+    FileDialog {
+        id: importFilesDialog
+        title: Language.text("Import music files", "导入音乐文件")
+        fileMode: FileDialog.OpenFiles
+        // 扩展名列表与 MetadataScanner::supportedExtensions 一致，
+        // 否则用户选了文件却导入失败，体验很糟。
+        nameFilters: [Language.text("Audio files", "音频文件") + " (*.aac *.aif *.aiff *.ape *.asf *.dff *.dsf *.flac *.m4a *.m4b *.mp3 *.mp4 *.mpc *.oga *.ogg *.opus *.spx *.tta *.wav *.wave *.wma *.wv)"]
+        onAccepted: music.importMusicFiles(selectedFiles.map(f => f.toString()))
+    }
     LiquidDialog {
         id: playlistDialog; anchors.centerIn: parent; width: 360; modal: true; title: Language.text("New Playlist", "新建歌单"); standardButtons: Dialog.Ok | Dialog.Cancel
         onOpened: { playlistName.text = ""; playlistName.forceActiveFocus() }
@@ -696,5 +920,123 @@ ApplicationWindow {
                 }
             }
         }
+    }
+    Menu {
+        id: favoriteSourceMenu
+        property string source: "netease"
+        palette.window: MusicColors.controlSurface
+        palette.windowText: AppTheme.text
+        palette.text: AppTheme.text
+        palette.buttonText: AppTheme.text
+        palette.base: MusicColors.controlSurface
+        palette.light: MusicColors.selectedSurface
+        palette.midlight: MusicColors.hoverFill
+        palette.dark: AppTheme.border
+        palette.highlight: MusicColors.selectedSurface
+        palette.highlightedText: AppTheme.text
+        background: Rectangle {
+            implicitWidth: 200
+            implicitHeight: favoriteSourceMenu.contentHeight + 8
+            color: MusicColors.controlSurface
+            radius: 8
+            border.width: 1
+            border.color: AppTheme.border
+        }
+        MenuItem {
+            text: Language.text("New favorite folder", "新建收藏目录")
+            onTriggered: window.createFavoriteFolder(favoriteSourceMenu.source)
+        }
+        MenuItem {
+            text: Language.text("Open this source", "打开该来源")
+            onTriggered: window.openFavoritesSource(favoriteSourceMenu.source)
+        }
+    }
+    Menu {
+        id: favoriteFolderMenu
+        property string folderId: ""
+        property string folderName: ""
+        property string folderSource: "netease"
+        palette.window: MusicColors.controlSurface
+        palette.windowText: AppTheme.text
+        palette.text: AppTheme.text
+        palette.buttonText: AppTheme.text
+        palette.base: MusicColors.controlSurface
+        palette.light: MusicColors.selectedSurface
+        palette.midlight: MusicColors.hoverFill
+        palette.dark: AppTheme.border
+        palette.highlight: MusicColors.selectedSurface
+        palette.highlightedText: AppTheme.text
+        background: Rectangle {
+            implicitWidth: 200
+            implicitHeight: favoriteFolderMenu.contentHeight + 8
+            color: MusicColors.controlSurface
+            radius: 8
+            border.width: 1
+            border.color: AppTheme.border
+        }
+        MenuItem {
+            text: Language.text("New favorite folder", "新建收藏目录")
+            onTriggered: window.createFavoriteFolder(favoriteFolderMenu.folderSource)
+        }
+        MenuItem {
+            text: Language.text("Rename folder", "重命名目录")
+            onTriggered: window.renameFavoriteFolder(favoriteFolderMenu.folderId, favoriteFolderMenu.folderName)
+        }
+        MenuItem {
+            text: Language.text("Delete folder", "删除目录")
+            onTriggered: {
+                favoriteDeleteDialog.folderId = favoriteFolderMenu.folderId
+                favoriteDeleteDialog.folderName = favoriteFolderMenu.folderName
+                favoriteDeleteDialog.open()
+            }
+        }
+    }
+    LiquidDialog {
+        id: favoriteFolderDialog
+        anchors.centerIn: parent; width: 360; modal: true
+        property bool editing: false
+        property string targetFolderId: ""
+        property string favoriteFolderSource: "netease"
+        property string currentName: ""
+        title: editing ? Language.text("Rename favorite folder", "重命名收藏目录")
+                       : Language.text("New favorite folder", "新建收藏目录")
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onOpened: { favoriteFolderField.text = editing ? currentName : ""; favoriteFolderField.forceActiveFocus() }
+        onClosed: favoriteFolderField.text = ""
+        contentItem: MusicTextField {
+            id: favoriteFolderField
+            placeholderText: Language.text("Folder name", "目录名称")
+            materialForm: false; liquidFinish: true
+        }
+        onAccepted: {
+            const name = favoriteFolderField.text.trim()
+            if (!name.length) return
+            if (editing) { favorites.renameFolder(targetFolderId, name); return }
+            const id = favorites.createFolder(favoriteFolderSource, name)
+            if (id.length) window.openFavoriteFolder(favoriteFolderSource, id)
+        }
+    }
+    LiquidDialog {
+        id: favoriteDeleteDialog
+        anchors.centerIn: parent; width: 380; modal: true
+        property string folderId: ""
+        property string folderName: ""
+        title: Language.text("Delete favorite folder?", "删除收藏目录？")
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: ColumnLayout {
+            spacing: 8
+            Label {
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                text: favoriteDeleteDialog.folderName
+                color: AppTheme.text; font.weight: Font.DemiBold
+            }
+            Label {
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                text: Language.text("The folder and its track list are removed from this device. The songs themselves are not deleted.",
+                                    "该目录及其曲目列表会从此设备移除，歌曲本身不会被删除。")
+                color: AppTheme.mutedText; font.pixelSize: 12
+            }
+        }
+        onAccepted: if (folderId.length) favorites.removeFolder(folderId)
     }
 }

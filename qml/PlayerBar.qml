@@ -10,6 +10,37 @@ LiquidCard {
     signal queueRequested()
     signal nowPlayingRequested()
     height: 52; radius: height / 2; padding: 8
+    // ── 收藏音乐标识 ──
+    // 只有来自网易云 / Bilibili 的曲目才有这条收藏线；本地曲目走本机喜欢，
+    // 在沉浸页里由另一个爱心表示，两者语义不同，不要混用。
+    // TrackRecord::source 的历史取值里，网易云既可能是 netease 也可能是 wy。
+    readonly property string libraryFavoriteSource: {
+        const source = bar.music.currentSourceId
+        if (source === "netease" || source === "wy") return "netease"
+        if (source === "bilibili") return "bilibili"
+        return ""
+    }
+    readonly property bool libraryFavorite: {
+        const revision = favorites.revision
+        if (bar.libraryFavoriteSource.length === 0) return false
+        const id = bar.music.currentTrackId
+        return id > 0 && favorites.isFavorite(bar.libraryFavoriteSource, String(id))
+    }
+    function toggleLibraryFavorite() {
+        const id = bar.music.currentTrackId
+        if (bar.libraryFavoriteSource.length === 0 || id <= 0) return
+        // 快照只保存展示信息和曲库行号；在线播放地址是短时的，存下来也没有意义。
+        favorites.toggleFavorite({
+            id: String(id),
+            source: bar.libraryFavoriteSource,
+            title: bar.music.currentTitle,
+            artist: bar.music.currentArtist,
+            album: bar.music.currentAlbum,
+            artworkUrl: bar.music.currentArtworkUrl,
+            url: "",
+            durationMs: bar.music.durationMs
+        })
+    }
     shadowEnabled: true; shadowOpacity: AppTheme.dark ? .22 : .14
     tintColor: AppTheme.dark ? "#282c32" : "#f8f9fa"
     tintStrength: .50
@@ -70,6 +101,19 @@ LiquidCard {
                 Label { anchors.centerIn: parent; text: Language.text("Preview", "试听"); color: MusicColors.previewBadgeText; font.pixelSize: 9; font.weight: Font.DemiBold }
                 ToolTip.text: bar.music.providerStatus; ToolTip.visible: badgeHover.hovered
                 HoverHandler { id: badgeHover }
+            }
+            MusicActionButton {
+                objectName: "reviewLibraryFavorite"
+                backdrop: null; iconOnly: true; iconName: "heart"
+                iconFilled: bar.libraryFavorite
+                iconColor: bar.libraryFavorite ? MusicColors.sidebarAccent : AppTheme.text
+                iconSize: 18; implicitWidth: 26; implicitHeight: 26; flat: true
+                visible: bar.libraryFavoriteSource.length > 0 && bar.music.currentTrackId > 0
+                onClicked: bar.toggleLibraryFavorite()
+                Accessible.name: bar.libraryFavorite
+                    ? Language.text("Remove from Favorite Music", "取消收藏音乐")
+                    : Language.text("Add to Favorite Music", "加入收藏音乐")
+                ToolTip.text: Accessible.name; ToolTip.visible: hovered
             }
             MusicActionButton { backdrop: null; iconOnly: true; iconName: "queueList"; iconColor: AppTheme.text; iconSize: 18; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: bar.queueRequested(); Accessible.name: Language.text("Queue", "播放队列"); ToolTip.text: Accessible.name; ToolTip.visible: hovered }
             MusicActionButton { id: volumeAction; objectName: "reviewPlayerVolumeButton"; backdrop: null; iconOnly: true; iconName: "volume"; iconColor: AppTheme.text; iconSize: 18; implicitWidth: 26; implicitHeight: 26; flat: true; onClicked: volumePopup.opened ? volumePopup.close() : volumePopup.open(); Accessible.name: Language.text("Volume", "音量"); ToolTip.text: Accessible.name; ToolTip.visible: hovered }

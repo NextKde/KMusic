@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Kos.Ui
 import "UiLanguage.mjs" as Language
 
@@ -9,6 +10,7 @@ ScrollView {
     required property var music
     required property var preferences
     property real bottomContentInset: 0
+    property string favoritesMessage: ""
     signal clearSearchRequested()
     onVisibleChanged: if (visible) music.refreshAudioCache()
     contentWidth: availableWidth
@@ -61,6 +63,12 @@ ScrollView {
         SettingRow {
             label: Language.text("Remember window size", "记住窗口大小")
             LiquidGlassSwitch { materialForm: true; checked: page.preferences.rememberWindowSize; onToggled: checked => page.preferences.rememberWindowSize = checked }
+        }
+        SettingRow {
+            label: Language.text("Keep running when the window is closed", "关闭窗口后继续运行")
+            description: Language.text("Closing the window hides it and playback keeps going. Use the menu bar icon or the Dock menu to bring it back or to quit.",
+                                       "关闭窗口只是隐藏，音乐继续播放。用菜单栏图标或 Dock 图标右键菜单唤回主窗口、切歌或退出。")
+            LiquidGlassSwitch { materialForm: true; checked: page.preferences.closeToMenuBar; onToggled: checked => page.preferences.closeToMenuBar = checked }
         }
         Heading { text: Language.text("Playback", "播放") }
         SettingRow {
@@ -121,6 +129,19 @@ ScrollView {
             MusicActionButton { text: Language.text("Clear", "清理"); enabled: page.music.audioCacheBytes > 0; onClicked: clearCache.open() }
         }
         Note { text: page.music.cacheCleanupMessage; visible: text.length > 0 }
+        Heading { text: Language.text("Favorite Music", "收藏音乐") }
+        SettingRow {
+            label: Language.text("Favorite library", "收藏音乐库")
+            description: Language.text("NetEase and Bilibili favorite folders share one JSON file on this device. Export it to back up or move to another Mac.",
+                                       "网易云与 Bilibili 的收藏目录保存在本机同一个 JSON 文件里。导出可用于备份或迁移到另一台 Mac。")
+            RowLayout {
+                spacing: 8
+                MusicActionButton { text: Language.text("Export", "导出"); onClicked: exportFavoritesDialog.open() }
+                MusicActionButton { text: Language.text("Import", "导入"); onClicked: importFavoritesDialog.open() }
+            }
+        }
+        Note { text: favorites.storagePath }
+        Note { text: page.favoritesMessage; visible: text.length > 0; color: AppTheme.text }
         Heading { text: Language.text("About", "关于") }
         SettingRow {
             label: "KMusic"
@@ -147,5 +168,64 @@ ScrollView {
         title: Language.text("Clear search history?", "清空搜索历史？")
         contentItem: Label { text: Language.text("Clears local and online search history on this device. Music and playlists are kept.", "清空此设备的本地及在线搜索历史，保留音乐和歌单。"); wrapMode: Text.WordWrap; color: AppTheme.text }
         onAccepted: page.clearSearchRequested()
+    }
+    function applyImport(merge) {
+        if (favorites.importFrom(importFavoritesDialog.pendingFile, merge)) {
+            page.favoritesMessage = merge
+                ? Language.text("Favorite library merged.", "收藏音乐库已合并导入。")
+                : Language.text("Favorite library replaced.", "收藏音乐库已替换导入。")
+            favoritesMessageTimer.restart()
+        }
+    }
+    Connections {
+        target: favorites
+        function onErrorOccurred(message) { page.favoritesMessage = message; favoritesMessageTimer.restart() }
+    }
+    Timer {
+        id: favoritesMessageTimer
+        interval: 6000
+        onTriggered: page.favoritesMessage = ""
+    }
+    FileDialog {
+        id: exportFavoritesDialog
+        title: Language.text("Export favorite music", "导出收藏音乐")
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "json"
+        nameFilters: ["JSON (*.json)"]
+        onAccepted: {
+            if (favorites.exportTo(selectedFile)) {
+                page.favoritesMessage = Language.text("Favorite library exported.", "收藏音乐库已导出。")
+                favoritesMessageTimer.restart()
+            }
+        }
+    }
+    FileDialog {
+        id: importFavoritesDialog
+        title: Language.text("Import favorite music", "导入收藏音乐")
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["JSON (*.json)"]
+        property url pendingFile
+        onAccepted: { importFavoritesDialog.pendingFile = selectedFile; importModeDialog.open() }
+    }
+    LiquidDialog {
+        id: importModeDialog
+        parent: Overlay.overlay; anchors.centerIn: parent; width: 400
+        modal: true; dim: true; standardButtons: Dialog.Cancel
+        title: Language.text("How should this file be imported?", "这个文件要怎么导入？")
+        contentItem: ColumnLayout {
+            spacing: 10
+            Label {
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                text: Language.text("Merging keeps the folders already on this device and adds the file's tracks. Replacing removes every folder here first.",
+                                    "合并会保留本机已有的目录，只补入文件里的曲目；替换会先清空本机全部收藏目录。")
+                color: AppTheme.mutedText; font.pixelSize: 12
+            }
+            RowLayout {
+                Layout.fillWidth: true; spacing: 8
+                Item { Layout.fillWidth: true }
+                MusicActionButton { text: Language.text("Merge", "合并"); onClicked: { page.applyImport(true); importModeDialog.close() } }
+                MusicActionButton { text: Language.text("Replace all", "替换全部"); destructive: true; onClicked: { page.applyImport(false); importModeDialog.close() } }
+            }
+        }
     }
 }

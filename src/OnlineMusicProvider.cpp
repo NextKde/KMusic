@@ -62,7 +62,36 @@ void OnlineMusicProvider::request(const QString &action, const QJsonObject &para
             providerDir = QDir(QCoreApplication::applicationDirPath()).filePath("../share/kmusic/providers");
         const QString helper = QDir(providerDir).filePath("runtime/helper.js");
         if (!QFileInfo::exists(helper)) { callback({{"ok", false}, {"message", tr("NetEase helper is missing from the installation.")}}); return; }
-        const QString node = QStandardPaths::findExecutable(QStringLiteral("node"));
+        QString node = QStandardPaths::findExecutable(QStringLiteral("node"));
+#if defined(Q_OS_MACOS)
+        if (node.isEmpty()) {
+            // macOS：从 Finder 启动时 PATH 只有系统目录，mise / Homebrew / nvm 装的 node 都找不到
+            const QString home = QDir::homePath();
+            const QStringList fixed = {
+                home + QStringLiteral("/.local/share/mise/installs/node/latest/bin/node"),
+                QStringLiteral("/opt/homebrew/bin/node"),
+                QStringLiteral("/usr/local/bin/node"),
+            };
+            for (const QString &candidate : fixed) {
+                if (QFileInfo(candidate).isExecutable()) { node = candidate; break; }
+            }
+            if (node.isEmpty()) {
+                const QStringList roots = {
+                    home + QStringLiteral("/.nvm/versions/node"),
+                    home + QStringLiteral("/.local/share/mise/installs/node"),
+                };
+                for (const QString &root : roots) {
+                    const QStringList versions = QDir(root).entryList(
+                        QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name | QDir::Reversed);
+                    for (const QString &version : versions) {
+                        const QString candidate = root + QLatin1Char('/') + version + QStringLiteral("/bin/node");
+                        if (QFileInfo(candidate).isExecutable()) { node = candidate; break; }
+                    }
+                    if (!node.isEmpty()) break;
+                }
+            }
+        }
+#endif
         if (node.isEmpty()) { callback({{"ok", false}, {"message", tr("Install Node.js 22.19 or newer for the NetEase provider.")}}); return; }
         m_process.setProgram(node);
         m_process.setArguments({helper});

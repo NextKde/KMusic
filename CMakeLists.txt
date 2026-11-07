@@ -1,13 +1,28 @@
 cmake_minimum_required(VERSION 3.21)
 project(KMusic VERSION 0.1.0 LANGUAGES CXX)
+
+if(APPLE)
+    enable_language(OBJCXX)
+endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(GNUInstallDirs)
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 QuickDialogs2 Concurrent DBus Network Sql)
+set(KMUSIC_QT_COMPONENTS Core Gui Qml Quick QuickControls2 QuickDialogs2 Concurrent DBus Network Sql)
+if(APPLE)
+    list(APPEND KMUSIC_QT_COMPONENTS Multimedia)
+endif()
+find_package(Qt6 6.8 REQUIRED COMPONENTS ${KMUSIC_QT_COMPONENTS})
 find_package(PkgConfig REQUIRED)
 find_package(Qt6Keychain REQUIRED)
 pkg_check_modules(MUSIC_QRENCODE REQUIRED IMPORTED_TARGET libqrencode)
-pkg_check_modules(MUSIC_GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-audio-1.0 gstreamer-pbutils-1.0)
+if(NOT APPLE)
+    pkg_check_modules(MUSIC_GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-audio-1.0 gstreamer-pbutils-1.0)
+endif()
+if(APPLE)
+    set(KMUSIC_AUDIO_LIBS Qt6::Multimedia)
+else()
+    set(KMUSIC_AUDIO_LIBS PkgConfig::MUSIC_GSTREAMER)
+endif()
 pkg_check_modules(MUSIC_TAGLIB REQUIRED IMPORTED_TARGET taglib>=1.12)
 qt_standard_project_setup(REQUIRES 6.8)
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nextkdeAppDemo/shared/qml/CMakeLists.txt")
@@ -15,21 +30,52 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nextkdeAppDemo/shared/qml/CMak
 endif()
 add_subdirectory(vendor/nextkdeAppDemo/shared/qml kos-ui)
 add_subdirectory(src/providers)
+if(APPLE)
+    set(KMUSIC_PLATFORM_SOURCES
+        platform/macos/PlaybackEngine.cpp platform/macos/PlaybackEngine.h
+        platform/macos/Transcoder.cpp platform/macos/Transcoder.h
+        platform/macos/MprisService.mm platform/macos/MprisService.h
+        platform/macos/DesktopPresence.mm src/DesktopPresence.h)
+else()
+    set(KMUSIC_PLATFORM_SOURCES
+        src/PlaybackHttpHeaders.cpp src/PlaybackEngine.cpp src/PlaybackEngine.h
+        src/Transcoder.cpp src/Transcoder.h
+        src/MprisService.cpp src/MprisService.h)
+endif()
+
 qt_add_executable(kmusic src/main.cpp
     src/AudioCache.cpp src/AudioCache.h src/MetadataScanner.cpp src/MetadataScanner.h
-    src/MusicDatabase.cpp src/MusicDatabase.h src/MusicTypes.h src/MprisService.cpp src/MprisService.h
-    src/PlaybackHttpHeaders.cpp src/PlaybackEngine.cpp src/PlaybackEngine.h src/Transcoder.cpp src/Transcoder.h
+    src/MusicDatabase.cpp src/MusicDatabase.h src/MusicTypes.h src/FavoriteLibrary.cpp src/FavoriteLibrary.h
+        ${KMUSIC_PLATFORM_SOURCES}
     src/LxSourceService.cpp src/LxSourceService.h src/LyricsService.cpp src/LyricsService.h
     src/OnlineMusicProvider.cpp src/OnlineMusicProvider.h src/AccountController.cpp src/AccountController.h src/SubsonicProvider.cpp src/SubsonicProvider.h)
 set_source_files_properties(qml/MusicColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(kmusic URI NextKde.Music VERSION 1.0 RESOURCE_PREFIX /qt/qml
     SOURCES src/MusicController.cpp src/MusicController.h src/MusicControllerBilibili.cpp src/BilibiliAccountController.cpp src/BilibiliAccountController.h src/BilibiliDiscoveryController.cpp src/BilibiliDiscoveryController.h src/BilibiliLibraryController.cpp src/BilibiliLibraryController.h src/BilibiliController.cpp src/BilibiliController.h src/TrackListModel.cpp src/TrackListModel.h
-    QML_FILES qml/BilibiliDiscoveryPage.qml qml/BilibiliFeedSection.qml qml/BilibiliPersonalPage.qml qml/BilibiliPage.qml qml/SearchHistory.mjs qml/MusicTextField.qml qml/MediaSourcesPage.qml qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml)
+    QML_FILES qml/BilibiliDiscoveryPage.qml qml/BilibiliFeedSection.qml qml/BilibiliPersonalPage.qml qml/BilibiliPage.qml qml/SearchHistory.mjs qml/MusicTextField.qml qml/MediaSourcesPage.qml qml/SettingsPage.qml qml/SearchDialog.qml qml/LocalMusicPage.qml qml/PersonalPage.qml qml/UiLanguage.mjs qml/NavigationHomePage.qml qml/LocalFoldersPage.qml qml/SourceConnectionDialog.qml qml/SourceDemoPage.qml qml/MusicSourceCatalog.mjs qml/CollectionList.qml qml/OnlineAlbumPage.qml qml/AccountDialog.qml qml/MusicColors.qml qml/MusicActionButton.qml qml/MusicNavigationButton.qml qml/MusicSelect.qml qml/Main.qml qml/Artwork.qml qml/AlbumTile.qml qml/DiscoveryPage.qml qml/SongsPage.qml qml/PlayerBar.qml qml/WindowChrome.qml qml/NowPlaying.qml qml/OnlinePage.qml qml/FavoritesPage.qml)
+if(APPLE)
+    target_include_directories(kmusic PRIVATE platform/macos)
+    # 其余 Obj-C++ 文件走手动引用计数，这个新文件用 ARC 省去成对的 retain/release。
+    set_source_files_properties(platform/macos/DesktopPresence.mm
+        PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+endif()
 target_include_directories(kmusic PRIVATE src)
 target_link_libraries(kmusic PRIVATE kmusic_provider_core)
-target_link_libraries(kmusic PRIVATE Qt6Keychain::Qt6Keychain PkgConfig::MUSIC_QRENCODE Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickDialogs2 Qt6::Concurrent Qt6::DBus Qt6::Network Qt6::Sql PkgConfig::MUSIC_GSTREAMER PkgConfig::MUSIC_TAGLIB)
+target_link_libraries(kmusic PRIVATE Qt6Keychain::Qt6Keychain PkgConfig::MUSIC_QRENCODE Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickDialogs2 Qt6::Concurrent Qt6::DBus Qt6::Network Qt6::Sql ${KMUSIC_AUDIO_LIBS} PkgConfig::MUSIC_TAGLIB)
+if(APPLE)
+    target_link_libraries(kmusic PRIVATE "-framework MediaPlayer" "-framework AppKit")
+endif()
+if(APPLE)
+    set_target_properties(kmusic PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "KMusic"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.nextkde.kmusic"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}")
+endif()
+
 target_compile_definitions(kmusic PRIVATE MUSIC_VERSION="${PROJECT_VERSION}")
-install(TARGETS kmusic RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS kmusic RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} BUNDLE DESTINATION .)
 install(FILES data/kmusic.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
 install(FILES data/kmusic.svg DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
 
